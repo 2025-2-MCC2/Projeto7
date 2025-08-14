@@ -6,7 +6,7 @@
 
 # Title
 
-## WebCrawles´s
+## WebCrawler´s
 
 ## Integrantes: <a href="">Guilherme Monteiro Da Silva</a>, <a href="https://github.com/DebatingAlpaca">João Pedro Da Silva</a>, <a href="">Raphael De Oliveira Santos</a>, <a href="">Stefany Samira De Oliveira Cubertino</a>
 
