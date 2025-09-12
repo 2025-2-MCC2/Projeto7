@@ -34,6 +34,8 @@
 <pre>
 ├── Raiz
 │
+├── Imagens
+│
 ├── Documentos
 │   ├── Entrega 1
 │   │   ├── Entrega Cálculo 2
@@ -59,9 +61,9 @@ Há também X pastas que seguem da seguinte forma:
 
 <b>Documentos</b>: Pasta com todos os documentos importantes do Site.
 
-<b>├── Entregas 1</b>: Todas as entregas para o dia 22 de Setembro, de todas as materias, estará nesta pasta.
+<b>Entregas 1</b>: Todas as entregas para o dia 22 de Setembro, de todas as materias, estará nesta pasta.
 
-<b>└── Entregas 2</b>: Todas as entregas para o dia 10 de Novembro, de todas as materias, estará nesta pasta.
+<b>Entregas 2</b>: Todas as entregas para o dia 10 de Novembro, de todas as materias, estará nesta pasta.
 
 
 
