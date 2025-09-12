@@ -15,7 +15,7 @@
 ## Descrição
 
   <img src="imagens/logo.png" 
-       alt="There is a Monster in the Window" 
+       alt="Lideranças Empáticas" 
        border="5" 
        width="400">
 
