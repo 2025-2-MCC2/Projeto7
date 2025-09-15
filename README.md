@@ -15,7 +15,7 @@
 ## Descrição
 
 <p align="center">
-  <img src="logo.png" 
+  <img src="imagens/logo.png" 
        alt="Lideranças Empáticas" 
        border="5" 
        width="400">
