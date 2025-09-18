@@ -29,6 +29,12 @@
   Fusce tristique efficitur purus, non maximus metus vestibulum sed. Etiam tincidunt ante tempor erat lobortis, sit amet elementum est pretium. Nam at consectetur leo. Aliquam rutrum laoreet maximus. Quisque dignissim pharetra ultrices. Cras egestas leo id maximus mollis. Proin laoreet aliquam massa, a auctor mauris fermentum at. Nulla bibendum purus leo, vitae eleifend dui ultricies sit amet. Aenean consequat viverra nulla non pellentesque. Mauris fermentum tristique fringilla.
 </p>
 
+## Protótipo navegável no Figma
+<a href="https://www.figma.com/design/d6d58QWVq8z9luoTVgzR7V/WebCrawler-s?node-id=48-2&t=Ak4S9BNHtQX5Ntdp-1">Protótipo navegável</a>
+
+## Link para o site
+inserir link final aqui
+
 ## 🛠 Estrutura de pastas
 
 <pre>
