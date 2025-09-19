@@ -1,0 +1,209 @@
+/* src/pages/LoginPage/LoginPage.css */
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: url("https://source.unsplash.com/1600x900/?nature,forest") no-repeat center center/cover;
+}
+
+/* Container Central */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  backdrop-filter: blur(3px);
+}
+
+/* Card do Login */
+.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+/* Título e Subtítulo */
+.login-title {
+  margin-bottom: 0.3rem;
+  color: #2e7d32;
+  font-size: 1.8rem;
+}
+
+.login-subtitle {
+  margin-bottom: 1.5rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* Formulário */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input-group {
+  text-align: left;
+}
+
+/* Labels */
+.input-group label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Inputs com ícones */
+.input-icon {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: white;
+  position: relative;
+}
+
+.input-icon .icon {
+  margin-right: 8px;
+  color: #4caf50;
+  font-size: 1.1rem;
+}
+
+.input-icon input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: transparent;
+}
+
+/* Botão Ver/Esconder Senha */
+.toggle-password {
+  cursor: pointer;
+  color: #4caf50;
+  font-size: 1.2rem;
+  position: absolute;
+  right: 10px;
+}
+
+/* Botão Entrar */
+.login-btn {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  width: 100%;
+}
+
+.login-btn:hover {
+  background: #1b5e20;
+}
+
+/* Links */
+.login-links {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.login-links a {
+  color: #2e7d32;
+  text-decoration: none;
+}
+
+.login-links a:hover {
+  color: #1b5e20;
+  text-decoration: underline;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 1rem;
+  }
+  .login-card {
+    padding: 1.5rem;
+  }
+  .login-title {
+    font-size: 1.5rem;
+  }
+}
+.login-message {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.login-message {
+  color: #e53935; /* Vermelho para erro */
+}
+
+.login-message:contains('sucesso') {
+  color: #2e7d32; /* Verde para sucesso */
+}
+
+/* Estilos para o seletor de método de login */
+.login-method-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.toggle-btn {
+  background: #f1f8e9;
+  color: #1b4332;
+  border: 2px solid #b7e4c7;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.toggle-btn.active {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+/* Chips de eventos dentro do calendário */
+.events-in-day {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+.event-chip {
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: #eef6ff;
+  color: #0b57d0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.more-chip {
+  font-size: 10px;
+  line-height: 1.2;
+  color: #555;
+}
+.day.has-events .num {
+  font-weight: 600;
+}

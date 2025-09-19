@@ -1,0 +1,320 @@
+/* src/pages/Grupos/Grupos.css */
+
+.grupos-page-container {
+  padding: 2rem;
+  background: #f0fdf4;
+  color: #1b4332;
+  min-height: 100vh;
+}
+
+.grupos-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.grupos-page-header h1 {
+  font-size: 2rem;
+  color: #1b4332;
+  margin: 0;
+}
+
+/* Card do Formulário */
+.form-card {
+  background: #e6f7eb;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.form-card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #1b4332;
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #b7e4c7;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  color: #1b4332;
+  box-sizing: border-box;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* Estilos gerais de botões */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s, opacity 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background-color: #1b4332;
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #2d6a4f;
+}
+
+.btn-secondary {
+  background-color: #d8f3dc;
+  color: #1b4332;
+  border: 1px solid #95d5b2;
+}
+.btn-secondary:hover {
+  background-color: #b7e4c7;
+}
+
+.btn-danger {
+  background-color: #d90429;
+  color: white;
+}
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
+/* Mensagem de feedback */
+.message {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Card da Lista */
+.list-card {
+  background: #e6f7eb;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.list-card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #1b4332;
+  font-size: 1.5rem;
+}
+
+.grupos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.grupo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #b7e4c7;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.grupo-item:last-child {
+  border-bottom: none;
+}
+
+.grupo-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.grupo-info h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.grupo-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #2d6a4f;
+}
+
+.grupo-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.grupo-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #95d5b2;
+  background-color: #d8f3dc;
+  color: #1b4332;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.grupo-actions button:hover {
+  background-color: #b7e4c7;
+}
+
+.grupo-actions .btn-danger {
+  background-color: #fff0f3;
+  color: #d90429;
+  border-color: #ffccd5;
+}
+
+.grupo-actions .btn-danger:hover {
+  background-color: #f8d7da;
+}
+
+.progress-bar-container {
+  background: #b7e4c7;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-bar-fill {
+  background: #1b4332;
+  height: 100%;
+  transition: width 0.4s ease-in-out;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+  .grupos-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .grupo-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .grupo-actions {
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .member-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .member-input-group .btn-danger-small {
+    margin-top: 5px;
+    align-self: flex-end;
+  }
+}
+
+/*
+  Estilos que estavam no arquivo mas não são usados pelo JSX atual.
+  Mantidos aqui caso sejam necessários no futuro.
+*/
+.search-and-filter,
+.search-input,
+.filter-select,
+.grupos-grid,
+.grupo-card-item {
+  display: none;
+}
+
+.grupo-card-item h3 {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.member-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.member-input-group input {
+  flex: 1;
+}
+
+.btn-danger-small {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-danger-small:hover {
+  background-color: #f1c6cb;
+}
+
+.member-list {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.member-list ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 0.5rem 0 0 0;
+  color: #2d6a4f;
+}
+
+.grupo-card-item h3 span {
+  font-size: 0.9rem;
+  color: #2d6a4f;
+  margin-top: 0.25rem;
+}   
+
+.member-input-group input[name="telefone"] {
+  flex: 0.8;
+}
+
+.meta-alimentos {
+  margin-top: 0.5rem;
+  font-style: italic;
+  color: #2d6a4f;
+}
+
+.grupo-card__meta-alimentos {
+  margin-top: 8px;
+}

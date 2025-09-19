@@ -1,0 +1,153 @@
+/* Footer wrapper */
+.footer-wrapper {
+    width: 100%;
+    background-color: #0A7F57;
+    padding: 1.5rem 1rem; /* reduzido */
+    color: white;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Footer main container */
+  .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    border-radius: 1.25rem;
+    padding: 1.5rem; /* reduzido */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+  /* Top section: logo + links + mapa */
+  .footer-content {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+  
+  /* Brand and logo */
+  .footer-brand {
+    flex: 1 1 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .brand-logo {
+    height: 60px; /* menor */
+    width: auto;
+    margin-bottom: 0.75rem;
+    border-radius: 100%;
+  }
+  
+  /* Redes sociais */
+  .social-icons {
+    display: flex;
+    gap: 0.75rem;
+  }
+  
+  .social-icons a {
+    font-size: 1.25rem; /* ligeiramente menor */
+    color: white;
+    transition: color 0.3s;
+  }
+  
+  .social-icons a:hover {
+    color: #d1d1d1;
+  }
+  
+  /* Links */
+  .footer-links {
+    flex: 1 1 180px;
+  }
+  
+  .footer-links h4 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .footer-links ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-links ul li {
+    margin-bottom: 0.4rem;
+  }
+  
+  .footer-links ul li a {
+    text-decoration: underline;
+    color: white;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+  }
+  
+  .footer-links ul li a:hover {
+    color: #c7f7e0;
+  }
+  
+  /* Localização */
+  .footer-location {
+    flex: 1 1 250px;
+  }
+  
+  .footer-location h4 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .footer-location p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .map-embed {
+    width: 100%;
+    height: 100px; /* menor */
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Logo FECAP */
+  .footer-logo {
+    margin-top: 1rem;
+  }
+  
+  .footer-logo img {
+    height: 30px; /* menor */
+    width: auto;
+  }
+  
+  /* Copyright */
+  .footer-copy {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    text-align: center;
+    color: #e6fff3;
+  }
+  
+  /* Responsivo */
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .footer-logo {
+      text-align: center;
+      width: 100%;
+    }
+  
+    .footer-copy {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+  

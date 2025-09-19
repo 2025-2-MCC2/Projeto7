@@ -1,0 +1,215 @@
+/* src/pages/RegisterPage/RegisterPage.css */
+
+/* Fundo consistente com a página de login */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: url("https://source.unsplash.com/1600x900/?nature,forest,community") no-repeat center center/cover;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card com design mais leve e moderno */
+.register-card {
+  background: rgba(255, 255, 255, 0.98);
+  padding: 2.5rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.register-title {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #2e7d32; /* Verde escuro do login */
+  font-size: 2rem;
+}
+
+.register-subtitle {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #555;
+  font-size: 1rem;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Estilos para os campos de input, consistentes com o login */
+.input-group {
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.input-icon {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.input-icon:focus-within {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+}
+
+.input-icon .icon {
+  margin-right: 10px;
+  color: #4caf50;
+  font-size: 1.1rem;
+}
+
+.input-icon input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: transparent;
+  color: #333;
+}
+
+.password-toggle {
+  cursor: pointer;
+  color: #757575;
+  font-size: 1.2rem;
+}
+
+/* Botões de seleção de perfil */
+.user-type-selection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.register-btn {
+  background: #f1f8e9; /* Verde bem claro */
+  color: #1b4332;
+  border: 2px solid #b7e4c7;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.register-btn:hover {
+  background: #dcedc8;
+  border-color: #95d5b2;
+}
+
+.register-btn.selected {
+  background: #2e7d32;
+  color: white;
+  border-color: #2e7d32;
+}
+
+/* Botão principal de submissão */
+.register-submit {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  width: 100%;
+}
+
+.register-submit:hover {
+  background: #1b5e20;
+}
+
+.register-message {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.register-link {
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+.register-link a {
+  color: #2e7d32;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Estilos para o seletor de método de login */
+.login-method-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.toggle-btn {
+  background: #f1f8e9;
+  color: #1b4332;
+  border: 2px solid #b7e4c7;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.toggle-btn.active {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .register-card {
+    padding: 1.5rem;
+  }
+
+  .register-title {
+    font-size: 1.8rem;
+  }
+
+  .user-type-selection {
+    grid-template-columns: 1fr;
+  }
+}
+/* Para Chrome, Safari, Opera e outros baseados em WebKit */
+input[type="password"]::-webkit-password-revelation-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+/* Para Microsoft Edge (versões mais antigas) */
+input[type="password"]::-ms-reveal {
+  display: none;
+}

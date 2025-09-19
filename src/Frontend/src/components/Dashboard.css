@@ -1,0 +1,234 @@
+/* Cor de fundo principal para a área do dashboard, como na imagem */
+.dash-container {
+    background-color: #e8f5e9;
+    /* Um tom de verde bem claro */
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+
+/* Estilo para o cabeçalho principal do dashboard (Nome do Grupo e ícones) */
+.dash-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #004d40;
+    /* Verde escuro, como na sidebar da imagem */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.group-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.header-icons {
+    display: flex;
+    gap: 1rem;
+    font-size: 1.25rem;
+}
+
+.header-icons .filter-icon {
+    cursor: pointer;
+}
+
+/* Estilo principal dos cards brancos que contêm os gráficos */
+.dash-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-content {
+    width: 100%;
+}
+
+.card-content h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+/* Estilos para a barra de progresso de arrecadação */
+.progress-meta-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.progress-meta-container progress {
+    flex-grow: 1;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: none;
+}
+
+/* Estilizando a barra de progresso para navegadores WebKit (Chrome, Safari) */
+.progress-meta-container progress::-webkit-progress-bar {
+    background-color: #e0e0e0;
+    border-radius: 6px;
+}
+
+.progress-meta-container progress::-webkit-progress-value {
+    background-color: #27ae60;
+    /* Verde progresso */
+    border-radius: 6px;
+}
+
+/* Estilos para os botões de ação (+) e (💬) nos cards */
+.card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 1rem;
+}
+
+.icon-button {
+    background-color: #e8eaf6;
+    /* Um tom de azul/roxo claro */
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3f51b5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-button:hover {
+    background-color: #c5cae9;
+    transform: scale(1.1);
+}
+
+/* Estilo para o Tooltip Customizado */
+.custom-tooltip {
+    background-color: rgba(30, 30, 30, 0.85);
+    border-radius: 6px;
+    padding: 10px 15px;
+    border: 1px solid #555;
+    color: white;
+}
+
+.custom-tooltip .label {
+    font-weight: bold;
+    margin: 0 0 5px 0;
+    color: #00C49F;
+    /* Cor de destaque */
+}
+
+.custom-tooltip .intro {
+    margin: 0;
+    font-size: 0.9em;
+}
+
+/* Estilos para o texto no centro do Gráfico de Rosca */
+.donut-center-text-total {
+    font-size: 2.5rem;
+    font-weight: 600;
+    fill: #333;
+}
+
+.donut-center-text-label {
+    font-size: 1rem;
+    fill: #666;
+}
+
+/* Melhoria no texto da legenda */
+.legend-text {
+    color: #555;
+}
+
+/* NOVO: Estilos para o seletor de gráficos */
+.chart-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #d8f3dc;
+}
+
+.chart-selector button {
+    padding: 10px 20px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+.chart-selector button:hover {
+    background-color: #e6f7eb;
+    color: #1b4332;
+}
+
+.chart-selector button.active {
+    color: #1b4332;
+    border-bottom-color: #27ae60;
+}
+
+/* NOVO: Estilos para a "tradução" do gráfico */
+.chart-insight {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #27ae60;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .dash-container {
+        padding: 1rem;
+    }
+
+    .dash-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .group-title {
+        font-size: 1.25rem;
+    }
+
+    .dash-card {
+        padding: 1rem;
+    }
+
+    .chart-selector {
+        flex-wrap: wrap;
+    }
+
+    .progress-meta-container {
+        flex-wrap: wrap;
+    }
+
+  .donut-center-text-total {
+    font-size: 2rem;
+  }
+
+  .donut-center-text-label {
+    font-size: 0.9rem;
+  }
+}
