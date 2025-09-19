@@ -29,7 +29,7 @@
   Fusce tristique efficitur purus, non maximus metus vestibulum sed. Etiam tincidunt ante tempor erat lobortis, sit amet elementum est pretium. Nam at consectetur leo. Aliquam rutrum laoreet maximus. Quisque dignissim pharetra ultrices. Cras egestas leo id maximus mollis. Proin laoreet aliquam massa, a auctor mauris fermentum at. Nulla bibendum purus leo, vitae eleifend dui ultricies sit amet. Aenean consequat viverra nulla non pellentesque. Mauris fermentum tristique fringilla.
 </p>
 
-## Protótipo navegável no Figma
+## <img src="https://img.icons8.com/?size=100&id=zfHRZ6i1Wg0U&format=png&color=000000" width="20" height="20"/> Protótipo navegável no Figma
 <a href="https://www.figma.com/design/d6d58QWVq8z9luoTVgzR7V/WebCrawler-s?node-id=48-2&t=Ak4S9BNHtQX5Ntdp-1">Protótipo navegável</a>
 
 ## Link para o site
@@ -85,7 +85,18 @@ Não há instalação! Apenas executável!
 
 ## 💻 Configuração para Desenvolvimento
 
+Para abrir este projeto você necessita das seguintes ferramentas:
 
+-<a href="https://code.visualstudio.com/">VSCode</a><br>
+-<a href="https://nodejs.org/pt">Node.js</a><br>
+```sh
+Dentro da pasta Backend:
+npm install
+npx nodemon server.js
+Dentro da pasta Frontend:
+npm install
+npm start
+```
 
 
 ## 📋 Licença/License
