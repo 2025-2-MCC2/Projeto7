@@ -42,6 +42,10 @@ inserir link final aqui
 │
 ├── Imagens
 │
+├── src
+|   ├── Backend
+|   └── Frontend
+|
 ├── Documentos
 │   ├── Entrega 1
 │   │   ├── Entrega Cálculo 2
@@ -64,6 +68,8 @@ inserir link final aqui
 <b>README.MD</b>: Arquivo que serve como guia e explicação geral sobre seu projeto. O mesmo que você está lendo agora.
 
 Há também X pastas que seguem da seguinte forma:
+
+<b>src</b>: Pasta que contém o código fonte.
 
 <b>Documentos</b>: Pasta com todos os documentos importantes do Site.
 
