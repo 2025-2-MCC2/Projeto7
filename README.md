@@ -106,7 +106,7 @@ npm start
 
 
 ## 📋 Licença/License
-<a href="https://github.com/2025-2-MCC2/Projeto7/tree/main">nome projeto</a> © 2025 by <a href="https://creativecommons.org">Guilherme Monteiro Da Silva, João Pedro Da Silva, Raphael De Oliveira Santos, Stefany Samira De Oliveira Cubertino</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>
+<a href="https://github.com/2025-2-MCC2/Projeto7/tree/main">nome projeto</a> © 2025 by <a href="https://github.com/2025-2-MCC2">Guilherme Monteiro Da Silva, João Pedro Da Silva, Raphael De Oliveira Santos, Stefany Samira De Oliveira Cubertino</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International</a>
 <br/><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;">
 
 ## 🎓 Referências
