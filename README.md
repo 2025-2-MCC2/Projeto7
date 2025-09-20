@@ -32,8 +32,8 @@
 ## <img src="https://img.icons8.com/?size=100&id=zfHRZ6i1Wg0U&format=png&color=000000" width="20" height="20"/> Protótipo navegável no Figma
 <a href="https://www.figma.com/design/d6d58QWVq8z9luoTVgzR7V/WebCrawler-s?node-id=48-2&t=Ak4S9BNHtQX5Ntdp-1">Protótipo navegável</a>
 
-## Link para o site
-inserir link final aqui
+## <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFggf9yNRN9xCYku8XMEkSE0LU9uMhkYbehQ&s" width="20" height="20"/> Link para o site
+<a href="https://projeto-interdisciplinar-webcrawlers.vercel.app/">Link para o site</a>
 
 ## 🛠 Estrutura de pastas
 
