@@ -1,6 +1,6 @@
 // src/pages/LoginPage/LoginPage.jsx
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // ← Adicionei Link
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import "./LoginPage.css";
 import { FaUser, FaLock, FaIdCard } from "react-icons/fa";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -10,115 +10,204 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
-  const [loginMethod, setLoginMethod] = useState("email"); // 'email' ou 'ra'
+  const [loginMethod, setLoginMethod] = useState("email"); // 'email' | 'ra'
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Lideranças Embaticas • Login";
+  }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
 
-    if (loginMethod === 'email') {
-      // Admin/Mentor Login
+    if (loginMethod === "email") {
+      // ADMIN (FANTASMA): sem necessidade de dados
       if (identifier === "admin@test.com" && password === "123456") {
-        setMessage("✅ Login como mentor realizado com sucesso!");
+        setMessage("✅ Login realizado com sucesso! (admin)");
         localStorage.setItem("auth", "true");
-        localStorage.setItem("perfil", JSON.stringify({ tipo: "adm", email: identifier, nome: "Admin" }));
-        setTimeout(() => navigate("/painel"), 1000);
+        localStorage.setItem(
+          "perfil",
+          JSON.stringify({
+            id: Date.now(),
+            tipo: "adm",      // Admin "fantasma"
+            nome: "",
+            email: "",
+            ra: "",
+            telefone: "",
+            fotoUrl: "",
+            preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
+          })
+        );
+        setTimeout(() => navigate("/painel"), 800);
         return;
       }
-      // Aluno Login de Teste
+
+      // MENTOR (exemplo)
+      if (identifier === "mentor@test.com" && password === "123456") {
+        setMessage("✅ Login realizado com sucesso! (mentor)");
+        localStorage.setItem("auth", "true");
+        localStorage.setItem(
+          "perfil",
+          JSON.stringify({
+            id: Date.now(),
+            tipo: "mentor",
+            nome: "Mentor Teste",
+            email: identifier,
+            ra: "",
+            telefone: "(11) 90000-0000",
+            fotoUrl: "",
+            preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
+          })
+        );
+        setTimeout(() => navigate("/painel"), 800);
+        return;
+      }
+
+      // ALUNO por e-mail (exemplo)
       if (identifier === "aluno@test.com" && password === "123456") {
-        setMessage("✅ Login como aluno realizado com sucesso!");
+        setMessage("✅ Login realizado com sucesso! (aluno)");
         localStorage.setItem("auth", "true");
-        localStorage.setItem("perfil", JSON.stringify({ tipo: "aluno", email: identifier, nome: "Aluno Teste" }));
-        setTimeout(() => navigate("/painel"), 1000);
+        localStorage.setItem(
+          "perfil",
+          JSON.stringify({
+            id: Date.now(),
+            tipo: "aluno",
+            nome: "Aluno Teste",
+            email: identifier, // opcional
+            ra: "12345",       // obrigatório (mock)
+            telefone: "",
+            fotoUrl: "",
+            preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
+          })
+        );
+        setTimeout(() => navigate("/painel"), 800);
         return;
       }
     }
 
-    if (loginMethod === 'ra') {
-      // Aluno Login de Teste com RA
+    // ALUNO por RA
+    if (loginMethod === "ra") {
       if (identifier === "12345" && password === "123456") {
-      setMessage("✅ Login como aluno realizado com sucesso!");
-      localStorage.setItem("auth", "true");
-      localStorage.setItem("perfil", JSON.stringify({ tipo: "aluno", ra: identifier, nome: "Aluno Teste RA" }));
-      setTimeout(() => navigate("/painel"), 1000);
-      return;
+        setMessage("✅ Login realizado com sucesso! (aluno)");
+        localStorage.setItem("auth", "true");
+        localStorage.setItem(
+          "perfil",
+          JSON.stringify({
+            id: Date.now(),
+            tipo: "aluno",
+            nome: "Aluno Teste RA",
+            email: "",          // opcional
+            ra: identifier,     // obrigatório
+            telefone: "",       // opcional
+            fotoUrl: "",
+            preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
+          })
+        );
+        setTimeout(() => navigate("/painel"), 800);
+        return;
+      }
     }
 
-    // Falha no login
     setMessage("❌ Email/RA ou senha incorretos!");
   };
-  }
+
+  const isSuccess = message.toLowerCase().includes("sucesso");
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2 className="login-title">Bem-vindo!</h2>
+        <h1 className="login-title">Bem-vindo!</h1>
         <p className="login-subtitle">Faça login para continuar</p>
 
-        <form onSubmit={handleLogin} className="login-form">
-          <div className="login-method-toggle">
-            <button type="button" className={`toggle-btn ${loginMethod === 'email' ? 'active' : ''}`} onClick={() => { setLoginMethod('email'); setIdentifier(''); }}>Usar Email</button>
-            <button type="button" className={`toggle-btn ${loginMethod === 'ra' ? 'active' : ''}`} onClick={() => { setLoginMethod('ra'); setIdentifier(''); }}>Usar RA</button>
-          </div>
+        {/* Alternância de método (Email/RA) */}
+        <div className="login-method-toggle">
+          <button
+            type="button"
+            className={`toggle-btn ${loginMethod === "email" ? "active" : ""}`}
+            onClick={() => {
+              setLoginMethod("email");
+              setIdentifier("");
+              setMessage("");
+            }}
+          >
+            Usar Email
+          </button>
+          <button
+            type="button"
+            className={`toggle-btn ${loginMethod === "ra" ? "active" : ""}`}
+            onClick={() => {
+              setLoginMethod("ra");
+              setIdentifier("");
+              setMessage("");
+            }}
+          >
+            Usar RA
+          </button>
+        </div>
 
+        {/* Formulário */}
+        <form onSubmit={handleLogin} className="login-form">
+          {/* Campo Email/RA */}
           <div className="input-group">
-            <label>{loginMethod === 'ra' ? 'RA (Registro do Aluno)' : 'Email'}</label>
+            <label>{loginMethod === "ra" ? "RA (Registro do Aluno)" : "Email"}</label>
             <div className="input-icon">
-              {loginMethod === 'ra' ? (
-                <FaIdCard className="icon" />
-              ) : (
-                <FaUser className="icon" />
-              )}
+              <span className="icon">
+                {loginMethod === "ra" ? <FaIdCard /> : <FaUser />}
+              </span>
               <input
-                type={loginMethod === 'ra' ? "text" : "email"}
-                placeholder={loginMethod === 'ra' ? "Digite seu RA" : "Digite seu email"}
+                type={loginMethod === "ra" ? "text" : "email"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
+                placeholder={loginMethod === "ra" ? "Ex.: 12345" : "voce@exemplo.com"}
                 required
               />
             </div>
           </div>
 
+          {/* Campo Senha */}
           <div className="input-group">
             <label>Senha</label>
             <div className="input-icon">
-              <FaLock className="icon" />
+              <span className="icon"><FaLock /></span>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Digite sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="******"
                 required
               />
               <span
                 className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowPassword((s) => !s)}
+                role="button"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
               </span>
             </div>
           </div>
 
-          <button type="submit" className="login-btn">
-            Entrar
-          </button>
+          {/* Botão Entrar */}
+          <button type="submit" className="login-btn">Entrar</button>
 
+          {/* Mensagem de feedback */}
           {message && (
             <p
               className="login-message"
-              style={{ color: message.includes("sucesso") ? "#2e7d32" : "#e53935" }}
+              style={{ color: isSuccess ? "#2e7d32" : "#e53935" }}
             >
               {message}
             </p>
           )}
-
-          <div className="login-links">
-            <Link to="#">Esqueci minha senha</Link>
-            <Link to="/registrar">Criar conta</Link> {/* ← Agora vai para o registro */}
-          </div>
         </form>
+
+        {/* Links */}
+        <div className="login-links">
+          <Link to="#" onClick={(e) => e.preventDefault()}>Esqueci minha senha</Link>
+          <Link to="/register" onClick={(e) => e.preventDefault()}>Criar conta</Link>
+        </div>
       </div>
     </div>
   );
-} 
+}

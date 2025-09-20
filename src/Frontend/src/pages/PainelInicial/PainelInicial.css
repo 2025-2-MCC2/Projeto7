@@ -95,6 +95,7 @@ body {
   white-space: nowrap;            /* mantém em uma linha */
   transition: background 0.25s ease;
   font-size: 0.95rem;
+  margin-right: 12px;
 }
 .header .tab:hover {
   background: #52b788;
@@ -194,7 +195,8 @@ body {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
+
+  margin-bottom: 24px; }
 .grupos-header {
   display: flex;
   justify-content: space-between;
@@ -692,7 +694,8 @@ h2, h3 {
 
   .grupos-section {
     padding: 12px;
-  }
+  
+  margin-bottom: 24px; }
   .grupo-card {
     padding: 10px;
     font-size: 0.95rem;
@@ -706,4 +709,44 @@ h2, h3 {
     height: 22px;
     font-size: 10px;
   }
+}
+/* Espaçamento entre seções principais */
+.grupos-section,
+.dashboard-container,
+.atividades-lista {
+  margin-bottom: 24px;
+}
+
+/* Perfil na barra horizontal no mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .sidebar > .perfil--sidebar {
+    order: 3; /* aparece depois dos botões */
+    margin-top: 0;
+    border-top: none;
+    border-left: 1px dashed #b7e4c7;
+    padding-left: 8px;
+  }
+
+  .perfil--sidebar .avatar-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+  }
+}
+/* Visibilidade condicional */
+.desktop-only { display: none; }
+.mobile-only { display: flex; }
+
+@media (min-width: 769px) {
+  .desktop-only { display: flex; }
+  .mobile-only { display: none; }
 }

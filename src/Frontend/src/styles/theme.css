@@ -1,0 +1,40 @@
+/* src/styles/theme.css */
+/* Paleta clara (padrão) */
+:root {
+    --bg: #f7f8f9;
+    --text: #333333;
+    --muted: #555555;
+  
+    --card-bg: #ffffff;
+    --border: #dddddd;
+    --shadow: 0 6px 20px rgba(0,0,0,0.12);
+  
+    --primary: #2e7d32;       /* verde principal (igual ao Login) */
+    --primary-hover: #1b5e20; /* hover */
+    --accent: #4caf50;
+  
+    --input-bg: #ffffff;
+  }
+  
+  /* Paleta escura (neutra, sem "gamer") */
+  html[data-theme="escuro"] {
+    --bg: #0f1115;
+    --text: #e6e6e6;
+    --muted: #a8b3b8;
+  
+    --card-bg: #171a1f;
+    --border: #2a2f33;
+    --shadow: 0 8px 28px rgba(0,0,0,0.35);
+  
+    --primary: #4caf50;       /* acento verde mantém identidade */
+    --primary-hover: #2e7d32;
+  
+    --input-bg: #0f1318;
+  }
+  
+  /* Aplicação global */
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+  }
+  
