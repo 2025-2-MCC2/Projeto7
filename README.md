@@ -35,6 +35,13 @@
 ## <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFggf9yNRN9xCYku8XMEkSE0LU9uMhkYbehQ&s" width="20" height="20"/> Link para o site
 <a href="https://projeto-interdisciplinar-webcrawlers.vercel.app/">Link para o site</a>
 
+## login e senha para testar:
+Aluno: 12345 (Login para RA)  senha:123456 <br/>
+Admin/Mentor: admin@test.com senha:123456
+
+
+
+
 ## 🛠 Estrutura de pastas
 
 <pre>
