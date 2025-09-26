@@ -19,8 +19,11 @@
        alt="Lideranças Empáticas" 
        border="5" 
        width="400">
+  <img src="imagens/file_000000007b7c622f81256e4b5fd69975.png" 
+       alt="Lideranças Empáticas" 
+       border="5" 
+       width="400">
 </p>
-
 
 
 <p>
