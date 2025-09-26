@@ -24,9 +24,16 @@
 
 
 <p>
-  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris imperdiet magna eget dolor dignissim molestie ut sit amet risus. Duis euismod arcu at placerat facilisis. Morbi scelerisque feugiat erat ullamcorper vestibulum. Phasellus pharetra nulla id dolor lobortis vulputate. Praesent nec urna magna. Donec sed risus in magna feugiat cursus a in libero. Aliquam eu neque lacus. Proin felis nibh, pulvinar sit amet aliquam ac, mollis sed urna. Mauris vel neque massa. Suspendisse felis dolor, laoreet ut eros a, fringilla fringilla mi. Curabitur tincidunt imperdiet velit, at porttitor risus malesuada quis. Pellentesque varius tellus ac rutrum vestibulum.
+  O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre da FECAP. Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade.
+Mais do que uma ação solidária, o projeto busca formar lideranças com responsabilidade social, desenvolvendo competências socioemocionais e ampliando a consciência cidadã. Para isso, conecta estudantes, mentores e comunidades, criando um espaço para aprendizado prático e troca de experiências.
 
-  Fusce tristique efficitur purus, non maximus metus vestibulum sed. Etiam tincidunt ante tempor erat lobortis, sit amet elementum est pretium. Nam at consectetur leo. Aliquam rutrum laoreet maximus. Quisque dignissim pharetra ultrices. Cras egestas leo id maximus mollis. Proin laoreet aliquam massa, a auctor mauris fermentum at. Nulla bibendum purus leo, vitae eleifend dui ultricies sit amet. Aenean consequat viverra nulla non pellentesque. Mauris fermentum tristique fringilla.
+Nosso projeto oferece uma plataforma completa para organização e acompanhamento das ações solidárias, garantindo transparência e engajamento em todas as etapas. Entre os principais recursos, destacam-se:
+Gestão de doações: acompanhamento detalhado do que está sendo arrecadado, com gráficos e relatórios em tempo real.
+Calendário e cronogramas: controle de datas importantes e prazos para cada grupo.
+Feed colaborativo: espaço para que os alunos publiquem atualizações e fotos das doações recebidas, incentivando a troca de experiências.
+Painel administrativo: visão geral para os administradores monitorarem o progresso de todos os grupos, metas alcançadas e tipos de itens arrecadados.
+Análise de impacto: métricas visuais que mostram o crescimento das iniciativas e ajudam na tomada de decisões.
+Essa estrutura não apenas facilita a gestão das ações, mas também promove engajamento, transparência e aprendizado prático, fortalecendo a colaboração entre alunos e mentores.
 </p>
 
 ## <img src="https://img.icons8.com/?size=100&id=zfHRZ6i1Wg0U&format=png&color=000000" width="20" height="20"/> Protótipo navegável no Figma
