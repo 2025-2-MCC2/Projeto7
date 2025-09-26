@@ -24,7 +24,7 @@
 
 
 <p>
-O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre da (FECAP). Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade.
+O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre da FECAP. Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade.
   
 Nosso projeto consiste no desenvolvimento de uma plataforma digital inovadora que tem como objetivo facilitar a gestão e o acompanhamento do projeto Lideranças Empáticas. A ferramenta foi criada para oferecer uma experiência completa e intuitiva, permitindo que alunos, mentores e administradores organizem ações solidárias de forma eficiente e transparente.
 
