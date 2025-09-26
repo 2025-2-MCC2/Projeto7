@@ -29,10 +29,14 @@ Mais do que uma ação solidária, o projeto busca formar lideranças com respon
 
 Nosso projeto oferece uma plataforma completa para organização e acompanhamento das ações solidárias, garantindo transparência e engajamento em todas as etapas. Entre os principais recursos, destacam-se:
 Gestão de doações: acompanhamento detalhado do que está sendo arrecadado, com gráficos e relatórios em tempo real.
-Calendário e cronogramas: controle de datas importantes e prazos para cada grupo.
-Feed colaborativo: espaço para que os alunos publiquem atualizações e fotos das doações recebidas, incentivando a troca de experiências.
-Painel administrativo: visão geral para os administradores monitorarem o progresso de todos os grupos, metas alcançadas e tipos de itens arrecadados.
-Análise de impacto: métricas visuais que mostram o crescimento das iniciativas e ajudam na tomada de decisões.
+## Calendário e cronogramas: controle de datas importantes e prazos para cada grupo.
+
+## Feed colaborativo: espaço para que os alunos publiquem atualizações e fotos das doações recebidas, incentivando a troca de experiências.
+
+## Painel administrativo: visão geral para os administradores monitorarem o progresso de todos os grupos, metas alcançadas e tipos de itens arrecadados.
+
+## Análise de impacto: métricas visuais que mostram o crescimento das iniciativas e ajudam na tomada de decisões.
+
 Essa estrutura não apenas facilita a gestão das ações, mas também promove engajamento, transparência e aprendizado prático, fortalecendo a colaboração entre alunos e mentores.
 </p>
 
