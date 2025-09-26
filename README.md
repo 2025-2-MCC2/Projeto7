@@ -24,9 +24,14 @@
 
 
 <p>
-O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre da (FECAP). Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade. Mais do que uma ação solidária, o projeto busca formar lideranças com responsabilidade social, desenvolvendo competências socioemocionais e ampliando a consciência cidadã.
+O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre da (FECAP). Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade.
+  
+Nosso projeto consiste no desenvolvimento de uma plataforma digital inovadora que tem como objetivo facilitar a gestão e o acompanhamento do projeto Lideranças Empáticas. A ferramenta foi criada para oferecer uma experiência completa e intuitiva, permitindo que alunos, mentores e administradores organizem ações solidárias de forma eficiente e transparente.
 
-Para tornar essa experiência ainda mais eficiente e colaborativa, nosso projeto conta com uma plataforma que possibilita e facilita o acompanhamento das doações, organização das ações e análise de impacto em tempo real. Entre suas funcionalidades, estão o monitoramento detalhado do que está sendo arrecadado por meio de gráficos e relatórios, controle de datas e cronogramas, além de um espaço interativo onde os alunos podem compartilhar atualizações e fotos das doações recebidas. A plataforma também oferece um painel administrativo que permite os administradores visualizarem o crescimento de todos os grupos, acompanhar o cumprimento das metas e analisar quais itens estão sendo doados, garantindo transparência e engajamento em todas as etapas.
+Entre suas principais funcionalidades, a plataforma possibilita o acompanhamento detalhado das doações, com gráficos e relatórios que mostram em tempo real o que está sendo arrecadado. Também oferece controle de datas e cronogramas, garantindo que os grupos cumpram seus prazos e metas. Além disso, conta com um espaço interativo para que os alunos publiquem atualizações e fotos das doações recebidas, promovendo engajamento e troca de experiências.
+
+Para os administradores, a plataforma disponibiliza um painel completo que permite visualizar o crescimento de todos os grupos, monitorar o cumprimento das metas e analisar os tipos de itens arrecadados. Essa estrutura garante transparência, incentiva a colaboração e fortalece a conexão entre teoria e prática, contribuindo para a formação de líderes engajados e socialmente responsáveis.
+
 </p>
 
 ## <img src="https://img.icons8.com/?size=100&id=zfHRZ6i1Wg0U&format=png&color=000000" width="20" height="20"/> Protótipo navegável no Figma
