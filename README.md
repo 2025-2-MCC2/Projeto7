@@ -24,21 +24,9 @@
 
 
 <p>
-  O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre da FECAP. Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade.
-Mais do que uma ação solidária, o projeto busca formar lideranças com responsabilidade social, desenvolvendo competências socioemocionais e ampliando a consciência cidadã. Para isso, conecta estudantes, mentores e comunidades, criando um espaço para aprendizado prático e troca de experiências.
+O Projeto Lideranças Empáticas é uma iniciativa coordenada pelo professor Jésus Gomes e idealizada por alunos do 1º semestre dos cursos de Ciências Econômicas, Ciências Contábeis e Administração da Fundação Escola de Comércio Álvares Penteado (FECAP). Seu objetivo principal é arrecadar alimentos para doação a pessoas em situação de vulnerabilidade social, promovendo solidariedade, engajamento e impacto positivo na comunidade. Mais do que uma ação solidária, o projeto busca formar lideranças com responsabilidade social, desenvolvendo competências socioemocionais e ampliando a consciência cidadã.
 
-Nosso projeto oferece uma plataforma completa para organização e acompanhamento das ações solidárias, garantindo transparência e engajamento em todas as etapas. Entre os principais recursos, destacam-se:
-Gestão de doações: acompanhamento detalhado do que está sendo arrecadado, com gráficos e relatórios em tempo real.
- 
- Calendário e cronogramas: controle de datas importantes e prazos para cada grupo.
-
- Feed colaborativo: espaço para que os alunos publiquem atualizações e fotos das doações recebidas, incentivando a troca de experiências.
-
- Painel administrativo: visão geral para os administradores monitorarem o progresso de todos os grupos, metas alcançadas e tipos de itens arrecadados.
-
- Análise de impacto: métricas visuais que mostram o crescimento das iniciativas e ajudam na tomada de decisões.
-
-Essa estrutura não apenas facilita a gestão das ações, mas também promove engajamento, transparência e aprendizado prático, fortalecendo a colaboração entre alunos e mentores.
+Para tornar essa experiência ainda mais eficiente e colaborativa, o projeto conta com uma plataforma que possibilita e facilita o acompanhamento das doações, organização das ações e análise de impacto em tempo real. Entre suas funcionalidades, estão o monitoramento detalhado do que está sendo arrecadado por meio de gráficos e relatórios, controle de datas e cronogramas, além de um espaço interativo onde os alunos podem compartilhar atualizações e fotos das doações recebidas. A plataforma também oferece um painel administrativo que permite visualizar o crescimento de todos os grupos, acompanhar o cumprimento das metas e analisar quais itens estão sendo doados, garantindo transparência e engajamento em todas as etapas. Dessa forma, o Lideranças Empáticas não apenas promove a solidariedade, mas também incentiva a construção de soluções colaborativas, aproximando teoria e prática e preparando líderes capazes de transformar realidades de forma ética e sustentável.
 </p>
 
 ## <img src="https://img.icons8.com/?size=100&id=zfHRZ6i1Wg0U&format=png&color=000000" width="20" height="20"/> Protótipo navegável no Figma
