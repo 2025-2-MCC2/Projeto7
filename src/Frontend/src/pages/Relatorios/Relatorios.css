@@ -1,0 +1,212 @@
+/* ===========================================
+   Relatorios.css — alinhado ao PainelInicial
+   =========================================== */
+
+/* Paleta equivalente à do PainelInicial.css */
+:root {
+  --pi-bg: #f0fdf4;         /* fundo app */
+  --pi-ink: #1b4332;        /* texto primário */
+  --pi-muted: #0b3d2c;      /* texto secundário */
+  --pi-primary: #1b4332;    /* ação primária */
+  --pi-accent: #2d6a4f;     /* hover/acentos */
+  --pi-accent2: #40916c;    /* hover claro */
+  --pi-panel: #d8f3dc;      /* bloco/seção */
+  --pi-card: #95d5b2;       /* card */
+  --pi-border: #b7e4c7;     /* divisórias/bordas */
+  --pi-danger: #d90429;     /* erro/remoção */
+  --pi-info-bg: #eef6ff;
+  --pi-info-ink: #0b57d0;
+}
+
+/* ===== Escopo geral da página de Relatórios ===== */
+.relatorios-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  color: var(--pi-ink);
+  /* Tipografia: herdada do Painel (Arial/sans) */
+  font-family: inherit;
+  background: transparent;
+}
+
+/* Cabeçalho da página /relatorios */
+.relatorios-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.relatorios-header h2 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--pi-ink);
+}
+.btn-back {
+  background: transparent;
+  color: var(--pi-ink);
+  border: 1px solid var(--pi-border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-back:hover { background: #e6f7eb; }
+
+/* ===== Contêiner principal das seções (aluno/mentor) ===== */
+.view-container {
+  background: var(--pi-panel);
+  border: 1px solid var(--pi-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+/* Subtítulo + indicador de status do mês */
+.subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.status-pill { display: inline-flex; align-items: center; gap: 8px; }
+
+/* ===== Linhas e grades utilitárias ===== */
+.row {
+  display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap;
+}
+.grid { display: grid; gap: 12px; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+/* ===== Inputs (harmonizados com o Painel) =====
+   Obs.: PainelInicial.css já define .input; aqui
+   estilizamos inputs puros usados no Relatorios.jsx */
+.view-container input[type="text"],
+.view-container input[type="number"],
+.view-container textarea,
+.view-container select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--pi-border);
+  background: #fff;
+  color: var(--pi-ink);
+  outline: none;
+}
+.view-container textarea { resize: vertical; }
+.view-container input:focus,
+.view-container textarea:focus,
+.view-container select:focus,
+.btn-primary:focus, .btn-secondary:focus, .btn-ghost:focus, .btn-tertiary:focus, .btn-back:focus {
+  outline: 2px solid var(--pi-primary);
+  outline-offset: 2px;
+}
+
+/* Placeholder/hint */
+.hint { color: var(--pi-muted); font-size: 12px; }
+
+/* ===== Botões (seguem a paleta do Painel) =====
+   Observação: o Painel já tem .btn, .btn-primary e .btn-ghost.
+   Aqui só garantimos consistência e cobrimos .btn-secondary/tertiary.
+*/
+.btn-primary {
+  background: var(--pi-primary); color: #fff;
+  border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer;
+}
+.btn-primary:hover { background: var(--pi-accent); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary {
+  background: #ffffff; color: var(--pi-ink);
+  border: 1px solid var(--pi-border); padding: 10px 14px; border-radius: 6px; cursor: pointer;
+}
+.btn-secondary:hover { background: #f4fbf6; }
+
+.btn-tertiary {
+  background: transparent; color: var(--pi-ink);
+  border: 1px dashed var(--pi-border); padding: 8px 12px; border-radius: 6px; cursor: pointer;
+}
+.btn-tertiary:hover { background: #e6f7eb; }
+
+.btn-ghost {
+  background: transparent; color: var(--pi-ink);
+  border: 1px solid var(--pi-border); padding: 8px 12px; border-radius: 6px; cursor: pointer;
+}
+.btn-ghost:hover { background: #e6f7eb; }
+
+.actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ===== Mensagens ===== */
+.msg { margin-top: 10px; padding: 10px 12px; border-radius: 8px; }
+.msg.error   { background: #ffecec; color: var(--pi-danger); }
+.msg.success { background: #e9fbef; color: #1e7a46; }
+.msg.warning { background: #fff7e6; color: #8a5a00; }
+.msg.info    { background: var(--pi-info-bg); color: var(--pi-info-ink); }
+
+/* ===== Chips/badges ===== */
+.pill {
+  display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px;
+  background: #b7e4c7; color: var(--pi-ink);
+}
+.pill.success { background: #e9fbef; color: #1e7a46; }
+.pill.warning { background: #fff7e6; color: #8a5a00; }
+
+/* Chip de status (usado em cartões de relatório) */
+.status-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 9999px;
+  background: #b7e4c7; border: 1px solid var(--pi-border);
+  color: var(--pi-ink); font-size: 12px;
+}
+.status-chip.enviado  { background: #e8f2ff; color: #0b57d0; border-color: #cfe2ff; }
+.status-chip.aprovado { background: #e9fbef; color: #1e7a46; border-color: #cbeed9; }
+.status-chip.ajustes  { background: #fff7e6; color: #8a5a00; border-color: #ffe4b3; }
+.status-chip.rascunho { background: #eef2f3; color: #344;   border-color: #d9e1e5; }
+
+/* ===== Cards e listas ===== */
+.report-view, .report-card {
+  background: var(--pi-card);
+  border: 1px solid var(--pi-border);
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+.report-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;
+}
+.report-meta {
+  display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px; color: var(--pi-muted); margin-bottom: 6px;
+}
+
+/* Box de feedback do mentor */
+.feedback-box {
+  border-left: 4px solid var(--pi-primary);
+  background: #e6f7eb;
+  padding: 10px; border-radius: 8px; margin-top: 10px;
+}
+
+/* ===== Filtros (mentor) ===== */
+.filters {
+  display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 12px;
+}
+.filter-block { display: flex; gap: 6px; align-items: end; }
+.filter-block label { display: flex; flex-direction: column; gap: 6px; color: var(--pi-muted); }
+.filter-block span  { color: var(--pi-muted); }
+
+/* ===== Grid de cards-resumo (mentor) ===== */
+.cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* ===== Acessibilidade ===== */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+
+/* ===== Responsividade (coerente com o Painel) ===== */
+@media (max-width: 768px) {
+  .relatorios-container { padding: 12px; }
+  .grid-2 { grid-template-columns: 1fr; }
+}

@@ -20,6 +20,7 @@ import Dashboard from "./components/Dashboard.jsx";
 import RegisterPage from './pages/RegisterPage/Registerpage.jsx'; // mantém minúsculo
 import Grupos from './pages/Grupos/Grupos.jsx';
 import PerfilPage from './pages/Perfil/PerfilPage.jsx'; // <-- ADICIONADO
+import Relatorios from './pages/Relatorios/Relatorios.jsx';
 
 import img1 from './assets/img1.jpg';
 import img2 from './assets/img2.jpg';
@@ -117,6 +118,14 @@ export default function App() {
           element={
             <RequireAuth>
               <PerfilPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/relatorios"
+          element={
+            <RequireAuth>
+              <Relatorios />
             </RequireAuth>
           }
         />

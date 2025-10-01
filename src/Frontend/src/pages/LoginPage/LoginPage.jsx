@@ -63,26 +63,26 @@ export default function LoginPage() {
         return;
       }
 
-      // ALUNO por e-mail (exemplo)
-      if (identifier === "aluno@test.com" && password === "123456") {
-        setMessage("✅ Login realizado com sucesso! (aluno)");
-        localStorage.setItem("auth", "true");
-        localStorage.setItem(
-          "perfil",
-          JSON.stringify({
-            id: Date.now(),
-            tipo: "aluno",
-            nome: "Aluno Teste",
-            email: identifier, // opcional
-            ra: "12345",       // obrigatório (mock)
-            telefone: "",
-            fotoUrl: "",
-            preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
-          })
-        );
-        setTimeout(() => navigate("/painel"), 800);
-        return;
-      }
+    //   // ALUNO por e-mail (exemplo)
+    //   if (identifier === "aluno@test.com" && password === "123456") {
+    //     setMessage("✅ Login realizado com sucesso! (aluno)");
+    //     localStorage.setItem("auth", "true");
+    //     localStorage.setItem(
+    //       "perfil",
+    //       JSON.stringify({
+    //         id: Date.now(),
+    //         tipo: "aluno",
+    //         nome: "Aluno Teste",
+    //         email: identifier, // opcional
+    //         ra: "12345",       // obrigatório (mock)
+    //         telefone: "",
+    //         fotoUrl: "",
+    //         preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
+    //       })
+    //     );
+    //     setTimeout(() => navigate("/painel"), 800);
+    //     return;
+    //   }
     }
 
     // ALUNO por RA
@@ -100,7 +100,7 @@ export default function LoginPage() {
             ra: identifier,     // obrigatório
             telefone: "",       // opcional
             fotoUrl: "",
-            preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
+            preferencias: { tema: "claro", linguagem: "pt-BR", notificacoesEmail: true },
           })
         );
         setTimeout(() => navigate("/painel"), 800);
@@ -130,7 +130,7 @@ export default function LoginPage() {
               setMessage("");
             }}
           >
-            Usar Email
+            Mentor
           </button>
           <button
             type="button"
@@ -141,7 +141,7 @@ export default function LoginPage() {
               setMessage("");
             }}
           >
-            Usar RA
+            Aluno
           </button>
         </div>
 
@@ -158,7 +158,7 @@ export default function LoginPage() {
                 type={loginMethod === "ra" ? "text" : "email"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder={loginMethod === "ra" ? "Ex.: 12345" : "voce@exemplo.com"}
+                placeholder={loginMethod === "ra" ? "Ex.: 12345" : "mentor@exemplo.com"}
                 required
               />
             </div>
