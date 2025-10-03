@@ -21,6 +21,7 @@ import RegisterPage from './pages/RegisterPage/Registerpage.jsx'; // mantém min
 import Grupos from './pages/Grupos/Grupos.jsx';
 import PerfilPage from './pages/Perfil/PerfilPage.jsx'; // <-- ADICIONADO
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
+import AtividadesGrupo from "./pages/Grupos/AtividadesGrupo";
 
 import img1 from './assets/img1.jpg';
 import img2 from './assets/img2.jpg';
@@ -129,6 +130,7 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route path="/grupos/atividade/:id" element={<AtividadesGrupo />} />
         {/* (Opcional) Se quiser expor Dashboard avulso: */}
         {/* <Route
           path="/dashboard"
@@ -138,10 +140,11 @@ export default function App() {
             </RequireAuth>
           }
         /> */}
-
+      
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      
     </Router>
   );
 }

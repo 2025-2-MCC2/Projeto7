@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom";
 import "./PainelInicial.css";
 import Dashboard from "../../components/Dashboard";
-
 /* ============================================================================
  * Helpers de storage e utils gerais
  * ==========================================================================*/
@@ -27,7 +26,6 @@ const getInitials = (name = "Usuário") => {
   const ini = `${first}${last}`.trim().toUpperCase();
   return ini || "U";
 };
-
 /* ============================================================================
  * Constantes/Helpers específicos de RELATÓRIOS (mapeando Relatorios.jsx)
  * - Mantém as MESMAS chaves e regras para 100% de compatibilidade
@@ -38,16 +36,15 @@ const REL_STATUS = {
   APROVADO: "aprovado",
   AJUSTES: "ajustes",
 };
-const REL_SETTINGS_KEY = "relatorios_prefs";  // (equivalente a SETTINGS_KEY)
-const REL_REPORTS_KEY = "relatorios";         // (equivalente a REPORTS_KEY)
-const REL_DRAFT_KEY = "relatorios_drafts";    // (equivalente a DRAFT_KEY)
+const REL_SETTINGS_KEY = "relatorios_prefs";
+const REL_REPORTS_KEY = "relatorios";
+const REL_DRAFT_KEY = "relatorios_drafts";
 const REL_DEFAULT_SETTINGS = {
-  deadlineDay: 5,  // último dia para editar o mês anterior
+  deadlineDay: 5,
   remindersOn: false,
 };
 const getMonthKey = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
 const toISO = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
-
 /** Regra de edição (mesma de Relatorios.jsx):
  * - Permitido até o dia `deadlineDay` do mês seguinte ao `report.month` (YYYY-MM).
  * - Sempre permitido se status = AJUSTES.
@@ -61,27 +58,21 @@ const isEditableRel = (report, now = new Date(), deadlineDay = REL_DEFAULT_SETTI
   const lock = new Date(yy, (mm - 1) + 1, deadlineDay + 1, 0, 0, 0); // até o dia seguinte 00:00
   return now < lock;
 };
-
 /* ============================================================================
  * Componente principal
  * ==========================================================================*/
 export default function PainelInicial() {
   const navigate = useNavigate();
-
-  /* -------------------------------------------
-   * Estado principal de navegação/usuário
-   * -----------------------------------------*/
+  /* --------------------- Estado principal de navegação/usuário --------------------- */
   const [secaoAtiva, setSecaoAtiva] = useState("grupos");
   const [perfil, setPerfil] = useState(() =>
     load("perfil", { nome: "Usuário", fotoUrl: "", tipo: "mentor", ra: "12345" })
   );
   useEffect(() => save("perfil", perfil), [perfil]);
-
   // Título da página
   useEffect(() => {
     document.title = "Lideranças Empáticas • Painel";
   }, []);
-
   // Sincroniza o perfil se alterado em outra aba/guia
   useEffect(() => {
     const onStorage = (e) => {
@@ -92,16 +83,14 @@ export default function PainelInicial() {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
-
-  /* -------------------------------------------
-   * DADOS: Grupos, Eventos, Atividades (originais)
-   * -----------------------------------------*/
+  /* --------------------- DADOS: Grupos, Eventos, Atividades (originais) --------------------- */
   const [grupos, setGrupos] = useState(() =>
     load("grupos", [
       {
         id: 1,
         nome: "Campanha de Natal 2025",
         mentor: "Mentor Admin",
+        // mentorFotoUrl: "https://exemplo.com/avatar.jpg",
         metaArrecadacao: 5000,
         metaAlimentos: "500 cestas básicas",
         progressoArrecadacao: 1937,
@@ -132,6 +121,8 @@ export default function PainelInicial() {
       },
     ])
   );
+  // Mesmo que a Atividades tenha sido movida para Grupos, mantemos o estado
+  // aqui para não quebrar o histórico do arquivo e manter o tamanho:
   const [atividades, setAtividades] = useState(() =>
     load("atividades", [
       { id: 1, titulo: "Configurar ambiente de desenvolvimento", descricao: "Instalar Node, VSCode, etc.", concluida: true },
@@ -141,7 +132,6 @@ export default function PainelInicial() {
   useEffect(() => save("grupos", grupos), [grupos]);
   useEffect(() => save("eventos", eventos), [eventos]);
   useEffect(() => save("atividades", atividades), [atividades]);
-
   // Visibilidade de grupos de acordo com perfil (aluno vê só os seus)
   const gruposVisiveis = useMemo(() => {
     if (perfil.tipo === "aluno") {
@@ -149,7 +139,6 @@ export default function PainelInicial() {
     }
     return grupos;
   }, [grupos, perfil]);
-
   // Seleção para Dashboard
   const [grupoSelecionadoId, setGrupoSelecionadoId] = useState(gruposVisiveis[0]?.id ?? null);
   useEffect(() => {
@@ -157,10 +146,7 @@ export default function PainelInicial() {
       setGrupoSelecionadoId(gruposVisiveis[0]?.id ?? null);
     }
   }, [gruposVisiveis, grupoSelecionadoId]);
-
-  /* -------------------------------------------
-   * Eventos/Agenda/Atividades (originais)
-   * -----------------------------------------*/
+  /* --------------------- Eventos/Agenda/Atividades (originais) --------------------- */
   const [abrirModalEvento, setAbrirModalEvento] = useState(false);
   const [formEvento, setFormEvento] = useState({ titulo: "", data: "", hora: "", grupoId: "", descricao: "" });
   const [errosEvento, setErrosEvento] = useState({});
@@ -169,7 +155,6 @@ export default function PainelInicial() {
   const [errosAtividade, setErrosAtividade] = useState({});
   const [filtroGrupoId, setFiltroGrupoId] = useState("");
   const [filtroData, setFiltroData] = useState("");
-
   const eventosOrdenadosFiltrados = useMemo(() => {
     const filtered = eventos.filter((e) => {
       const byGroup = filtroGrupoId ? String(e.grupoId) === String(filtroGrupoId) : true;
@@ -181,7 +166,6 @@ export default function PainelInicial() {
         new Date(`${a.data}T${a.hora || "00:00"}`) - new Date(`${b.data}T${b.hora || "00:00"}`)
     );
   }, [eventos, filtroGrupoId, filtroData]);
-
   const validarEvento = () => {
     const errs = {};
     if (!formEvento.titulo || formEvento.titulo.trim().length < 3)
@@ -198,7 +182,6 @@ export default function PainelInicial() {
     setErrosAtividade(errs);
     return Object.keys(errs).length === 0;
   };
-
   const removerGrupo = (id) => {
     if (window.confirm("Tem certeza que deseja excluir este grupo?")) {
       setGrupos((prev) => prev.filter((g) => g.id !== id));
@@ -243,10 +226,7 @@ export default function PainelInicial() {
     setAtividades((prev) =>
       prev.map((ativ) => (ativ.id === id ? { ...ativ, concluida: !ativ.concluida } : ativ))
     );
-
-  /* -------------------------------------------
-   * Calendário (originais)
-   * -----------------------------------------*/
+  /* --------------------- Calendário (originais) --------------------- */
   const [calDate, setCalDate] = useState(() => new Date());
   const year = calDate.getFullYear();
   const month = calDate.getMonth();
@@ -276,10 +256,7 @@ export default function PainelInicial() {
     const selected = `${year}-${pad2(month + 1)}-${pad2(dayNum)}`;
     setFiltroData((prev) => (prev === selected ? "" : selected));
   };
-
-  /* -------------------------------------------
-   * Perfil / menu avatar (originais)
-   * -----------------------------------------*/
+  /* --------------------- Perfil / menu avatar (originais) --------------------- */
   const [openProfileMenu, setOpenProfileMenu] = useState(false);
   const profileRef = useRef(null);
   useEffect(() => {
@@ -296,16 +273,12 @@ export default function PainelInicial() {
     setOpenProfileMenu(false);
     navigate("/");
   };
-
   const grupoParaDashboard = useMemo(() => {
     return gruposVisiveis.find((g) => g.id === Number(grupoSelecionadoId));
   }, [gruposVisiveis, grupoSelecionadoId]);
-
   /* ============================================================================
    * >>> RELATÓRIOS dentro do Painel (com a mesma lógica do Relatorios.jsx) <<<
    * ==========================================================================*/
-
-  // Mapeia o "currentUser" a partir do perfil/grupos (papel, RA, grupos do mentor)
   const currentUserRel = useMemo(() => {
     const role =
       (perfil.tipo === "mentor" || perfil.tipo === "professor") ? "mentor" : "aluno";
@@ -319,8 +292,6 @@ export default function PainelInicial() {
       assignedGroups,
     };
   }, [perfil, grupos]);
-
-  // Preferimos "grupos" reais; para visibilidade no módulo de relatórios:
   const relGruposVisiveis = useMemo(() => {
     if (currentUserRel.role === "aluno") {
       return grupos.filter((g) => g.membros?.some((m) => m.ra === currentUserRel.ra));
@@ -328,24 +299,20 @@ export default function PainelInicial() {
     if (currentUserRel.role === "mentor") {
       const setNames = new Set((currentUserRel.assignedGroups ?? []).map((n) => n.toLowerCase()));
       const vis = grupos.filter((g) => setNames.has(g.nome.toLowerCase()));
-      return vis.length ? vis : grupos; // fallback útil
+      return vis.length ? vis : grupos;
     }
     return grupos;
   }, [grupos, currentUserRel]);
-
-  // Persistência dos relatórios, drafts e settings (mesmas chaves)
   const [relSettings, setRelSettings] = useState(() =>
     load(REL_SETTINGS_KEY, REL_DEFAULT_SETTINGS)
   );
   const [relReports, setRelReports] = useState(() =>
-    load(REL_REPORTS_KEY, []) // se quiser mock inicial, troque [] por seu mock
+    load(REL_REPORTS_KEY, [])
   );
   const [relDrafts, setRelDrafts] = useState(() => load(REL_DRAFT_KEY, {}));
   useEffect(() => save(REL_SETTINGS_KEY, relSettings), [relSettings]);
   useEffect(() => save(REL_REPORTS_KEY, relReports), [relReports]);
   useEffect(() => save(REL_DRAFT_KEY, relDrafts), [relDrafts]);
-
-  // Sincroniza quando /relatorios (ou outra aba) atualizar os dados
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === REL_REPORTS_KEY) setRelReports(load(REL_REPORTS_KEY, []));
@@ -355,8 +322,6 @@ export default function PainelInicial() {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
-
-  // Mensagens + acessibilidade (foco gerenciado)
   const [relErrorMsg, setRelErrorMsg] = useState("");
   const [relSuccessMsg, setRelSuccessMsg] = useState("");
   const relErrorRef = useRef(null);
@@ -364,15 +329,12 @@ export default function PainelInicial() {
   const resetRelMessages = () => { setRelErrorMsg(""); setRelSuccessMsg(""); };
   useEffect(() => { if (relErrorMsg && relErrorRef.current) relErrorRef.current.focus(); }, [relErrorMsg]);
   useEffect(() => { if (relSuccessMsg && relSuccessRef.current) relSuccessRef.current.focus(); }, [relSuccessMsg]);
-
-  // Seleção de grupo e data (dia/mês/ano) para o formulário do aluno
   const now = new Date();
   const [relSelectedGroupId, setRelSelectedGroupId] = useState(null);
   useEffect(() => {
     if (relGruposVisiveis.length > 0) setRelSelectedGroupId(relGruposVisiveis[0].id);
     else setRelSelectedGroupId(null);
   }, [relGruposVisiveis]);
-
   const [relSelDay, setRelSelDay] = useState(now.getDate());
   const [relSelMonth, setRelSelMonth] = useState(now.getMonth() + 1);
   const [relSelYear, setRelSelYear] = useState(now.getFullYear());
@@ -384,8 +346,6 @@ export default function PainelInicial() {
     () => getMonthKey(relSelectedDate),
     [relSelectedDate]
   );
-
-  // Campos do formulário do aluno
   const [relEditingReport, setRelEditingReport] = useState(null);
   const [relNewReportContent, setRelNewReportContent] = useState("");
   const [relValorArrecadado, setRelValorArrecadado] = useState("");
@@ -396,14 +356,10 @@ export default function PainelInicial() {
   const [relStatusAtual, setRelStatusAtual] = useState(REL_STATUS.RASCUNHO);
   const relContentRef = useRef(null);
   useEffect(() => { if (relContentRef.current) relContentRef.current.focus(); }, [relSelectedGroupId]);
-
-  // Rascunho: chave por aluno+grupo+mês
   const relDraftKey = useMemo(() => {
     if (!relSelectedGroupId) return "";
     return `${currentUserRel.ra || currentUserRel.name}::${relSelectedGroupId}::${relSelectedMonthKey}`;
   }, [currentUserRel, relSelectedGroupId, relSelectedMonthKey]);
-
-  // Carregar rascunho salvo ao trocar grupo ou mês
   useEffect(() => {
     if (!relDraftKey) return;
     const d = relDrafts[relDraftKey];
@@ -429,8 +385,6 @@ export default function PainelInicial() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [relDraftKey]);
-
-  // Auto-salvar rascunho (1s após digitar)
   useEffect(() => {
     if (!relDraftKey) return;
     const t = setTimeout(() => {
@@ -454,8 +408,6 @@ export default function PainelInicial() {
     relNewReportContent, relValorArrecadado, relKgAlimentos, relQtdCestas, relParceiros, relLocalAtividade, relStatusAtual,
     relSelDay, relSelMonth, relSelYear
   ]);
-
-  // Report do mês selecionado do aluno (se existir)
   const relMyMonthReport = useMemo(() => {
     if (currentUserRel.role !== "aluno" || !relSelectedGroupId) return null;
     return (
@@ -467,13 +419,10 @@ export default function PainelInicial() {
       ) || null
     );
   }, [relReports, relSelectedGroupId, relSelectedMonthKey, currentUserRel]);
-
   const relPodeEditar = useMemo(
     () => isEditableRel(relMyMonthReport || relEditingReport, new Date(), relSettings.deadlineDay),
     [relMyMonthReport, relEditingReport, relSettings.deadlineDay]
   );
-
-  // Atalho Ctrl/Cmd+S para salvar (quando aluno)
   useEffect(() => {
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -489,12 +438,9 @@ export default function PainelInicial() {
     relValorArrecadado, relKgAlimentos, relQtdCestas, relParceiros, relLocalAtividade,
     relSelDay, relSelMonth, relSelYear, currentUserRel.role
   ]);
-
   const setRelError = (msg) => { setRelSuccessMsg(""); setRelErrorMsg(msg); };
   const setRelSuccess = (msg) => { setRelErrorMsg(""); setRelSuccessMsg(msg); };
   const relFindGroupById = (id) => grupos.find((g) => g.id === id);
-
-  // Criar/atualizar relatório (Aluno)
   const handleRelCreateOrUpdate = useCallback(() => {
     resetRelMessages();
     if (currentUserRel.role !== "aluno") {
@@ -520,8 +466,6 @@ export default function PainelInicial() {
     }
     const dateISO = toISO(y, m, d);
     const monthKey = `${y}-${pad2(m)}`;
-
-    // EDITAR
     if (relEditingReport) {
       if (relEditingReport.authorRA !== currentUserRel.ra) {
         return setRelError("Você só pode editar o seu próprio relatório.");
@@ -541,7 +485,7 @@ export default function PainelInicial() {
                 .map((s) => s.trim())
                 .filter(Boolean),
               localAtividade: relLocalAtividade.trim(),
-              status: REL_STATUS.ENVIADO, // ao atualizar, volta para ENVIADO
+              status: REL_STATUS.ENVIADO,
               versions: [...(relEditingReport.versions || []), { at: Date.now(), content: relNewReportContent.trim() }],
             }
           : r
@@ -549,8 +493,6 @@ export default function PainelInicial() {
       setRelReports(updated);
       setRelEditingReport(null);
       setRelSuccess("Relatório atualizado com sucesso.");
-
-      // Limpa rascunho desta chave
       if (relDraftKey) {
         setRelDrafts((prev) => {
           const copy = { ...prev };
@@ -560,8 +502,6 @@ export default function PainelInicial() {
       }
       return;
     }
-
-    // CRIAR (um por aluno+grupo+mês)
     const exist = relReports.some(
       (r) =>
         r.groupId === relSelectedGroupId &&
@@ -591,8 +531,6 @@ export default function PainelInicial() {
     };
     setRelReports((prev) => [...prev, newReport]);
     setRelSuccess("Relatório criado com sucesso.");
-
-    // Limpa rascunho desta chave
     if (relDraftKey) {
       setRelDrafts((prev) => {
         const copy = { ...prev };
@@ -605,7 +543,6 @@ export default function PainelInicial() {
     relQtdCestas, relParceiros, relLocalAtividade, relPodeEditar, relSelYear, relSelMonth, relSelDay,
     relEditingReport, relReports, relDraftKey
   ]);
-
   const handleRelEdit = (report) => {
     resetRelMessages();
     if (currentUserRel.role !== "aluno") return setRelError("Somente alunos podem editar.");
@@ -626,29 +563,25 @@ export default function PainelInicial() {
     setRelStatusAtual(report.status || REL_STATUS.RASCUNHO);
     if (relContentRef.current) relContentRef.current.focus();
   };
-
   const handleRelCancelEdit = () => {
     setRelEditingReport(null);
     setRelSuccess("Edição cancelada.");
   };
-
-  /* ---- View: Mentor (filtros) ---- */
   const [relFilters, setRelFilters] = useState({
     from: { d: "", m: "", y: "" },
-    to:   { d: "", m: "", y: "" },
+    to: { d: "", m: "", y: "" },
     groupId: "",
     status: "",
     author: "",
   });
   const applyRelFilters = (list) => {
     let res = [...list];
-    // período (de/até)
     const { from, to } = relFilters;
     const fromISO = (from.d && from.m && from.y) ? toISO(from.y, from.m, from.d) : null;
     const toISOv = (to.d && to.m && to.y) ? toISO(to.y, to.m, to.d) : null;
     res = res.filter((r) => {
       if (fromISO && r.dateISO < fromISO) return false;
-      if (toISOv && r.dateISO > toISOv)   return false;
+      if (toISOv && r.dateISO > toISOv) return false;
       return true;
     });
     if (relFilters.groupId) {
@@ -661,11 +594,9 @@ export default function PainelInicial() {
       const q = relFilters.author.toLowerCase();
       res = res.filter((r) => r.authorName.toLowerCase().includes(q));
     }
-    // ordena por data decrescente
     res.sort((a, b) => (a.dateISO < b.dateISO ? 1 : a.dateISO > b.dateISO ? -1 : 0));
     return res;
   };
-
   /* ============================================================================
    * Render
    * ==========================================================================*/
@@ -677,7 +608,6 @@ export default function PainelInicial() {
         <button onClick={() => setSecaoAtiva("relatorio")}>Relatório</button>
         <button onClick={() => setSecaoAtiva("agenda")}>Agenda</button>
       </aside>
-
       <main className="main-content">
         {/* Header */}
         <header className="header">
@@ -694,14 +624,14 @@ export default function PainelInicial() {
             >
               Dashboard
             </button>
-            <button
+            {/* [REMOVIDO] A aba Atividades foi migrada para a página Grupos */}
+            {/* <button
               className={`tab ${secaoAtiva === "atividades" ? "active" : ""}`}
               onClick={() => setSecaoAtiva("atividades")}
             >
               Atividades
-            </button>
+            </button> */}
           </div>
-
           <div className="perfil" ref={profileRef}>
             <button
               className="avatar-button"
@@ -743,7 +673,6 @@ export default function PainelInicial() {
             )}
           </div>
         </header>
-
         {/* Seção: GRUPOS */}
         {secaoAtiva === "grupos" && (
           <section className="grupos-section">
@@ -753,18 +682,57 @@ export default function PainelInicial() {
                 <button className="criar-grupo" onClick={() => navigate('/grupos')}>+ Criar Grupo</button>
               )}
             </div>
-
             {gruposVisiveis.length === 0 && <p>Nenhum grupo para exibir.</p>}
-
             {gruposVisiveis.map((g) => (
-              <div key={g.id} className="grupo-card">
+              <div
+                key={g.id}
+                className="grupo-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/grupos/atividade/${g.id}`)}
+                onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/grupos/atividade/${g.id}`); }}
+              >
+                {/* Cabeçalho (título) */}
                 <div className="grupo-card__top">
                   <h3>{g.nome}</h3>
-                  <button className="btn btn-danger" onClick={() => removerGrupo(g.id)} title="Excluir grupo">
-                    Excluir
-                  </button>
                 </div>
 
+                {/* Mentor com foto (ou iniciais) */}
+                {g.mentor && (
+                  <div
+                    className="grupo-card__mentor"
+                    style={{ display: "flex", alignItems: "center", gap: 8, margin: "6px 0 4px" }}
+                  >
+                    {g.mentorFotoUrl ? (
+                      <img
+                        className="avatar small"
+                        src={g.mentorFotoUrl}
+                        alt={`Mentor ${g.mentor}`}
+                        style={{ width: 28, height: 28, borderRadius: "50%" }}
+                      />
+                    ) : (
+                      <span
+                        className="avatar small avatar-initials"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "#d8f3dc",
+                          color: "#1b4332",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {getInitials(g.mentor)}
+                      </span>
+                    )}
+                    <span>Mentor: {g.mentor}</span>
+                  </div>
+                )}
+
+                {/* Metas e progresso */}
                 <p>
                   Meta: R$ {g.metaArrecadacao?.toFixed(2) ?? "0.00"} · Arrecadado: R$ {g.progressoArrecadacao?.toFixed(2) ?? "0.00"}
                 </p>
@@ -772,17 +740,40 @@ export default function PainelInicial() {
                   <div
                     className="progress"
                     style={{
-                      width: `${Math.min(((g.progressoArrecadacao || 0) / (g.metaArrecadacao || 1)) * 100, 100)}%`,
+                      width: `${Math.min(((g.progressoArrecadacao ?? 0) / (g.metaArrecadacao || 1)) * 100, 100)}%`,
                     }}
                   />
                 </div>
-                {g.mentor && <p className="grupo-card__mentor">Mentor: {g.mentor}</p>}
-                {g.metaAlimentos && <p className="grupo-card__meta-alimentos">Meta de Alimentos: {g.metaAlimentos}</p>}
+                {g.metaAlimentos && (
+                  <p className="grupo-card__meta-alimentos">Meta de Alimentos: {g.metaAlimentos}</p>
+                )}
+
+                {/* Ações - param propagação para não navegar ao clicar */}
+                <div
+                  className="grupo-card__actions"
+                  style={{ display: "flex", gap: 8, marginTop: 10 }}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => navigate(`/grupos?tab=editar&editar=${g.id}`)}
+                    title="Editar grupo"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => removerGrupo(g.id)}
+                    title="Excluir grupo"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </div>
             ))}
           </section>
         )}
-
         {/* Seção: DASHBOARD */}
         {secaoAtiva === "dashboard" && (
           <div className="dashboard-container">
@@ -799,7 +790,6 @@ export default function PainelInicial() {
                 ))}
               </select>
             </div>
-
             {grupoParaDashboard ? (
               <Dashboard grupo={grupoParaDashboard} />
             ) : (
@@ -807,43 +797,6 @@ export default function PainelInicial() {
             )}
           </div>
         )}
-
-        {/* Seção: ATIVIDADES */}
-        {secaoAtiva === "atividades" && (
-          <section className="grupos-section">
-            <div className="grupos-header">
-              <h2>Minhas Atividades</h2>
-              <button className="criar-grupo" onClick={() => setAbrirModalAtividade(true)}>+ Adicionar Atividade</button>
-            </div>
-
-            {atividades.length === 0 ? (
-              <p>Nenhuma atividade cadastrada.</p>
-            ) : (
-              <div className="atividades-lista">
-                {atividades.map((ativ) => (
-                  <div key={ativ.id} className={`atividade-card ${ativ.concluida ? "concluida" : ""}`}>
-                    <div className="atividade-card__main">
-                      <input
-                        type="checkbox"
-                        checked={ativ.concluida}
-                        onChange={() => alternarConclusaoAtividade(ativ.id)}
-                        title={ativ.concluida ? "Marcar como pendente" : "Marcar como concluída"}
-                      />
-                      <div>
-                        <h3>{ativ.titulo}</h3>
-                        {ativ.descricao && <p>{ativ.descricao}</p>}
-                      </div>
-                    </div>
-                    <button className="btn btn-danger" onClick={() => removerAtividade(ativ.id)} title="Excluir atividade">
-                      Excluir
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
         {/* Seção: AGENDA */}
         {secaoAtiva === "agenda" && (
           <section className="grupos-section agenda-section">
@@ -851,7 +804,6 @@ export default function PainelInicial() {
               <h2>Agenda</h2>
               <button className="criar-grupo" onClick={() => setAbrirModalEvento(true)}>+ Novo Evento</button>
             </div>
-
             <div className="filters">
               <label>Filtrar por grupo:
                 <select value={filtroGrupoId} onChange={(e) => setFiltroGrupoId(e.target.value)} className="input">
@@ -870,7 +822,6 @@ export default function PainelInicial() {
                 )}
               </div>
             </div>
-
             {/* Calendário */}
             <div className="calendar">
               <div className="calendar-header">
@@ -891,10 +842,10 @@ export default function PainelInicial() {
                 ))}
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const dayNum = i + 1,
-                    ymd = `${year}-${pad2(month + 1)}-${pad2(dayNum)}`,
-                    isToday = ymd === todayYMD,
-                    isSelected = ymd === filtroData,
-                    dayEvents = eventosPorDia.get(ymd) ?? [];
+                        ymd = `${year}-${pad2(month + 1)}-${pad2(dayNum)}`,
+                        isToday = ymd === todayYMD,
+                        isSelected = ymd === filtroData,
+                        dayEvents = eventosPorDia.get(ymd) ?? [];
                   return (
                     <button
                       key={ymd}
@@ -915,7 +866,6 @@ export default function PainelInicial() {
                 })}
               </div>
             </div>
-
             {eventosOrdenadosFiltrados.length === 0 ? (
               <p>Nenhum evento encontrado.</p>
             ) : (
@@ -944,18 +894,16 @@ export default function PainelInicial() {
             )}
           </section>
         )}
-
         {/* Seção: RELATÓRIO (com mesma lógica do Relatorios.jsx) */}
         {secaoAtiva === "relatorio" && (
           <section className="grupos-section">
             <div className="grupos-header">
               <h2>Relatórios</h2>
-              {/* Acesso opcional à página completa, se preferir usar a rota */}
+              {/* Acesso opcional à página completa */}
               <button className="criar-grupo" onClick={() => navigate('/relatorios')}>
                 Abrir página completa
               </button>
             </div>
-
             {/* === View: ALUNO === */}
             {currentUserRel.role === "aluno" && (
               <div className="view-container">
@@ -969,7 +917,6 @@ export default function PainelInicial() {
                     )}
                   </div>
                 </header>
-
                 {/* Seleção de Grupo */}
                 <div className="row">
                   <label htmlFor="rel-group-select"><strong>Grupo:</strong></label>
@@ -983,7 +930,6 @@ export default function PainelInicial() {
                     ))}
                   </select>
                 </div>
-
                 {/* Data (dia/mês/ano) */}
                 <div className="row">
                   <label><strong>Data do relatório:</strong></label>
@@ -997,7 +943,6 @@ export default function PainelInicial() {
                     {Array.from({ length: 6 }, (_, i) => now.getFullYear() - 3 + i).map((y) => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
-
                 {/* Campos estruturados */}
                 <div className="grid grid-2">
                   <label>Valor arrecadado (R$)
@@ -1036,7 +981,6 @@ export default function PainelInicial() {
                     />
                   </label>
                 </div>
-
                 {/* Conteúdo descritivo */}
                 <label>Descrição do mês
                   <textarea
@@ -1053,7 +997,6 @@ export default function PainelInicial() {
                     Edição bloqueada (prazo encerrado ou relatório aprovado). Se precisar alterar, peça ao mentor para marcar como “ajustes”.
                   </p>
                 )}
-
                 {/* Ações */}
                 <div className="actions">
                   <button
@@ -1067,7 +1010,6 @@ export default function PainelInicial() {
                     <button className="btn-secondary" onClick={handleRelCancelEdit}>Cancelar</button>
                   )}
                 </div>
-
                 {/* Mensagens com foco gerenciado */}
                 {relErrorMsg && (
                   <p className="msg error" tabIndex={-1} ref={relErrorRef} aria-live="assertive">
@@ -1079,7 +1021,6 @@ export default function PainelInicial() {
                     {relSuccessMsg}
                   </p>
                 )}
-
                 {/* Visualização do relatório atual (se existir e não estiver editando) */}
                 {relMyMonthReport && !relEditingReport && (
                   <div className="report-view">
@@ -1098,14 +1039,12 @@ export default function PainelInicial() {
                       <p><strong>Local da atividade:</strong> {relMyMonthReport.localAtividade}</p>
                     )}
                     <p><strong>Descrição:</strong> {relMyMonthReport.content}</p>
-
                     {relMyMonthReport.feedbackMentor && (
                       <div className="feedback-box">
                         <strong>Feedback do mentor:</strong>
                         <p>{relMyMonthReport.feedbackMentor}</p>
                       </div>
                     )}
-
                     {isEditableRel(relMyMonthReport, new Date(), relSettings.deadlineDay) && (
                       <button className="btn-tertiary" onClick={() => handleRelEdit(relMyMonthReport)}>
                         Editar
@@ -1115,19 +1054,16 @@ export default function PainelInicial() {
                 )}
               </div>
             )}
-
             {/* === View: MENTOR/PROFESSOR === */}
             {currentUserRel.role === "mentor" && (() => {
               const assignedNames = new Set((currentUserRel.assignedGroups ?? []).map((n) => n.toLowerCase()));
               const assignedReports = relReports.filter((r) => assignedNames.size ? assignedNames.has(r.groupName.toLowerCase()) : true);
               const filtered = applyRelFilters(assignedReports);
-
               return (
                 <div className="view-container">
                   <header className="subheader">
                     <h3>Relatórios dos Grupos Designados</h3>
                   </header>
-
                   {/* Filtros */}
                   <div className="filters">
                     <div className="filter-block">
@@ -1145,7 +1081,6 @@ export default function PainelInicial() {
                         {Array.from({ length: 10 }, (_, i) => now.getFullYear() - 5 + i).map((y) => <option key={y} value={y}>{y}</option>)}
                       </select>
                     </div>
-
                     <div className="filter-block">
                       <span>Até:</span>
                       <select aria-label="Dia até" value={relFilters.to.d} onChange={(e) => setRelFilters((f) => ({ ...f, to: { ...f.to, d: e.target.value } }))}>
@@ -1161,7 +1096,6 @@ export default function PainelInicial() {
                         {Array.from({ length: 10 }, (_, i) => now.getFullYear() - 5 + i).map((y) => <option key={y} value={y}>{y}</option>)}
                       </select>
                     </div>
-
                     <div className="filter-block">
                       <label>Grupo
                         <select value={relFilters.groupId} onChange={(e) => setRelFilters((f) => ({ ...f, groupId: e.target.value }))}>
@@ -1170,7 +1104,6 @@ export default function PainelInicial() {
                         </select>
                       </label>
                     </div>
-
                     <div className="filter-block">
                       <label>Status
                         <select value={relFilters.status} onChange={(e) => setRelFilters((f) => ({ ...f, status: e.target.value }))}>
@@ -1179,7 +1112,6 @@ export default function PainelInicial() {
                         </select>
                       </label>
                     </div>
-
                     <div className="filter-block">
                       <label>Autor
                         <input type="text" placeholder="Buscar por autor"
@@ -1189,7 +1121,6 @@ export default function PainelInicial() {
                       </label>
                     </div>
                   </div>
-
                   {/* Lista */}
                   {filtered.length === 0 ? (
                     <p>Nenhum relatório encontrado para os filtros selecionados.</p>
@@ -1213,7 +1144,6 @@ export default function PainelInicial() {
                           {report.localAtividade && <p><strong>Local:</strong> {report.localAtividade}</p>}
                           <p><strong>Descrição:</strong> {report.content}</p>
                         </div>
-
                         {/* Feedback e mudança de status pelo mentor */}
                         <div className="mentor-actions">
                           <label>Feedback ao aluno
@@ -1241,7 +1171,6 @@ export default function PainelInicial() {
                       </div>
                     ))
                   )}
-
                   {/* Toolbar (export/import futuramente) — mantida oculta no Painel */}
                 </div>
               );
@@ -1249,7 +1178,6 @@ export default function PainelInicial() {
           </section>
         )}
       </main>
-
       {/* Modal Evento */}
       {abrirModalEvento && (
         <div className="modal-overlay" onClick={() => setAbrirModalEvento(false)}>
@@ -1314,8 +1242,8 @@ export default function PainelInicial() {
           </div>
         </div>
       )}
-
-      {/* Modal Atividade */}
+      {/* Modal Atividade — MANTIDO no arquivo, mas a seção Atividades foi migrada para "Grupos".
+          Você pode remover este modal quando concluir a migração por completo. */}
       {abrirModalAtividade && (
         <div className="modal-overlay" onClick={() => setAbrirModalAtividade(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -1350,6 +1278,44 @@ export default function PainelInicial() {
           </div>
         </div>
       )}
+      {/* [REMOVIDO DA UI] Seção: ATIVIDADES
+          Abaixo está a seção original, deixando comentada para referência/histórico.
+          Ela NÃO é mais renderizada no Painel (aba desativada). */}
+      {/*
+      {secaoAtiva === "atividades" && (
+        <section className="grupos-section">
+          <div className="grupos-header">
+            <h2>Minhas Atividades</h2>
+            <button className="criar-grupo" onClick={() => setAbrirModalAtividade(true)}>+ Adicionar Atividade</button>
+          </div>
+          {atividades.length === 0 ? (
+            <p>Nenhuma atividade cadastrada.</p>
+          ) : (
+            <div className="atividades-lista">
+              {atividades.map((ativ) => (
+                <div key={ativ.id} className={`atividade-card ${ativ.concluida ? "concluida" : ""}`}>
+                  <div className="atividade-card__main">
+                    <input
+                      type="checkbox"
+                      checked={ativ.concluida}
+                      onChange={() => alternarConclusaoAtividade(ativ.id)}
+                      title={ativ.concluida ? "Marcar como pendente" : "Marcar como concluída"}
+                    />
+                    <div>
+                      <h3>{ativ.titulo}</h3>
+                      {ativ.descricao && <p>{ativ.descricao}</p>}
+                    </div>
+                  </div>
+                  <button className="btn btn-danger" onClick={() => removerAtividade(ativ.id)} title="Excluir atividade">
+                    Excluir
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+      */}
     </div>
   );
 }
