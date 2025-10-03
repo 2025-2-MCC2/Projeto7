@@ -15,7 +15,7 @@ CREATE TABLE usuario (
     email VARCHAR(50) UNIQUE,
     senha VARCHAR(50),
     cargo VARCHAR(10),
-    ID_grupo INT NOT NULL,
+    ID_grupo INT,
     FOREIGN KEY (ID_grupo)
         REFERENCES grupo (ID_grupo)
 );
