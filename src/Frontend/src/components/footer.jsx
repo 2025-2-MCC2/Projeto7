@@ -18,7 +18,7 @@ export default function Footer() {
              src={logo} 
             />
             <div className="social-icons">
-              <a href="https://www.instagram.com/fecapoficial/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <a href="https://www.instagram.com/fecap/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <i className="fab fa-instagram"></i>
               </a>
               <a href="https://www.linkedin.com/school/fecap/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
