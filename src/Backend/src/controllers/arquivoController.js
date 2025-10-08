@@ -4,7 +4,7 @@ import { pool } from "../db.js";
 export async function getArquivos(_, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT a.ID_arquivo, a.tipo_arquivo, a.nome_arquivo,
+      SELECT a.ID_arquivo, a.tipo_arquivo, a.caminho_arquivo,
              d.descricao AS doacao_descricao, p.conteudo AS postagem_conteudo, u.nome_usuario AS autor_postagem
       FROM arquivo a
       JOIN doacao d ON a.ID_doacao = d.ID_doacao
@@ -23,7 +23,7 @@ export async function getArquivoById(req, res) {
   const { id } = req.params;
   try {
     const [rows] = await pool.query(
-      `SELECT a.ID_arquivo, a.tipo_arquivo, a.nome_arquivo,
+      `SELECT a.ID_arquivo, a.tipo_arquivo, a.caminho_arquivo,
               d.descricao AS doacao_descricao, p.conteudo AS postagem_conteudo, u.nome_usuario AS autor_postagem
        FROM arquivo a
        JOIN doacao d ON a.ID_doacao = d.ID_doacao
@@ -42,19 +42,19 @@ export async function getArquivoById(req, res) {
 
 // POST criar arquivo
 export async function createArquivo(req, res) {
-  const { tipo_arquivo, nome_arquivo, ID_doacao, ID_postagem } = req.body;
-  if (!tipo_arquivo || !nome_arquivo || !ID_doacao || !ID_postagem) {
+  const { tipo_arquivo, caminho_arquivo, ID_doacao, ID_postagem } = req.body;
+  if (!tipo_arquivo || !caminho_arquivo || !ID_doacao || !ID_postagem) {
     return res
       .status(400)
       .json({
         error:
-          "Campos obrigatórios: tipo_arquivo, nome_arquivo, ID_doacao, ID_postagem",
+          "Campos obrigatórios: tipo_arquivo, caminho_arquivo, ID_doacao, ID_postagem",
       });
   }
   try {
     const [ins] = await pool.query(
-      "INSERT INTO arquivo (tipo_arquivo, nome_arquivo, ID_doacao, ID_postagem) VALUES (?, ?, ?, ?)",
-      [tipo_arquivo, nome_arquivo, ID_doacao, ID_postagem]
+      "INSERT INTO arquivo (tipo_arquivo, caminho_arquivo, ID_doacao, ID_postagem) VALUES (?, ?, ?, ?)",
+      [tipo_arquivo, caminho_arquivo, ID_doacao, ID_postagem]
     );
     const [rows] = await pool.query(
       "SELECT * FROM arquivo WHERE ID_arquivo = ?",
@@ -69,11 +69,11 @@ export async function createArquivo(req, res) {
 // PUT atualizar arquivo
 export async function updateArquivo(req, res) {
   const { id } = req.params;
-  const { tipo_arquivo, nome_arquivo, ID_doacao, ID_postagem } = req.body;
+  const { tipo_arquivo, caminho_arquivo, ID_doacao, ID_postagem } = req.body;
   try {
     const [result] = await pool.query(
-      "UPDATE arquivo SET tipo_arquivo=?, nome_arquivo=?, ID_doacao=?, ID_postagem=? WHERE ID_arquivo=?",
-      [tipo_arquivo, nome_arquivo, ID_doacao, ID_postagem, id]
+      "UPDATE arquivo SET tipo_arquivo=?, caminho_arquivo=?, ID_doacao=?, ID_postagem=? WHERE ID_arquivo=?",
+      [tipo_arquivo, caminho_arquivo, ID_doacao, ID_postagem, id]
     );
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Arquivo não encontrado" });
