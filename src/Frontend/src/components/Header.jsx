@@ -20,6 +20,7 @@ export default function Header() {
           <button className="btn btn-pill" onClick={() => navigate('/login')}>
             Login
           </button>
+          
         </nav>
       </div>
     </header>

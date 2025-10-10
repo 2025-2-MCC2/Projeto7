@@ -277,7 +277,6 @@ export default function Grupos() {
       <div className="tabs" style={{display:'flex', gap:8, marginBottom:16}}>
         <button className={`btn-secondary ${aba==='criar' ? 'active' : ''}`} onClick={() => setAba('criar')}>Criar</button>
         <button className={`btn-secondary ${aba==='editar' ? 'active' : ''}`} onClick={() => setAba('editar')}>Editar</button>
-        <button className={`btn-secondary ${aba==='atividades' ? 'active' : ''}`} onClick={() => setAba('atividades')}>Atividades</button>
       </div>
 
       {/* ---- ABA CRIAR ---- */}
@@ -566,7 +565,7 @@ export default function Grupos() {
         </>
       )}
 
-      ---- ABA ATIVIDADES ----
+      {/* ---- ABA ATIVIDADES ---- */}
       {aba === 'atividades' && (
         <section className="list-card">
           <h2>Minhas Atividades</h2>

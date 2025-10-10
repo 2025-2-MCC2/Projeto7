@@ -1348,5 +1348,30 @@ display: incline-block;
     transition: none !important;
   }
 }
+/* ===== Criação de Grupos ===== */
+.painel-container .grupos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
 
+.painel-container .btn--create {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.painel-container .btn--create:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+}
+.painel-container .btn--create i {
+  font-size: 14px;
+}
 /*
