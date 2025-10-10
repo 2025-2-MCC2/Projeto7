@@ -12,12 +12,14 @@
     --primary: #2e7d32;       /* verde principal (igual ao Login) */
     --primary-hover: #1b5e20; /* hover */
     --accent: #4caf50;
-  
+    --danger: #d90429;
     --input-bg: #ffffff;
   }
   
   /* Paleta escura (neutra, sem "gamer") */
-  html[data-theme="escuro"] {
+  html[data-theme="escuro"]
+  .painel-container[data-theme="escuro"] { 
+    --danger: #ef4444; 
     --bg: #0f1115;
     --text: #e6e6e6;
     --muted: #a8b3b8;
