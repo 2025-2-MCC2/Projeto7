@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "start": "npm run dev"
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.19",
