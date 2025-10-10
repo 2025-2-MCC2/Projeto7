@@ -1,8 +1,9 @@
 /* =========================
-   PainelInicial.css (atualizado)
+   PainelInicial.css 
    ========================= */
 
 /* --- Resets --- */
+:root { --danger: #d90429; }
 * {
   box-sizing: border-box;
 }
@@ -763,3 +764,589 @@ display: incline-block;
 .contant_box_404{
    margin-top: -50px;
 }
+/* =========================
+   Botões Editar/Excluir — micro-interações
+   ========================= */
+
+/* Base: efeitos suaves de hover/focus/press e suporte a ripple */
+.painel-container .grupo-card__actions .btn {
+  position: relative;
+  overflow: hidden;                /* p/ ripple */
+  transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, color .16s ease, border-color .16s ease;
+  will-change: transform;
+}
+
+.painel-container .grupo-card__actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.painel-container .grupo-card__actions .btn:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.painel-container .grupo-card__actions .btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Ícone à esquerda do rótulo */
+.painel-container .grupo-card__actions .btn i {
+  margin-right: 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* =========================
+   Especializações
+   ========================= */
+
+/* EDITAR — fica mais “ação primária” com sheen */
+.painel-container .grupo-card__actions .btn--edit {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Sheen (brilho passando) no hover */
+@keyframes btn-sheen {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  40%  { opacity: .35; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+.painel-container .grupo-card__actions .btn--edit::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,.35) 45%, transparent 70%);
+  transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+.painel-container .grupo-card__actions .btn--edit:hover::before {
+  animation: btn-sheen .8s ease-out;
+}
+
+/* EXCLUIR — periga, então vermelho mais evidente + heat */
+.painel-container .grupo-card__actions .btn--delete {
+  background: var(--danger, #d90429);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Heat aura leve no hover (sem exagero) */
+@keyframes btn-heat {
+  0%   { box-shadow: 0 0 0 0 rgba(217,4,41,.25); }
+  100% { box-shadow: 0 0 0 8px rgba(217,4,41,0); }
+}
+.painel-container .grupo-card__actions .btn--delete:hover {
+  animation: btn-heat .9s ease-out;
+}
+
+/* Shakezinho mínimo se quiser destacar ainda mais o hover do Excluir */
+@keyframes btn-wiggle {
+  0%, 100% { transform: translateY(-1px) rotate(0deg); }
+  50%      { transform: translateY(-1px) rotate(-2deg); }
+}
+.painel-container .grupo-card__actions .btn--delete:hover i {
+  animation: btn-wiggle .35s ease-in-out;
+}
+
+/* =========================
+   Ripple de clique (CSS-only)
+   ========================= */
+@keyframes btn-ripple {
+  0%   { transform: scale(0); opacity: .26; }
+  80%  { transform: scale(1.35); opacity: .12; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.painel-container .grupo-card__actions .btn::after {
+  content: "";
+  position: absolute;
+  left: var(--rx, 50%);
+  top: var(--ry, 50%);
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+.painel-container .grupo-card__actions .btn:active::after {
+  animation: btn-ripple .45s ease-out;
+}
+
+/* Respeitar preferências do usuário */
+@media (prefers-reduced-motion: reduce) {
+  .painel-container .grupo-card__actions .btn,
+  .painel-container .grupo-card__actions .btn--delete:hover,
+  .painel-container .grupo-card__actions .btn--delete:hover i,
+  .painel-container .grupo-card__actions .btn--edit:hover::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =========================
+   Tema escuro do Painel
+   ========================= */
+.painel-container[data-theme="escuro"] .grupo-card__actions .btn--edit {
+  background: var(--primary);
+  color: #fff;
+}
+.painel-container[data-theme="escuro"] .grupo-card__actions .btn--delete {
+  background: var(--danger, #ef4444); /* fallback vermelho Tailwind-like se var(--danger) não existir */
+  color: #fff;
+}
+/* =========================
+   Botões Editar/Excluir — micro-interações e estados
+   ========================= */
+
+   .painel-container .grupo-card__actions .btn {
+    position: relative;
+    overflow: hidden; /* para ripple */
+    transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, color .16s ease, border-color .16s ease;
+    will-change: transform;
+  }
+  
+  .painel-container .grupo-card__actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  }
+  
+  .painel-container .grupo-card__actions .btn:active {
+    transform: translateY(0) scale(.98);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  
+  .painel-container .grupo-card__actions .btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  
+  .painel-container .grupo-card__actions .btn i {
+    margin-right: 8px;
+    font-size: 14px;
+    line-height: 1;
+  }
+  
+  /* Especializações */
+  .painel-container .grupo-card__actions .btn--edit {
+    background: var(--primary);
+    color: #fff;
+    border-color: transparent;
+  }
+  
+  .painel-container .grupo-card__actions .btn--delete {
+    background: var(--danger, #d90429);
+    color: #fff;
+    border-color: transparent;
+  }
+  
+  /* ====== Loading: Editar ====== */
+  .painel-container .grupo-card__actions .btn--edit.is-loading {
+    pointer-events: none;
+    opacity: .88;
+  }
+  
+  /* ====== Confirmar: Excluir ====== */
+  @keyframes confirm-shake {
+    0%,100% { transform: translateY(-1px) rotate(0deg); }
+    25%     { transform: translateY(-1px) rotate(-2deg); }
+    50%     { transform: translateY(-1px) rotate(2deg); }
+    75%     { transform: translateY(-1px) rotate(-1deg); }
+  }
+  .painel-container .grupo-card__actions .btn--delete.confirm {
+    background: #f59e0b; /* amber-500, destaca confirmação */
+    color: #1f2937;      /* texto escuro p/ contraste */
+    border-color: transparent;
+    animation: confirm-shake .35s ease-in-out;
+  }
+  
+  /* ====== Sheen no Editar ====== */
+  @keyframes btn-sheen {
+    0%   { transform: translateX(-120%); opacity: 0; }
+    40%  { opacity: .35; }
+    100% { transform: translateX(120%); opacity: 0; }
+  }
+  .painel-container .grupo-card__actions .btn--edit::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,.35) 45%, transparent 70%);
+    transform: translateX(-120%);
+    opacity: 0; pointer-events: none;
+  }
+  .painel-container .grupo-card__actions .btn--edit:hover::before {
+    animation: btn-sheen .8s ease-out;
+  }
+  
+  /* ====== Heat no Excluir ====== */
+  @keyframes btn-heat {
+    0%   { box-shadow: 0 0 0 0 rgba(217,4,41,.25); }
+    100% { box-shadow: 0 0 0 8px rgba(217,4,41,0); }
+  }
+  .painel-container .grupo-card__actions .btn--delete:hover {
+    animation: btn-heat .9s ease-out;
+  }
+  
+  /* ====== Ripple central (CSS-only) ====== */
+  @keyframes btn-ripple {
+    0%   { transform: scale(0); opacity: .26; }
+    80%  { transform: scale(1.35); opacity: .12; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .painel-container .grupo-card__actions .btn::after {
+    content: "";
+    position: absolute;
+    left: var(--rx, 50%);
+    top: var(--ry, 50%);
+    width: 8px; height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .painel-container .grupo-card__actions .btn:active::after {
+    animation: btn-ripple .45s ease-out;
+  }
+  
+  /* ====== Tema escuro ====== */
+  .painel-container[data-theme="escuro"] .grupo-card__actions .btn--edit {
+    background: var(--primary);
+    color: #fff;
+  }
+  .painel-container[data-theme="escuro"] .grupo-card__actions .btn--delete {
+    background: var(--danger, #ef4444);
+    color: #fff;
+  }
+  
+  /* ====== Acessibilidade ====== */
+  @media (prefers-reduced-motion: reduce) {
+    .painel-container .grupo-card__actions .btn,
+    .painel-container .grupo-card__actions .btn--delete:hover,
+    .painel-container .grupo-card__actions .btn--edit:hover::before,
+    .painel-container .grupo-card__actions .btn--delete.confirm {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+  /* =========================
+   Botão Criar Grupo — micro-interações e estados
+   ========================= */
+
+/* Base (aproveita .btn/.btn-primary do projeto) */
+.painel-container .btn--create {
+  position: relative;
+  overflow: hidden; /* para ripple e sheen */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    filter .16s ease,
+    background-color .16s ease;
+}
+
+.painel-container .btn--create i {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Hover: sobe 1px e dá leve glow */
+.painel-container .btn--create:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  filter: saturate(1.02);
+}
+
+/* Press: tap */
+.painel-container .btn--create:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: 0 4px 12px rgba(0,0,0,.10);
+}
+
+/* Focus: acessível */
+.painel-container .btn--create:focus-visible {
+  outline: 2px solid #fff;            /* contraste sobre o primário */
+  outline-offset: 2px;
+}
+
+/* Sheen (brilho passando) */
+@keyframes create-sheen {
+  0%   { transform: translateX(-130%); opacity: 0; }
+  35%  { opacity: .35; }
+  100% { transform: translateX(130%); opacity: 0; }
+}
+.painel-container .btn--create::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,.35) 45%, transparent 70%);
+  transform: translateX(-130%);
+  opacity: 0; pointer-events: none;
+}
+.painel-container .btn--create:hover::before {
+  animation: create-sheen .8s ease-out;
+}
+
+/* Pulso sutil contínuo enquanto está em loading (opcional) */
+@keyframes create-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(1.02); filter: brightness(1.02); }
+}
+.painel-container .btn--create.is-loading {
+  pointer-events: none;
+  opacity: .92;
+  animation: create-pulse 1.2s ease-in-out infinite;
+}
+
+/* Ripple a partir do ponto do clique (usa --rx/--ry) */
+@keyframes create-ripple {
+  0%   { transform: scale(0); opacity: .28; }
+  80%  { transform: scale(1.35); opacity: .12; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.painel-container .btn--create::after {
+  content: "";
+  position: absolute;
+  left: var(--rx, 50%);
+  top: var(--ry, 50%);
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  background: #fff; /* contraste no primário */
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+.painel-container .btn--create:active::after {
+  animation: create-ripple .45s ease-out;
+}
+
+/* Tema escuro do Painel (mantém legibilidade e brilho) */
+.painel-container[data-theme="escuro"] .btn--create {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Respeita preferências do usuário */
+@media (prefers-reduced-motion: reduce) {
+  .painel-container .btn--create,
+  .painel-container .btn--create:hover,
+  .painel-container .btn--create.is-loading,
+  .painel-container .btn--create:hover::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.painel-container .grupos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+/* =========================
+   PERFIL — Avatar, presença, ripple e menu
+   ========================= */
+
+/* Container do perfil (sino + avatar) */
+.painel-container .perfil {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Avatar button: base */
+.painel-container .avatar-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px; /* p/ foco */
+}
+
+/* Avatar (img ou iniciais) */
+.painel-container .avatar,
+.painel-container .avatar.avatar-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: inline-block;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease, border-color .16s ease;
+}
+
+/* Hover: tilt + leve brilho */
+@keyframes avatar-tilt {
+  0% { transform: rotate(0deg) }
+  50% { transform: rotate(-2deg) }
+  100% { transform: rotate(0deg) }
+}
+.painel-container .avatar-button:hover .avatar,
+.painel-container .avatar-button:hover .avatar.avatar-initials {
+  transform: translateY(-1px);
+  filter: saturate(1.03) brightness(1.03);
+  box-shadow: 0 8px 20px rgba(0,0,0,.10);
+  animation: avatar-tilt .35s ease-in-out;
+}
+
+/* Foco visível (acessibilidade) */
+.painel-container .avatar-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Ripple ao clicar no avatar (usa --rx/--ry se setado via JS) */
+@keyframes avatar-ripple {
+  0%   { transform: scale(0); opacity: .28; }
+  80%  { transform: scale(1.35); opacity: .12; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.painel-container .avatar-button::after {
+  content: "";
+  position: absolute;
+  left: var(--rx, 50%);
+  top: var(--ry, 50%);
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  background: var(--primary);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+.painel-container .avatar-button:active::after {
+  animation: avatar-ripple .45s ease-out;
+}
+
+/* Ponto de presença (online) */
+.painel-container .avatar-button .presence-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--card-bg);
+  background: #22c55e; /* green-500 */
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+/* Respiração do ponto de presença */
+@keyframes presence-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 2px rgba(34,197,94,.15); }
+  50% { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(34,197,94,.10); }
+}
+.painel-container .avatar-button .presence-dot.is-online {
+  animation: presence-breathe 2s ease-in-out infinite;
+}
+
+/* ===== MENU DO PERFIL ===== */
+.painel-container .profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 220px;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  z-index: 10000;
+
+  /* pop-in */
+  transform-origin: top right;
+  animation: menu-pop .14s ease-out;
+}
+
+/* Pop-in do menu */
+@keyframes menu-pop {
+  0% { opacity: 0; transform: translateY(-6px) scale(.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Seta (arrow) do menu */
+.painel-container .profile-menu::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 14px;
+  width: 12px; height: 12px;
+  background: var(--card-bg);
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+
+/* Cabeçalho do menu */
+.painel-container .profile-menu__header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.painel-container .profile-menu .profile-meta .muted {
+  color: var(--muted);
+}
+
+/* Itens do menu */
+.painel-container .profile-menu .menu-item {
+  width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+.painel-container .profile-menu .menu-item:hover {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+@supports not (color: color-mix(in srgb, #000, #000)) {
+  .painel-container .profile-menu .menu-item:hover { background: rgba(76, 175, 80, 0.06); }
+}
+.painel-container .profile-menu .menu-item.danger:hover {
+  background: rgba(217, 4, 41, .08);
+}
+
+/* Ícones nos itens (se quiser incluir) */
+.painel-container .profile-menu .menu-item i {
+  width: 16px; text-align: center; color: var(--muted);
+}
+
+/* Tema escuro do Painel — reforço */
+.painel-container[data-theme="escuro"] .profile-menu {
+  background: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+.painel-container[data-theme="escuro"] .profile-menu::before {
+  background: var(--card-bg);
+  border-color: var(--border);
+}
+
+/* Preferência de reduzir movimento */
+@media (prefers-reduced-motion: reduce) {
+  .painel-container .avatar-button:hover .avatar,
+  .painel-container .avatar-button .presence-dot.is-online,
+  .painel-container .profile-menu {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/*

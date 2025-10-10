@@ -84,6 +84,99 @@ export default function PainelInicial() {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
+  
+const userId = React.useMemo(
+  () => String(perfil?.ra || perfil?.nome || "anon"),
+  [perfil?.ra, perfil?.nome]
+);
+// Estado e timers para loading + ripple (somente do Criar Grupo)
+const [creating, setCreating] = useState(false);
+const creatingTimerRef = useRef(null);
+
+const handleCreateGroupClick = (e) => {
+  // Calcular posição do clique p/ ripple
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const rx = ((e.clientX - rect.left) / rect.width) * 100;
+  const ry = ((e.clientY - rect.top) / rect.height) * 100;
+  btn.style.setProperty('--rx', rx + '%');
+  btn.style.setProperty('--ry', ry + '%');
+
+  // Entrar em loading e navegar
+  setCreating(true);
+  navigate('/grupos'); // sua rota de criação/gestão
+
+  // Fallback de segurança (caso a tela não troque por algum motivo)
+  clearTimeout(creatingTimerRef.current);
+  creatingTimerRef.current = setTimeout(() => setCreating(false), 2000);
+};
+
+// Limpeza
+useEffect(() => {
+  return () => clearTimeout(creatingTimerRef.current);
+}, []);
+  
+// === Estados para UX avançada dos botões ===
+const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+const confirmTimerRef = useRef(null);
+
+const [editingId, setEditingId] = useState(null);
+const editingTimerRef = useRef(null);
+
+// 1) Clique no Excluir com passo de confirmação
+const handleDeleteClick = (id) => {
+  // Se já está em modo confirmar: executa exclusão
+  if (confirmDeleteId === id) {
+    clearTimeout(confirmTimerRef.current);
+    setConfirmDeleteId(null);
+    removerGrupo(id); // sua função existente
+    return;
+  }
+  // Primeiro clique: entra no estado "Confirmar" por ~2.5s
+  setConfirmDeleteId(id);
+  clearTimeout(confirmTimerRef.current);
+  confirmTimerRef.current = setTimeout(() => {
+    setConfirmDeleteId(null);
+  }, 2500);
+};
+
+// 2) Clique no Editar com loading/spinner
+const handleEditClick = (id) => {
+  setEditingId(id);
+  // Navega — ao trocar de rota, este componente deve desmontar e limpar estado
+  navigate(`/grupos?tab=editar&editar=${id}`);
+  // Fallback de segurança: se por algum motivo não desmontar, reseta em 2s
+  clearTimeout(editingTimerRef.current);
+  editingTimerRef.current = setTimeout(() => setEditingId(null), 2000);
+};
+
+// Limpesa de timers ao desmontar
+useEffect(() => {
+  return () => {
+    clearTimeout(confirmTimerRef.current);
+    clearTimeout(editingTimerRef.current);
+  };
+}, []);
+
+// Ripple no avatar: calcula o ponto do clique
+const onAvatarClick = (e) => {
+  setOpenProfileMenu((o) => !o);
+  // ripple
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const rx = ((e.clientX - rect.left) / rect.width) * 100;
+  const ry = ((e.clientY - rect.top) / rect.height) * 100;
+  btn.style.setProperty('--rx', rx + '%');
+  btn.style.setProperty('--ry', ry + '%');
+  setTimeout(() => {
+    btn.style.removeProperty('--rx');
+    btn.style.removeProperty('--ry');
+  }, 500);
+};
+
+// Opcional: status online (pode vir de perfil.status no futuro)
+const isOnline = true;
+const profileMenuId = "profile-menu-pop";
   /* --------------------- DADOS: Grupos, Eventos, Atividades (originais) --------------------- */
   const [grupos, setGrupos] = useState(() =>
     load("grupos", [
@@ -693,8 +786,28 @@ export default function PainelInicial() {
             <div className="grupos-header">
               <h2>Grupos</h2>
               {(perfil.tipo !== 'aluno' || gruposVisiveis.length === 0) && (
-                <button className="criar-grupo" onClick={() => navigate('/grupos')}>+ Criar Grupo</button>
-              )}
+            <button
+            className={`btn btn-primary btn--create ${creating ? 'is-loading' : ''}`}
+            onClick={handleCreateGroupClick}
+            title="Criar novo grupo"
+            aria-label="Criar novo grupo"
+            disabled={creating}
+            >
+            {creating ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                <span>Criando…</span>
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-plus" aria-hidden="true"></i>
+                <span>Criar Grupo</span>
+              </>
+            )}
+            </button>
+            )}
+
+              
             </div>
             {gruposVisiveis.length === 0 && <p>Nenhum grupo para exibir.</p>}
             {gruposVisiveis.map((g) => (
@@ -770,19 +883,50 @@ export default function PainelInicial() {
                   onKeyDown={(e) => e.stopPropagation()}
                 >
                   <button
-                    className="btn btn-secondary"
-                    onClick={() => navigate(`/grupos?tab=editar&editar=${g.id}`)}
-                    title="Editar grupo"
+                    
+                  className={`btn btn-secondary btn--edit ${editingId === g.id ? "is-loading" : ""}`}
+                  onClick={() => handleEditClick(g.id)}
+                  title="Editar grupo"
+                  aria-label={`Editar grupo ${g.nome}`}
+                  disabled={editingId === g.id}
                   >
-                    Editar
+                    {editingId === g.id ? (
+                       <>
+                   <i className="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                   <span>Editando…</span>
+                   </>
+                    ) : (
+                      <>
+                      
+                  <i className="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                  <span>Editar</span>
+                      </>
+                    )}
                   </button>
+                  
                   <button
-                    className="btn btn-danger"
-                    onClick={() => removerGrupo(g.id)}
-                    title="Excluir grupo"
-                  >
-                    Excluir
-                  </button>
+                  className={`btn btn-danger btn--delete ${confirmDeleteId === g.id ? "confirm" : ""}`}
+                  onClick={() => handleDeleteClick(g.id)}
+                  title={confirmDeleteId === g.id ? "Confirmar exclusão" : "Excluir grupo"}
+                  aria-label={
+                    confirmDeleteId === g.id
+                      ? `Confirmar exclusão do grupo ${g.nome}`
+                      : `Excluir grupo ${g.nome}`
+                            }
+                          >
+                            {confirmDeleteId === g.id ? (
+                              <>
+                                <i className="fa-solid fa-check" aria-hidden="true"></i>
+                                <span>Confirmar</span>
+                              </>
+                            ) : (
+                              <>
+                                <i className="fa-solid fa-trash" aria-hidden="true"></i>
+                                <span>Excluir</span>
+                              </>
+                            )}
+                          </button>
+
                 </div>
               </div>
             ))}
