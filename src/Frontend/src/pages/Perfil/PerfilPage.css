@@ -153,3 +153,10 @@
   .perfil-grid-2, .perfil-grid-3 { grid-template-columns: 1fr; }
   .perfil-avatar-actions { min-width: 0; width: 100%; }
 }
+
+.painel-container .perfil .notif-bell { order: 1; }
+.painel-container .perfil .avatar-button { order: 2; }
+
+.painel-container .header .perfil {
+  margin-left: 8px;          /* ajuste fino opcional */
+}

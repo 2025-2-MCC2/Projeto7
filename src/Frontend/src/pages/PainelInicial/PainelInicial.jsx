@@ -1,9 +1,10 @@
-// VERSÃO COMPLETA E ATUALIZADA
 // src/pages/PainelInicial/PainelInicial.jsx
+// Imports
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./PainelInicial.css";
 import Dashboard from "../../components/Dashboard";
+import NotificationBell from "../../components/Notifications/NotificationBell";
 /* ============================================================================
  * Helpers de storage e utils gerais
  * ==========================================================================*/
@@ -633,20 +634,30 @@ export default function PainelInicial() {
             </button> */}
           </div>
           <div className="perfil" ref={profileRef}>
+            {/* [Adicionado] Sino de notificações */}
+          <NotificationBell userId={userId} className="mr-2" />
+
             <button
               className="avatar-button"
-              onClick={() => setOpenProfileMenu((o) => !o)}
+              onClick={onAvatarClick}
               title={perfil.nome || "Perfil"}
+              aria-haspopup="menu"
+              aria-expanded={openProfileMenu}
+              aria-controls={profileMenuId}
             >
               {perfil.fotoUrl ? (
                 <img className="avatar" src={perfil.fotoUrl} alt="Foto do perfil" />
               ) : (
                 <span className="avatar avatar-initials">{getInitials(perfil.nome)}</span>
               )}
+              <span className={`presence-dot ${isOnline ? "is-online" : ""}`} aria-hidden="true"></span>
             </button>
             {openProfileMenu && (
               <div className="profile-menu">
-                <div className="profile-menu__header">
+                <div className="profile-menu__header"
+                id={profileMenuId}
+                role="menu"
+                >
                   {perfil.fotoUrl ? (
                     <img className="avatar small" src={perfil.fotoUrl} alt="Foto do perfil" />
                   ) : (
@@ -663,11 +674,14 @@ export default function PainelInicial() {
                 <button
                   className="menu-item"
                   onClick={() => { setOpenProfileMenu(false); navigate('/perfil'); }}
+                   role="menuitem"
                 >
-                  Meu perfil
+                  <i className="fa-regular fa-user" aria-hidden="true"></i>
+                  <span>Meu perfil</span>
                 </button>
                 <button className="menu-item danger" onClick={handleLogout}>
-                  Sair
+                <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                <span>Sair</span>
                 </button>
               </div>
             )}
