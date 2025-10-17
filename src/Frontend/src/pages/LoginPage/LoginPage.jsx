@@ -62,27 +62,6 @@ export default function LoginPage() {
         setTimeout(() => navigate("/painel"), 800);
         return;
       }
-
-    //   // ALUNO por e-mail (exemplo)
-    //   if (identifier === "aluno@test.com" && password === "123456") {
-    //     setMessage("✅ Login realizado com sucesso! (aluno)");
-    //     localStorage.setItem("auth", "true");
-    //     localStorage.setItem(
-    //       "perfil",
-    //       JSON.stringify({
-    //         id: Date.now(),
-    //         tipo: "aluno",
-    //         nome: "Aluno Teste",
-    //         email: identifier, // opcional
-    //         ra: "12345",       // obrigatório (mock)
-    //         telefone: "",
-    //         fotoUrl: "",
-    //         preferencias: { tema: "escuro", linguagem: "pt-BR", notificacoesEmail: true },
-    //       })
-    //     );
-    //     setTimeout(() => navigate("/painel"), 800);
-    //     return;
-    //   }
     }
 
     // ALUNO por RA
