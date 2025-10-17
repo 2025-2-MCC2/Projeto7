@@ -22,6 +22,7 @@ import Grupos from './pages/Grupos/Grupos.jsx';
 import PerfilPage from './pages/Perfil/PerfilPage.jsx'; // <-- ADICIONADO
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
 import AtividadesGrupo from "./pages/Grupos/AtividadesGrupo";
+import Configuracoes from "./pages/Configuracoes/Configuracoes";
 
 import img1 from './assets/img1.jpg';
 import img2 from './assets/img2.jpg';
@@ -41,6 +42,17 @@ function ThemeBoot() {
   }, []);
   return null;
 }
+
+const getUserId = () => {
+  try {
+    const raw = localStorage.getItem('perfil');
+    const p = raw ? JSON.parse(raw) : {};
+    return String(p.ra || p.nome || 'anon');
+  } catch {
+    return 'anon';
+  }
+};
+
 
 // Página pública (Home) — SEM Footer interno (evita duplicidade)
 function HomePage() {
@@ -122,6 +134,7 @@ export default function App() {
             </RequireAuth>
           }
         />
+       <Route path="/config" element={<Configuracoes userId={getUserId()} />} />
         <Route
           path="/relatorios"
           element={
@@ -145,6 +158,8 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       
+      
     </Router>
+    
   );
 }

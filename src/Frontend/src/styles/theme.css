@@ -17,8 +17,7 @@
   }
   
   /* Paleta escura (neutra, sem "gamer") */
-  html[data-theme="escuro"]
-  .painel-container[data-theme="escuro"] { 
+  .painel-container[data-theme="escuro"] {
     --danger: #ef4444; 
     --bg: #0f1115;
     --text: #e6e6e6;

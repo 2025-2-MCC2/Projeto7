@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import "./PainelInicial.css";
 import Dashboard from "../../components/Dashboard";
 import NotificationBell from "../../components/Notifications/NotificationBell";
+import { useSettings } from "../../hooks/useSettings";
+import { useAutoPresence } from "../../hooks/usePresence";
+
 /* ============================================================================
  * Helpers de storage e utils gerais
  * ==========================================================================*/
@@ -27,6 +30,9 @@ const getInitials = (name = "Usuário") => {
   const ini = `${first}${last}`.trim().toUpperCase();
   return ini || "U";
 };
+
+
+
 /* ============================================================================
  * Constantes/Helpers específicos de RELATÓRIOS (mapeando Relatorios.jsx)
  * - Mantém as MESMAS chaves e regras para 100% de compatibilidade
@@ -177,6 +183,19 @@ const onAvatarClick = (e) => {
 // Opcional: status online (pode vir de perfil.status no futuro)
 const isOnline = true;
 const profileMenuId = "profile-menu-pop";
+
+
+// Tema do Painel (claro/escuro) com persistência local
+const [temaPainel, setTemaPainel] = useState(() => localStorage.getItem('painel_theme') || 'claro');
+useEffect(() => localStorage.setItem('painel_theme', temaPainel), [temaPainel]);
+
+const { settings, update } = useSettings();
+useAutoPresence({
+  enabled: settings.status?.mode === 'auto',
+  timeoutMin: settings.status?.autoTimeoutMin ?? 5,
+  onChange: (newState) => update('status.mode', newState) // troca online <-> ausente
+});
+
   /* --------------------- DADOS: Grupos, Eventos, Atividades (originais) --------------------- */
   const [grupos, setGrupos] = useState(() =>
     load("grupos", [
@@ -695,7 +714,7 @@ const profileMenuId = "profile-menu-pop";
    * Render
    * ==========================================================================*/
   return (
-    <div className="painel-container">
+    <div className="painel-container" data-theme={temaPainel}>
       <aside className="sidebar">
         <h2>Descubra</h2>
         <button onClick={() => setSecaoAtiva("grupos")}>Início</button>
@@ -727,6 +746,7 @@ const profileMenuId = "profile-menu-pop";
             </button> */}
           </div>
           <div className="perfil" ref={profileRef}>
+
             {/* [Adicionado] Sino de notificações */}
           <NotificationBell userId={userId} className="mr-2" />
 
@@ -760,6 +780,7 @@ const profileMenuId = "profile-menu-pop";
                   )}
                   <div className="profile-meta">
                     <strong>{perfil.nome || "Usuário"}</strong>
+                    
                     <small className="muted">online</small>
                   </div>
                 </div>
@@ -772,6 +793,20 @@ const profileMenuId = "profile-menu-pop";
                   <i className="fa-regular fa-user" aria-hidden="true"></i>
                   <span>Meu perfil</span>
                 </button>
+                
+                  {/* Configurações  */} 
+                      <button
+                        className="menu-item"
+                        role="menuitem"
+                        onClick={() => { setOpenProfileMenu(false); navigate('/config'); }}
+                        title="Configurações"
+                        aria-label="Abrir configurações"
+                      >
+                        <i className="fa-solid fa-gear" aria-hidden="true"></i>
+                        <span>Configurações</span>
+                      </button>
+
+                {/* Sair */}
                 <button className="menu-item danger" onClick={handleLogout}>
                 <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                 <span>Sair</span>
