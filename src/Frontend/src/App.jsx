@@ -22,7 +22,7 @@ import Grupos from './pages/Grupos/Grupos.jsx';
 import PerfilPage from './pages/Perfil/PerfilPage.jsx'; // <-- ADICIONADO
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
 import AtividadesGrupo from "./pages/Grupos/AtividadesGrupo";
-import Configuracoes from "./pages/Configuracoes/Configuracoes";
+import Configuracoes from "./pages/Configuracoes/Configuracoes.jsx";
 
 import img1 from './assets/img1.jpg';
 import img2 from './assets/img2.jpg';
