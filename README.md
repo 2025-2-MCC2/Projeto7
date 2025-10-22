@@ -48,6 +48,15 @@ Aluno: 12345 (Login para RA)  senha:123456 <br/>
 Admin/Mentor: admin@test.com senha:123456
 
 
+# Entregas
+| Disciplinas | Entrega 1 | Entrega 2 |  
+| :-------: | :------: | :-------: |
+| web dev fullstack | [Protótipo navegável](https://projeto-interdisciplinar-webcrawlers.vercel.app/) | [Protótipo navegável](https://projeto-interdisciplinar-webcrawlers.vercel.app/) |   
+| Cálculo II | [Cálculo II](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20C%C3%A1lculo%202.pdf) | [Cálculo II](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%202/Entrega%202%20-%20C%C3%A1lculo%202.pdf) |    
+| Banco de Dados | [Banco de Dados](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Projetos%20em%20Banco%20de%20Dados.pdf) | [Banco de Dados](https://github.com/2025-2-MCC2/Projeto7/tree/main/Documentos/Entrega%202/Entrega%202%20-%20Projetos%20em%20Banco%20de%20Dados) |  
+| Gestão Empresarial | [Gestão Empresarial](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Gest%C3%A3o%20Empresarial%20e%20Din%C3%A2micas%20das%20Organiza%C3%A7%C3%B5es.pdf) | [Gestão Empresarial]() |  
+| Projeto Interdisciplinar | [Projeto Interdisciplinar](https://www.figma.com/design/d6d58QWVq8z9luoTVgzR7V/WebCrawler-s?node-id=48-2&t=Ak4S9BNHtQX5Ntdp-1) | [Projeto Interdisciplinar](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Documento%20-%20Projeto%20de%20Extens%C3%A3o%20-%20COM%20Empresa.pdf) |   
+<br/>
 
 
 ## 🛠 Estrutura de pastas
