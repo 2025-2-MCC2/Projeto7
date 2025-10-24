@@ -1471,44 +1471,6 @@ useAutoPresence({
           </div>
         </div>
       )}
-      {/* [REMOVIDO DA UI] Seção: ATIVIDADES
-          Abaixo está a seção original, deixando comentada para referência/histórico.
-          Ela NÃO é mais renderizada no Painel (aba desativada). */}
-      {/*
-      {secaoAtiva === "atividades" && (
-        <section className="grupos-section">
-          <div className="grupos-header">
-            <h2>Minhas Atividades</h2>
-            <button className="criar-grupo" onClick={() => setAbrirModalAtividade(true)}>+ Adicionar Atividade</button>
-          </div>
-          {atividades.length === 0 ? (
-            <p>Nenhuma atividade cadastrada.</p>
-          ) : (
-            <div className="atividades-lista">
-              {atividades.map((ativ) => (
-                <div key={ativ.id} className={`atividade-card ${ativ.concluida ? "concluida" : ""}`}>
-                  <div className="atividade-card__main">
-                    <input
-                      type="checkbox"
-                      checked={ativ.concluida}
-                      onChange={() => alternarConclusaoAtividade(ativ.id)}
-                      title={ativ.concluida ? "Marcar como pendente" : "Marcar como concluída"}
-                    />
-                    <div>
-                      <h3>{ativ.titulo}</h3>
-                      {ativ.descricao && <p>{ativ.descricao}</p>}
-                    </div>
-                  </div>
-                  <button className="btn btn-danger" onClick={() => removerAtividade(ativ.id)} title="Excluir atividade">
-                    Excluir
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-      */}
     </div>
   );
 }

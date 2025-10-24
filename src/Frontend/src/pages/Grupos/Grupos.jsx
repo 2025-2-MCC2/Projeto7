@@ -55,13 +55,24 @@ export default function Grupos(){
   useEffect(()=>{ const qs = new URLSearchParams(location.search); const t = qs.get('tab'); if (t && tabs.includes(t) && t !== aba) setAba(t); }, [location.search]);
 
   useEffect(()=>{
-    LS.migrate(); const t = setTimeout(()=>{
+    LS.migrate();
+    const t = setTimeout(()=>{
       try { const arr = LS.get(LS_KEYS.grupos, LS.get(LS_KEYS.legacyGrupos, [])); setGrupos(Array.isArray(arr) ? arr : []); } catch(e){ setError('Falha ao ler dados locais.'); }
       setLoading(false);
     }, 160); return ()=> clearTimeout(t);
   }, []);
 
-  useEffect(()=>{ try { LS.set(LS_KEYS.grupos, grupos); LS.set(LS_KEYS.legacyGrupos, grupos); } catch{} }, [grupos]);
+  // SALVAMENTO SEGURO: só salva depois que carregou
+  useEffect(() => {
+    if (loading) return;
+    try {
+      const safe = Array.isArray(grupos) ? grupos : [];
+      LS.set(LS_KEYS.grupos, safe);
+      LS.set(LS_KEYS.legacyGrupos, safe);
+    } catch (err) {
+      console.warn('Falha ao salvar grupos no localStorage.', err);
+    }
+  }, [grupos, loading]);
 
   const gruposFiltrados = useMemo(()=>{
     let list = [...grupos];
@@ -157,14 +168,39 @@ export default function Grupos(){
     setEditMembers(prev=>[...prev, ...parsed]); setPasteTextEdit(''); setPasteOpenEdit(false);
   };
 
+  // CORREÇÃO: atualiza estado com função prev para evitar race condition que causava perda de dados
   const onSave = (e) => {
     e.preventDefault(); if (!editId) return; setSaving(true);
-    try { setGrupos(g => g.map(x => x.id===editId ? { ...x, nome: editForm.nome.trim(), metaArrecadacao: Number(editForm.metaArrecadacao||0), metaAlimentos: editForm.metaAlimentos||'', membros: isStudent ? editMembers.filter(m => m.nome && m.ra) : x.membros, mentor: isMentor ? (perfil.nome||'Mentor') : x.mentor, mentorFotoUrl: isMentor ? (perfil.fotoUrl||'') : x.mentorFotoUrl, capaDataUrl: editCapa || undefined } : x)); setEditId(null); setMessage({ type:'success', text:'Grupo atualizado.' }); setTimeout(()=> setMessage(''), 2000); } finally { setSaving(false); }
+    try {
+      setGrupos(prev => {
+        const atualizados = prev.map(x => 
+          x.id === editId
+            ? {
+                ...x,
+                nome: editForm.nome.trim(),
+                metaArrecadacao: Number(editForm.metaArrecadacao || 0),
+                metaAlimentos: editForm.metaAlimentos || '',
+                membros: isStudent ? editMembers.filter(m => m.nome && m.ra) : x.membros,
+                mentor: isMentor ? (perfil.nome || 'Mentor') : x.mentor,
+                mentorFotoUrl: isMentor ? (perfil.fotoUrl || '') : x.mentorFotoUrl,
+                capaDataUrl: editCapa || undefined
+              }
+            : x
+        );
+        return [...atualizados];
+      });
+      setEditId(null);
+      setMessage({ type:'success', text:'Grupo atualizado.' });
+      setTimeout(()=> setMessage(''), 2000);
+    } finally { setSaving(false); }
   };
 
   const askDelete = (g) => setConfirm({ open:true, id:g.id, name:g.nome });
   const doDelete = () => { const id = confirm.id; setConfirm({open:false, id:null, name:''}); if (!id) return; setGrupos(g => g.filter(x => x.id!==id)); if (editId === id) setEditId(null); };
 
+  // =========================
+  // Render
+  // =========================
   return (
     <div className="grupos-page-container">
       <div className="grupos-page-header">
@@ -398,6 +434,22 @@ export default function Grupos(){
           </div>
         </div>
       )}
+
+      {/* Inline style para reduzir avatar do mentor e tornar circular (estilo perfil WhatsApp) */}
+      <style>
+        {`
+          .mentor-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: inline-block;
+            border: 2px solid rgba(255,255,255,0.06);
+          }
+          .mentor-pill { display: flex; align-items: center; gap:8px; }
+          .mentor-name { font-size: 0.95rem; margin-left: 4px; }
+        `}
+      </style>
     </div>
   );
 }

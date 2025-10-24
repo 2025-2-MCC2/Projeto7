@@ -1,80 +1,101 @@
-// src/config/db.js
-'use strict';
-const mysql = require('mysql2/promise');
+// src/config/db.js (ESM)
+import 'dotenv/config';
+import mysql from 'mysql2/promise';
 
 const {
   MYSQL_HOST = 'localhost',
   MYSQL_PORT = 3306,
   MYSQL_USER = 'root',
   MYSQL_PASSWORD = '',
-  MYSQL_DATABASE = 'projetoPI',
+  MYSQL_DATABASE = 'projetoPI',      // <<-- OBRIGATÓRIO (não deixe vazio em produção)
 } = process.env;
 
-let pool;
+export let pool;
 
-/**
- * Cria o database se não existir (utf8mb4).
- */
+/** Cria o database caso não exista */
 async function ensureDatabase() {
   const serverPool = await mysql.createPool({
     host: MYSQL_HOST,
     port: Number(MYSQL_PORT),
     user: MYSQL_USER,
     password: MYSQL_PASSWORD,
-    connectionLimit: 5
+    connectionLimit: 5,
   });
-  await serverPool.query(
-    `CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`
-     DEFAULT CHARACTER SET utf8mb4
-     DEFAULT COLLATE utf8mb4_unicode_ci;`
-  );
+  if (!MYSQL_DATABASE) {
+    console.warn('⚠️  MYSQL_DATABASE está vazio no .env. Defina para evitar ER_NO_DB_ERROR.');
+  } else {
+    await serverPool.query(
+      `CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`
+       DEFAULT CHARACTER SET utf8mb4
+       DEFAULT COLLATE utf8mb4_unicode_ci;`
+    );
+  }
   await serverPool.end();
 }
 
-/**
- * Garante a tabela mínima 'usuarios' (id, nome, email, created_at).
- * -> Atende à exigência de “ao menos uma tabela (ex: usuários)”.
- */
+/** Cria as tabelas usadas pelos seus controllers de auth/usuário */
 async function ensureTables() {
+  // tabela grupo
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS usuarios (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      nome VARCHAR(100) NOT NULL,
-      email VARCHAR(120) NOT NULL UNIQUE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    CREATE TABLE IF NOT EXISTS grupo (
+      ID_grupo   INT AUTO_INCREMENT PRIMARY KEY,
+      nome_grupo VARCHAR(120) NOT NULL
+    ) ENGINE=InnoDB
+      DEFAULT CHARSET=utf8mb4
+      COLLATE=utf8mb4_unicode_ci;
+  `);
+
+  // tabela usuario (NÃO "usuarios")
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS usuario (
+      ID_usuario   INT AUTO_INCREMENT PRIMARY KEY,
+      RA           VARCHAR(32)  NULL,
+      nome_usuario VARCHAR(120) NOT NULL,
+      email        VARCHAR(160) NULL,
+      senha        VARCHAR(255) NOT NULL,
+      cargo        VARCHAR(32)  NOT NULL,        -- 'adm' | 'mentor' | 'aluno'
+      ID_grupo     INT NULL,
+      foto_url     VARCHAR(500) NULL,
+      UNIQUE KEY uq_usuario_email (email),
+      UNIQUE KEY uq_usuario_ra (RA),
+      CONSTRAINT fk_usuario_grupo FOREIGN KEY (ID_grupo) REFERENCES grupo(ID_grupo)
+        ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB
       DEFAULT CHARSET=utf8mb4
       COLLATE=utf8mb4_unicode_ci;
   `);
 }
 
-/**
- * Inicializa pool conectado ao DB e garante tabelas.
- */
-async function initDb() {
+/** Inicializa pool já apontando para o DB e garante tabelas */
+export async function initDb() {
   await ensureDatabase();
   pool = await mysql.createPool({
     host: MYSQL_HOST,
     port: Number(MYSQL_PORT),
     user: MYSQL_USER,
     password: MYSQL_PASSWORD,
-    database: MYSQL_DATABASE,
+    database: MYSQL_DATABASE || undefined, // se vazio, ER_NO_DB_ERROR
+    waitForConnections: true,
     connectionLimit: 10,
+    queueLimit: 0,
     multipleStatements: false,
     charset: 'utf8mb4_unicode_ci',
   });
-  await ensureTables();
-  return pool;
-}
 
-/**
- * Retorna o pool de conexão.
- */
-function getDb() {
-  if (!pool) {
-    throw new Error('Pool MySQL não inicializado. Chame initDb() no bootstrap.');
+  await ensureTables();
+
+  // Log do DB ativo
+  try {
+    const [r] = await pool.query('SELECT DATABASE() AS db');
+    console.log(`🗄️  MySQL conectado. DATABASE() = ${r?.[0]?.db || '(nenhum selecionado)'}`);
+  } catch (e) {
+    console.error('❌ Falha ao testar conexão MySQL:', e?.message || e);
   }
   return pool;
 }
 
-module.exports = { initDb, getDb };
+/** Acesse o pool depois de initDb() */
+export function getDb() {
+  if (!pool) throw new Error('Pool MySQL não inicializado. Chame initDb() no bootstrap.');
+  return pool;
+}

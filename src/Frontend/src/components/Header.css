@@ -1,0 +1,93 @@
+/* Header corrigido */
+.app-header {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #1b4332, #2d6a4f);
+    color: white;
+    z-index: 1000;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  
+  .header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  
+  /* === BRAND (Logo + Textos) === */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .brand__logo {
+    height: 70px; /* ajuste o tamanho do logo */
+    width: auto;
+    border-radius: 50%; /* opcional: deixa redondo */
+    object-fit: contain;
+  }
+  
+  .brand__text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+  }
+  
+  .brand__title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+  
+  .brand__subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  
+  /* === BOTÃO === */
+  nav .btn-pill {
+    padding: 0.5rem 1.2rem;
+    font-size: 0.95rem;
+    border-radius: 50px;
+    background-color: #e0f2f1;
+    color: #1b4332;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  nav .btn-pill:hover {
+    background-color: #b2dfdb;
+  }
+  
+  /* === RESPONSIVO === */
+  @media (max-width: 768px) {
+    .header-inner {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  
+    .brand__logo {
+      height: 55px;
+    }
+  
+    .brand__title {
+      font-size: 1.1rem;
+    }
+  
+    .brand__subtitle {
+      font-size: 0.8rem;
+    }
+  }
+  
