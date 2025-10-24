@@ -4,10 +4,17 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-
 import { initDb } from './DataBase/db.js';
+import path from 'node:path';
+
+import profileRoutes from './routes/profile.routes.js';
+import presenceRoutes from './routes/presence.routes.js';
+import dashboardRoutes from "./routes/dashboard.routes.js";
+import doacoesRoutes from './routes/doacoes.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import usuarioRoutes from './routes/user.routes.js';
+import mainRoutes from './routes.js';                        // <— se quiser centralizar tudo
+
 
 const app = express();
 
@@ -22,9 +29,23 @@ app.use(cookieParser());
 // Rotas
 app.use('/api', authRoutes);
 app.use('/api/usuario', usuarioRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/presence', presenceRoutes);
+app.use("/api", doacoesRoutes);
+app.use("/api", dashboardRoutes);
+app.use('/api', mainRoutes);  
 
-// Healthcheck
+// Health check
 app.get(['/health', '/api/health'], (_req, res) => res.json({ ok: true }))
+
+
+// servir uploads estaticamente
+const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
+app.use('/uploads', express.static(UPLOADS_DIR, {
+  maxAge: '7d',
+  etag: true,
+}));
+
 
 // Inicializa DB e só então sobe o servidor
 await initDb();

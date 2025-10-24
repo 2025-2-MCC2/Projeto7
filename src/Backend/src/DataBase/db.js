@@ -37,15 +37,18 @@ async function ensureDatabase() {
 async function ensureTables() {
   // tabela grupo
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS grupo (
-      ID_grupo   INT AUTO_INCREMENT PRIMARY KEY,
-      nome_grupo VARCHAR(120) NOT NULL
-    ) ENGINE=InnoDB
-      DEFAULT CHARSET=utf8mb4
-      COLLATE=utf8mb4_unicode_ci;
-  `);
+   CREATE TABLE IF NOT EXISTS grupo (
+  ID_grupo           INT AUTO_INCREMENT PRIMARY KEY,
+  nome               VARCHAR(120) NOT NULL,
+  meta_arrecadacao   DECIMAL(12,2) DEFAULT 0,
+  meta_alimentos     VARCHAR(120),
+  capa_url           VARCHAR(255),
+  mentor_id          INT NULL,
+  criado_em          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em      DATETIME NULL ON UPDATE CURRENT_TIMESTAMP
+`);
 
-  // tabela usuario (NÃO "usuarios")
+  // tabela usuario 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS usuario (
       ID_usuario   INT AUTO_INCREMENT PRIMARY KEY,

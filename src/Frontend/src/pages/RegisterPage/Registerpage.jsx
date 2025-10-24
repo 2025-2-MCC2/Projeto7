@@ -1,94 +1,64 @@
-// src/pages/RegisterPage/RegisterPage.jsx
+// src/pages/RegisterPage/Registerpage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './RegisterPage.css';
 import { FaUser, FaLock, FaIdCard, FaEnvelope, FaPhone } from 'react-icons/fa';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import { api } from '../../auth/api'; // usa VITE_API_URL como base
 
 export default function RegisterPage() {
-  // tipo do usuário (mantido do seu fluxo anterior)
-  const [userType, setUserType] = useState('aluno'); // 'aluno' | 'mentor'
+  // tipo do usuário (aluno | mentor)
+  const [userType, setUserType] = useState('aluno');
 
-  // formulário (mantendo o padrão de agrupamento de campos)
+  // formulário
   const [name, setName] = useState('');
-  const [ra, setRa] = useState('');          // aluno
+  const [ra, setRa] = useState('');       // aluno
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');    // mentor
+  const [phone, setPhone] = useState(''); // mentor
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
- // UI states
-const [showPassword, setShowPassword] = useState(false); // Controla o primeiro campo de senha
-const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Controla o segundo campo de senha
-const [message, setMessage] = useState('');
+  // UI states
+  const [showPassword, setShowPassword] = useState(false); // toggle apenas da 1ª senha
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
-  // se já estiver autenticado, vai para o painel
+  // Se já estiver autenticado, vai para o painel
   useEffect(() => {
     if (localStorage.getItem('auth')) {
       navigate('/painel', { replace: true });
     }
   }, [navigate]);
 
-  // helpers de storage
-  const getUsers = () => {
-    try {
-      return JSON.parse(localStorage.getItem('users')) || [];
-    } catch {
-      return [];
-    }
-  };
-  const setUsers = (arr) => localStorage.setItem('users', JSON.stringify(arr));
-
-  // sanitizações no mesmo estilo
+  // sanitizações
   const sanitizeRA = (v) => v.replace(/\D/g, '').slice(0, 20);
   const sanitizePhone = (v) => v.replace(/\D/g, '').slice(0, 15);
 
-  // validações simples com primeira mensagem de erro (mantendo seu padrão de 1 mensagem)
+  // validações simples
   const validate = () => {
-    if (!name || name.trim().length < 2) {
-      return '❌ Informe seu nome (min. 2 caracteres).';
-    }
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      return '❌ Informe um e-mail válido.';
-    }
-    if (!password || password.length < 6) {
-      return '❌ Senha com no mínimo 6 caracteres.';
-    }
-    if (password !== confirm) {
-      return '❌ As senhas não conferem.';
-    }
-
-    const users = getUsers();
-
-    // unicidade por e-mail
-    const emailInUse = users.some((u) => (u.email || '').toLowerCase() === email.trim().toLowerCase());
-    if (emailInUse) {
-      return '❌ Este e-mail já está cadastrado.';
-    }
+    if (!name || name.trim().length < 2) return '❌ Informe seu nome (min. 2 caracteres).';
+    if (!email || !/\S+@\S+\.\S+/.test(email)) return '❌ Informe um e-mail válido.';
+    if (!password || password.length < 6) return '❌ Senha com no mínimo 6 caracteres.';
+    if (password !== confirm) return '❌ As senhas não conferem.';
 
     if (userType === 'aluno') {
       if (!ra) return '❌ Informe seu RA.';
       if (ra.length < 4) return '❌ RA muito curto.';
-      const raInUse = users.some((u) => (u.ra || '') === ra);
-      if (raInUse) return '❌ Este RA já está cadastrado.';
     } else {
-      // mentor
       if (!phone) return '❌ Informe seu telefone.';
       if (phone.length < 10) return '❌ Telefone inválido (use DDD + número).';
-      // Se quiser checar unicidade de telefone, descomente:
-      // const phoneInUse = users.some((u) => (u.phone || '') === phone);
-      // if (phoneInUse) return '❌ Este telefone já está cadastrado.';
     }
-
-    return ''; // ok
+    return '';
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
+    setMessage('');
+    setSubmitting(true);
 
-    // normaliza antes (mantendo o estilo de atualização simples)
+    // normaliza dados
     const normalized = {
       type: userType,
       name: (name || '').trim(),
@@ -98,38 +68,88 @@ const [message, setMessage] = useState('');
       password: password || '',
     };
 
-    // reflete normalização nos inputs que precisam
+    // reflete normalizações nos inputs
     if (normalized.ra !== ra) setRa(normalized.ra);
     if (normalized.phone !== phone) setPhone(normalized.phone);
     if (normalized.email !== email) setEmail(normalized.email);
 
+    // validações
     const validationMsg = validate();
     if (validationMsg) {
       setMessage(validationMsg);
+      setSubmitting(false);
       return;
     }
 
-    // salva usuário
-    const users = getUsers();
-    const newUser = { ...normalized };
-    setUsers([newUser, ...users]);
+    try {
+      // 1) Cria usuário no backend
+      // Backend espera: RA, nome_usuario, email, senha, cargo ('aluno'|'mentor'), ID_grupo
+      const payload = {
+        RA: userType === 'aluno' ? normalized.ra : null,
+        nome_usuario: normalized.name,
+        email: normalized.email,
+        senha: normalized.password,
+        cargo: userType,      // 'aluno' ou 'mentor'
+        ID_grupo: null,
+      };
 
-    // autentica e monta perfil (mantendo seu padrão)
-    localStorage.setItem('auth', 'true');
-    localStorage.setItem(
-      'perfil',
-      JSON.stringify({
-        nome: newUser.name,
-        email: newUser.email,
-        ra: newUser.ra || '',
-        telefone: newUser.phone || '',
-        tipo: newUser.type,
-        fotoUrl: '',
-      })
-    );
+      await api.post('/usuario', payload);
 
-    setMessage('✅ Conta criada! Redirecionando...');
-    setTimeout(() => navigate('/painel'), 800);
+      // 2) Autologin
+      const method = userType === 'aluno' ? 'ra' : 'email';
+      const identifier = userType === 'aluno' ? normalized.ra : normalized.email;
+
+      const respLogin = await api.post('/auth/login', {
+        method,
+        identifier,
+        senha: normalized.password,
+      });
+
+      const u = respLogin?.data?.user;
+      if (!u?.tipo) {
+        throw new Error('Retorno inesperado do login.');
+      }
+
+      // 3) Persistência local (compat com ProtectedRoute)
+      localStorage.setItem('auth', 'true'); // compat com guards antigos
+
+      const foto = u.fotoUrl || ''; // se vier do backend, mantém; senão vazio
+      const perfil = {
+        tipo: u.tipo,
+        nome: u.nome || normalized.name,
+        email: u.email || (userType === 'mentor' ? normalized.email : ''),
+        ra: u.ra || (userType === 'aluno' ? normalized.ra : ''),
+        grupoId: u.grupoId || null,
+        grupoNome: u.grupoNome || null,
+        fotoUrl: foto,
+      };
+      localStorage.setItem('perfil', JSON.stringify(perfil));
+
+      // aluno/mentor: salvar ultimoLogin (ADM não se registra aqui)
+      localStorage.setItem(
+        'ultimoLogin',
+        JSON.stringify({
+          id: u.id,
+          tipo: u.tipo,
+          nome: perfil.nome,
+          email: perfil.email,
+          ra: perfil.ra,
+          fotoUrl: foto,
+        })
+      );
+
+      setMessage('✅ Conta criada! Entrando…');
+      navigate('/painel', { replace: true }); // vai direto para o painel
+    } catch (err) {
+      // Trata erros comuns do backend
+      const apiMsg =
+        err?.response?.data?.error ||
+        (err?.response?.status === 409 ? 'RA ou e-mail já cadastrados.' : null) ||
+        '❌ Erro ao criar a conta. Tente novamente.';
+      setMessage(apiMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -138,7 +158,7 @@ const [message, setMessage] = useState('');
         <h2 className="register-title">Criar Conta</h2>
         <p className="register-subtitle">Junte-se à nossa comunidade!</p>
 
-        {/* seleção de tipo (mantida do seu fluxo) */}
+        {/* seleção de tipo (Aluno | Mentor) */}
         <div className="user-type-selection">
           <button
             type="button"
@@ -156,7 +176,7 @@ const [message, setMessage] = useState('');
           </button>
         </div>
 
-        <form onSubmit={handleRegister}>
+        <form onSubmit={handleRegister} className="register-form" noValidate>
           {/* Nome */}
           <div className="input-group">
             <label>Nome</label>
@@ -168,11 +188,12 @@ const [message, setMessage] = useState('');
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                autoComplete="name"
               />
             </div>
           </div>
 
-          {/* Campos específicos por tipo */}
+          {/* Campos específicos */}
           {userType === 'aluno' ? (
             <div className="input-group">
               <label>RA (Registro do Aluno)</label>
@@ -184,6 +205,9 @@ const [message, setMessage] = useState('');
                   value={ra}
                   onChange={(e) => setRa(sanitizeRA(e.target.value))}
                   required
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -198,6 +222,7 @@ const [message, setMessage] = useState('');
                   value={phone}
                   onChange={(e) => setPhone(sanitizePhone(e.target.value))}
                   required
+                  inputMode="tel"
                 />
               </div>
             </div>
@@ -214,58 +239,62 @@ const [message, setMessage] = useState('');
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
               />
             </div>
           </div>
 
-   {/* Senha (Com o toggle) */}
-<div className="input-group">
-  <label>Senha</label>
-  <div className="input-icon">
-    <FaLock className="icon" />
-    <input
-      type={showPassword ? 'text' : 'password'}
-      placeholder="Mín. 6 caracteres"
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      required
-    />
-    <div
-      className="password-toggle"
-      onClick={() => setShowPassword(!showPassword)}
-      role="button"
-      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-      title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-    >
-      {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-    </div>
-  </div>
-</div>
+          {/* Senha (com toggle) */}
+          <div className="input-group">
+            <label>Senha</label>
+            <div className="input-icon">
+              <FaLock className="icon" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Mín. 6 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+              <div
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                role="button"
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+              </div>
+            </div>
+          </div>
 
-{/* Confirmar senha (Sempre oculto e SEM o toggle) */}
-<div className="input-group">
-  <label>Confirmar senha</label>
-  <div className="input-icon">
-    <FaLock className="icon" />
-    <input
-      // O tipo aqui é fixo, garantindo que a senha fique sempre oculta.
-      type="password"
-      placeholder="Repita a senha"
-      value={confirm}
-      onChange={(e) => setConfirm(e.target.value)}
-      required
-    />
-    {/* Note que removemos toda a div 'password-toggle' daqui */}
-  </div>
-</div>
-          <button type="submit" className="register-submit">
-            Criar Conta
+          {/* Confirmar senha (sempre oculto e sem toggle) */}
+          <div className="input-group">
+            <label>Confirmar senha</label>
+            <div className="input-icon">
+              <FaLock className="icon" />
+              <input
+                type="password"
+                placeholder="Repita a senha"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+
+          <button type="submit" className="register-submit" disabled={submitting}>
+            {submitting ? 'Criando…' : 'Criar Conta'}
           </button>
 
           {message && (
             <p
               className="register-message"
-              style={{ color: message.includes('sucesso') || message.includes('✅') ? '#2e7d32' : '#e53935' }}
+              style={{ color: message.startsWith('✅') ? '#2e7d32' : '#e53935' }}
+              role="status"
+              aria-live={message.startsWith('✅') ? 'polite' : 'assertive'}
             >
               {message}
             </p>
