@@ -3,13 +3,70 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Grupos.css';
 
+/**
+ * Grupos.jsx (Unificado)
+ * - Combina lógica antiga (localStorage, capa base64, auto-atribuição de mentor)
+ *   com o novo comportamento rotas backend (GET/POST/PUT/DELETE /api/grupos).
+ * - Ao criar/editar/excluir atualiza:
+ *    1) estado local (setGrupos)
+ *    2) localStorage (keys: le_grupos_v2, grupos) para compat com PainelInicial
+ *
+ * Regras:
+ * - Mentor: quando cria -> atribuído como mentor e também membro
+ * - Aluno: quando cria -> atribuído automaticamente como membro (não mentor)
+ * - Ambos podem subir uma imagem de capa (capaDataUrl) em base64 que é enviada ao backend
+ *
+ * Nota: para testes off-line, mantenho alguns helpers de LS/migrate.
+ */
+
 /* =========================
    Config da API
    ========================= */
 const API_BASE = '/api'; // ajuste se necessário
 
 /* =========================
-   Helpers / Utils
+   LocalStorage helpers (compatibilidade com antigo)
+   ========================= */
+const LS_KEYS = {
+  grupos: 'le_grupos_v2',
+  legacyGrupos: 'grupos',
+};
+
+const LS = {
+  get(key, fb) {
+    try {
+      const v = localStorage.getItem(key);
+      return v ? JSON.parse(v) : fb;
+    } catch {
+      return fb;
+    }
+  },
+  set(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch {}
+  },
+  migrate() {
+    try {
+      const novo = localStorage.getItem(LS_KEYS.grupos);
+      const legado = localStorage.getItem(LS_KEYS.legacyGrupos);
+      if (!novo && legado) {
+        localStorage.setItem(LS_KEYS.grupos, legado);
+      }
+    } catch {}
+  },
+  clearOnlyGrupos() {
+    try {
+      localStorage.removeItem(LS_KEYS.grupos);
+      localStorage.removeItem(LS_KEYS.legacyGrupos);
+    } catch {}
+  },
+};
+
+if (typeof window !== 'undefined') window.__LE_CLEAR_GRUPOS__ = () => LS.clearOnlyGrupos();
+
+/* =========================
+   Utils
    ========================= */
 const currency = (v) =>
   (Number(v ?? 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -18,32 +75,40 @@ const initials = (name = '?') =>
   String(name).trim().split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
 
 /* =========================
-   Componente
+   Componente principal
    ========================= */
 export default function Grupos() {
-  /* Perfil (mantendo sua lógica) */
+  /* -------------------------
+     Perfil (do localStorage)
+     ------------------------- */
   const [perfil] = useState(() => {
     try { return JSON.parse(localStorage.getItem('perfil')) ?? {}; } catch { return {}; }
   });
-  const isStudent   = perfil.tipo === 'aluno';
-  const isMentor    = perfil.tipo === 'mentor';
-  const isAdmin     = perfil.tipo === 'adm';
+  const isStudent = perfil.tipo === 'aluno';
+  const isMentor  = perfil.tipo === 'mentor';
+  const isAdmin   = perfil.tipo === 'adm';
   const isMentorLike = isMentor || isAdmin;
 
+  /* -------------------------
+     Router & navegação
+     ------------------------- */
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* Estados de carregamento/erro/mensagem */
+  /* -------------------------
+     Estados globais
+     ------------------------- */
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  /* Dados */
   const [grupos, setGrupos] = useState([]);
   const [q, setQ] = useState('');
   const [order, setOrder] = useState('recentes'); // recentes | a_z | z_a
 
-  /* Abas (criar/editar) */
+  /* -------------------------
+     Abas
+     ------------------------- */
   const tabs = ['criar', 'editar'];
   const [aba, setAba] = useState(() => {
     const qs = new URLSearchParams(location.search);
@@ -55,54 +120,80 @@ export default function Grupos() {
     const qs = new URLSearchParams(location.search);
     const t = qs.get('tab');
     if (t && tabs.includes(t) && t !== aba) setAba(t);
-  }, [location.search]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   /* =========================
-     Carregar lista do backend
+     Inicialização: carregar grupos (backend -> fallback localStorage)
      ========================= */
   useEffect(() => {
+    LS.migrate();
+
     let abort = false;
     (async () => {
       setLoading(true);
       setError('');
       try {
-        const r = await fetch(`${API_BASE}/grupos`);
-        if (!r.ok) throw new Error('Falha ao carregar grupos');
-        const data = await r.json();
-        if (!abort) setGrupos(Array.isArray(data) ? data : []);
+        const resp = await fetch(`${API_BASE}/grupos`);
+        if (!resp.ok) {
+          // fallback: tenta ler do localStorage se backend indisponível
+          throw new Error('Falha ao carregar do servidor');
+        }
+        const data = await resp.json();
+        if (!abort) {
+          setGrupos(Array.isArray(data) ? data : []);
+          // manter compat com PainelInicial: atualiza localStorage
+          LS.set(LS_KEYS.grupos, Array.isArray(data) ? data : []);
+          LS.set(LS_KEYS.legacyGrupos, Array.isArray(data) ? data : []);
+        }
       } catch (e) {
-        if (!abort) setError(e?.message ?? 'Erro ao carregar grupos.');
+        // tenta ler do localStorage
+        try {
+          const arr = LS.get(LS_KEYS.grupos, LS.get(LS_KEYS.legacyGrupos, []));
+          if (!abort) setGrupos(Array.isArray(arr) ? arr : []);
+        } catch (er) {
+          if (!abort) setError('Erro ao carregar grupos.');
+        }
       } finally {
         if (!abort) setLoading(false);
       }
     })();
+
     return () => { abort = true; };
   }, []);
 
+  // sempre manter localStorage em sincronia com estado
+  useEffect(() => {
+    try {
+      LS.set(LS_KEYS.grupos, grupos);
+      LS.set(LS_KEYS.legacyGrupos, grupos);
+    } catch {}
+  }, [grupos]);
+
   /* =========================
-     Filtros e ordenação
+     Filtragem e ordenação
      ========================= */
   const gruposFiltrados = useMemo(() => {
     let list = Array.isArray(grupos) ? [...grupos] : [];
     if (q.trim()) {
       const s = q.toLowerCase();
       list = list.filter(g =>
-        g.nome?.toLowerCase()?.includes(s) ||
-        g.mentor?.toLowerCase()?.includes(s) ||
+        (g.nome ?? '').toLowerCase().includes(s) ||
+        (g.mentor ?? '').toLowerCase().includes(s) ||
         (g.membros ?? []).some(m =>
-          m.nome?.toLowerCase()?.includes(s) ||
+          (m.nome ?? '').toLowerCase().includes(s) ||
           String(m.ra ?? '').includes(s)
         )
       );
     }
-    if (order === 'a_z')      list.sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+    if (order === 'a_z') list.sort((a,b)=> String(a.nome).localeCompare(String(b.nome),'pt-BR'));
     else if (order === 'z_a') list.sort((a,b)=> String(b.nome).localeCompare(String(a.nome),'pt-BR'));
-    else                      list.sort((a,b)=> Number(b.id)-Number(a.id)); // recentes
+    else list.sort((a,b)=> Number(b.id) - Number(a.id)); // recentes por id (backend deve prover id incremental)
     return list;
   }, [grupos, q, order]);
 
   /* =========================
-     Badges de status
+     Badges & Helpers
      ========================= */
   const getStatusBadges = (g) => {
     const out = [];
@@ -118,21 +209,39 @@ export default function Grupos() {
   };
 
   /* =========================
-     Criar grupo
+     CRIAR GRUPO
      ========================= */
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ nome: '', metaArrecadacao: '', metaAlimentos: '' });
   const [createMembers, setCreateMembers] = useState(() =>
-    isStudent
-      ? [{ nome: perfil.nome ?? '', ra: perfil.ra ?? '', telefone: '' }]
-      : [{ nome: '', ra: '', telefone: '' }]
+    isStudent ? [{ nome: perfil.nome ?? '', ra: perfil.ra ?? '', telefone: '' }] : [{ nome: '', ra: '', telefone: '' }]
   );
 
-  // Colagem em massa
+  // capa (base64) - herdado do antigo
+  const [capaUrl, setCapaUrl] = useState('');
+  const capaRef = useRef(null);
+  const onPickCapa = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type?.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Selecione uma imagem válida.' });
+      return;
+    }
+    const rd = new FileReader();
+    rd.onload = () => setCapaUrl(String(rd.result));
+    rd.readAsDataURL(f);
+  };
+  const removeCapa = () => {
+    setCapaUrl('');
+    if (capaRef.current) capaRef.current.value = '';
+  };
+
+  // Paste members (bulk)
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const parseLine = (line) => {
-    const raw = line.trim(); if (!raw) return null;
+    const raw = line.trim();
+    if (!raw) return null;
     let parts = raw.split(/[;,\t]|\s{2,}/).map(s=>s.trim()).filter(Boolean);
     if (parts.length === 1) {
       const m = raw.match(/^(.*)\s+([A-Za-z0-9\-\_\.]+)$/);
@@ -165,47 +274,98 @@ export default function Grupos() {
   const onCreate = async (e) => {
     e.preventDefault();
     if (!createValid) {
-      setMessage({ type:'error', text:'Preencha os campos obrigatórios.' });
+      setMessage({ type: 'error', text: 'Preencha os campos obrigatórios.' });
       return;
     }
     setCreating(true);
     try {
+      // preparar membros: se mentor -> adiciona mentor também como membro
+      const autoMember = isMentor ? { nome: perfil.nome || '', ra: perfil.ra || '', telefone: perfil.telefone || '' }
+                       : isStudent ? { nome: perfil.nome || '', ra: perfil.ra || '', telefone: perfil.telefone || '' }
+                       : null;
+
+      // merge members: garantir que o autor apareça primeiro (se aplicável) e sem duplicatas por RA
+      const incoming = createMembers.filter(m => m.nome && m.ra);
+      const merged = [];
+      if (autoMember) merged.push(autoMember);
+      incoming.forEach(im => {
+        const exists = merged.some(x => String(x.ra) === String(im.ra));
+        if (!exists) merged.push(im);
+      });
+
       const payload = {
         nome: createForm.nome.trim(),
         metaArrecadacao: isStudent ? 0 : Number(createForm.metaArrecadacao ?? 0),
         metaAlimentos: isStudent ? '' : (createForm.metaAlimentos ?? ''),
-        membros: createMembers.filter(m => m.nome && m.ra),
+        membros: merged,
+        mentor: isMentor ? perfil.nome || undefined : undefined,
+        mentorFotoUrl: isMentor ? perfil.fotoUrl || undefined : undefined,
+        capaDataUrl: capaUrl || undefined,
       };
-      const r = await fetch(`${API_BASE}/grupos`, {
+
+      // POST para backend
+      const resp = await fetch(`${API_BASE}/grupos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!r.ok) throw new Error('Erro ao criar grupo');
-      const novo = await r.json();
-      setGrupos(prev => [novo, ...prev]);
 
-      // limpa UI
-      setCreateForm({ nome:'', metaArrecadacao:'', metaAlimentos:'' });
-      setCreateMembers(isStudent
-        ? [{ nome: perfil.nome ?? '', ra: perfil.ra ?? '', telefone:'' }]
-        : [{ nome:'', ra:'', telefone:'' }]);
-      setMessage({ type:'success', text:'Grupo criado com sucesso!' });
+      if (!resp.ok) {
+        // tenta extrair mensagem do servidor
+        let msg = 'Erro ao criar grupo';
+        try {
+          const json = await resp.json();
+          if (json?.error) msg = json.error;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      const novo = await resp.json();
+
+      // atualiza estado local e LS
+      setGrupos(prev => [novo, ...prev]);
+      LS.set(LS_KEYS.grupos, [novo, ...LS.get(LS_KEYS.grupos, [])]);
+      LS.set(LS_KEYS.legacyGrupos, [novo, ...LS.get(LS_KEYS.legacyGrupos, [])]);
+
+      // UI cleanup
+      setCreateForm({ nome: '', metaArrecadacao: '', metaAlimentos: '' });
+      setCreateMembers(isStudent ? [{ nome: perfil.nome ?? '', ra: perfil.ra ?? '', telefone: '' }] : [{ nome: '', ra: '', telefone: '' }]);
+      removeCapa();
+      setMessage({ type: 'success', text: 'Grupo criado com sucesso!' });
       setTimeout(() => setMessage(''), 2000);
       setAba('editar');
-    } catch (e2) {
-      setMessage({ type:'error', text: e2?.message ?? 'Erro ao criar grupo.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: err?.message ?? 'Erro ao criar grupo.' });
     } finally {
       setCreating(false);
     }
   };
 
   /* =========================
-     Editar grupo
+     EDITAR GRUPO
      ========================= */
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({ nome:'', metaArrecadacao:'', metaAlimentos:'' });
   const [editMembers, setEditMembers] = useState([{ nome:'', ra:'', telefone:'' }]);
+  const [editCapa, setEditCapa] = useState('');
+  const editCapaRef = useRef(null);
+
+  // pick edit cover (base64)
+  const onPickEditCapa = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type?.startsWith('image/')) {
+      setMessage({ type:'error', text:'Selecione uma imagem válida.' });
+      return;
+    }
+    const rd = new FileReader();
+    rd.onload = () => setEditCapa(String(rd.result));
+    rd.readAsDataURL(f);
+  };
+  const removeEditCapa = () => {
+    setEditCapa('');
+    if (editCapaRef.current) editCapaRef.current.value = '';
+  };
 
   const startEdit = (g) => {
     setEditId(g.id);
@@ -214,15 +374,12 @@ export default function Grupos() {
       metaArrecadacao: String(g.metaArrecadacao ?? ''),
       metaAlimentos: g.metaAlimentos ?? '',
     });
-    setEditMembers(
-      (g.membros?.length ? g.membros : [{ nome:'', ra:'', telefone:'' }]).map(m => ({
-        ...m, telefone: m.telefone ?? ''
-      }))
-    );
+    setEditMembers((g.membros?.length ? g.membros : [{ nome:'', ra:'', telefone:'' }]).map(m => ({ ...m, telefone: m.telefone || '' })));
+    setEditCapa(g.capaDataUrl || g.capaUrl || '');
     window.scrollTo(0,0);
   };
 
-  // Colagem em massa (editar)
+  // paste members edit
   const [pasteOpenEdit, setPasteOpenEdit] = useState(false);
   const [pasteTextEdit, setPasteTextEdit] = useState('');
   const onPasteMembersEdit = () => {
@@ -248,20 +405,38 @@ export default function Grupos() {
         nome: editForm.nome.trim(),
         metaArrecadacao: Number(editForm.metaArrecadacao ?? 0),
         metaAlimentos: editForm.metaAlimentos ?? '',
-        // Regra atual: aluno pode editar membros do seu grupo (mantendo sua ideia)
         membros: isStudent ? editMembers.filter(m => m.nome && m.ra) : undefined,
+        // se mentor (criador) estiver editando, atualiza info de mentor no grupo:
+        mentor: isMentor ? (perfil.nome || undefined) : undefined,
+        mentorFotoUrl: isMentor ? (perfil.fotoUrl || undefined) : undefined,
+        capaDataUrl: editCapa || undefined,
       };
+
       const r = await fetch(`${API_BASE}/grupos/${editId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!r.ok) throw new Error('Falha ao salvar grupo');
+
+      if (!r.ok) {
+        let msg = 'Falha ao salvar grupo';
+        try {
+          const j = await r.json();
+          if (j?.error) msg = j.error;
+        } catch {}
+        throw new Error(msg);
+      }
+
       const atualizado = await r.json();
       setGrupos(prev => prev.map(x => x.id === editId ? atualizado : x));
+      // atualizar localStorage
+      const all = LS.get(LS_KEYS.grupos, []).map(x => x.id === editId ? atualizado : x);
+      LS.set(LS_KEYS.grupos, all);
+      LS.set(LS_KEYS.legacyGrupos, all);
+
       setEditId(null);
       setMessage({ type:'success', text:'Grupo atualizado.' });
-      setTimeout(() => setMessage(''), 2000);
+      setTimeout(()=> setMessage(''), 2000);
     } catch (e2) {
       setMessage({ type:'error', text: e2?.message ?? 'Erro ao salvar.' });
     } finally {
@@ -270,7 +445,7 @@ export default function Grupos() {
   };
 
   /* =========================
-     Exclusão
+     EXCLUIR GRUPO
      ========================= */
   const [confirm, setConfirm] = useState({ open:false, id:null, name:'' });
   const askDelete = (g) => setConfirm({ open:true, id:g.id, name:g.nome });
@@ -279,9 +454,19 @@ export default function Grupos() {
     setConfirm({ open:false, id:null, name:'' });
     if (!id) return;
     try {
-      const r = await fetch(`${API_BASE}/grupos/${id}`, { method:'DELETE' });
-      if (!r.ok) throw new Error('Falha ao excluir');
-      setGrupos(g => g.filter(x => x.id !== id));
+      const r = await fetch(`${API_BASE}/grupos/${id}`, { method: 'DELETE' });
+      if (!r.ok) {
+        let msg = 'Falha ao excluir';
+        try { const j = await r.json(); if (j?.error) msg = j.error; } catch {}
+        throw new Error(msg);
+      }
+
+      setGrupos(prev => prev.filter(x => x.id !== id));
+      // atualizar LS
+      const all = LS.get(LS_KEYS.grupos, []).filter(x => x.id !== id);
+      LS.set(LS_KEYS.grupos, all);
+      LS.set(LS_KEYS.legacyGrupos, all);
+
       if (editId === id) setEditId(null);
       setMessage({ type:'success', text:'Grupo excluído.' });
       setTimeout(() => setMessage(''), 1500);
@@ -291,7 +476,7 @@ export default function Grupos() {
   };
 
   /* =========================
-     Render
+     Render completo (UI)
      ========================= */
   return (
     <div className="grupos-page-container">
@@ -312,12 +497,14 @@ export default function Grupos() {
             placeholder="Buscar por nome, mentor ou membro"
           />
         </div>
+
         <div className="right">
           <select className="input" value={order} onChange={(e)=>setOrder(e.target.value)}>
             <option value="recentes">Mais recentes</option>
             <option value="a_z">A–Z</option>
             <option value="z_a">Z–A</option>
           </select>
+
           <div className="tabs">
             <button
               className={`btn-secondary ${aba==='criar'?'active':''}`}
@@ -408,7 +595,7 @@ export default function Grupos() {
                     </div>
                   ))}
 
-                  <div className="paste-row">
+                  <div className="paste-row" style={{ marginTop: 8 }}>
                     <button type="button" className="btn-secondary" onClick={()=> setPasteOpen(o=>!o)}>
                       Colar lista de membros
                     </button>
@@ -434,6 +621,7 @@ export default function Grupos() {
                       type="button"
                       className="btn-secondary"
                       onClick={()=> setCreateMembers(prev => [...prev, { nome:'', ra:'', telefone:'' }])}
+                      style={{ marginTop: 10 }}
                     >
                       Adicionar Membro
                     </button>
@@ -464,6 +652,20 @@ export default function Grupos() {
                   </>
                 )}
 
+                <div className="form-group">
+                  <label>Imagem de capa (opcional)</label>
+                  {capaUrl ? (
+                    <div className="cover-preview">
+                      <img src={capaUrl} alt="Capa do grupo" />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button type="button" className="btn-danger" onClick={removeCapa}>Remover capa</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <input ref={capaRef} type="file" accept="image/*" onChange={onPickCapa} />
+                  )}
+                </div>
+
                 <div className="form-actions">
                   <button type="submit" className="btn-primary" disabled={creating || !createValid}>
                     {creating ? 'Criando…' : 'Criar Grupo'}
@@ -478,23 +680,21 @@ export default function Grupos() {
             <>
               <div className="list-card">
                 <h2>Grupos Existentes</h2>
+
                 {gruposFiltrados.length === 0 ? (
                   <p>{isStudent ? 'Você ainda não faz parte de um grupo.' : 'Nenhum grupo encontrado.'}</p>
                 ) : (
                   <ul className="grupos-list">
                     {gruposFiltrados.map(g => {
                       const badges = getStatusBadges(g);
-                      const percent = Math.min(
-                        ((Number(g.progressoArrecadacao ?? 0) / Math.max(Number(g.metaArrecadacao ?? 1), 1)) * 100),
-                        100
-                      );
+                      const percent = Math.min(((Number(g.progressoArrecadacao ?? 0) / Math.max(Number(g.metaArrecadacao ?? 1), 1)) * 100), 100);
 
                       return (
                         <li key={g.id} className="grupo-item">
                           <div className="grupo-cover">
                             {g.capaDataUrl
                               ? <img src={g.capaDataUrl} alt="Capa do grupo"/>
-                              : <div className="cover-ph">Sem capa</div>
+                              : (g.capaUrl ? <img src={g.capaUrl} alt="Capa do grupo" /> : <div className="cover-ph">Sem capa</div>)
                             }
                           </div>
 
@@ -631,7 +831,7 @@ export default function Grupos() {
                         </button>
                       )}
 
-                      <div className="paste-row">
+                      <div className="paste-row" style={{ marginTop: 8 }}>
                         <button type="button" className="btn-secondary" onClick={()=> setPasteOpenEdit(o=>!o)}>
                           Colar lista de membros
                         </button>
@@ -676,6 +876,20 @@ export default function Grupos() {
                       </>
                     )}
 
+                    <div className="form-group">
+                      <label>Imagem de capa</label>
+                      {editCapa ? (
+                        <div className="cover-preview">
+                          <img src={editCapa} alt="Capa do grupo" />
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                            <button type="button" className="btn-danger" onClick={removeEditCapa}>Remover capa</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <input ref={editCapaRef} type="file" accept="image/*" onChange={onPickEditCapa} />
+                      )}
+                    </div>
+
                     <div className="form-actions">
                       <button type="submit" className="btn-primary" disabled={saving}>
                         {saving ? 'Salvando…' : 'Salvar Alterações'}
@@ -709,14 +923,19 @@ export default function Grupos() {
         </div>
       )}
 
-      {/* Ajuste do avatar do mentor (visual) */}
-      <style>
-        {`
+      {/* Estilos inline pequenos para ajustar avatar */}
+      <style>{`
         .mentor-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: inline-block; border: 2px solid rgba(255,255,255,0.06); }
-        .mentor-pill { display: flex; align-items: center; gap:8px; }
+        .mentor-pill { display:flex; align-items:center; gap:8px; }
         .mentor-name { font-size: 0.95rem; margin-left: 4px; }
-        `}
-      </style>
+        .cover-preview img { max-width: 240px; max-height: 120px; display:block; border-radius:8px; object-fit:cover; }
+        .member-input-group { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+        .grupo-item { display:flex; gap:12px; padding:12px; border-radius:8px; background:#fff; align-items:flex-start; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:10px; }
+        .grupo-cover img { width:100px; height:80px; object-fit:cover; border-radius:6px; }
+        .cover-ph { width:100px; height:80px; display:flex; align-items:center; justify-content:center; background:#f2f2f2; border-radius:6px; color:#666; }
+        .progress-bar-container { height:8px; background:#eee; border-radius:8px; overflow:hidden; margin:8px 0; }
+        .progress-bar-fill { height:100%; background:linear-gradient(90deg,#4caf50,#8bc34a); }
+      `}</style>
     </div>
   );
 }

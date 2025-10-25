@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../DataBase/db.js";
 
 // GET todas doações em itens
 export async function getDoacoesItem(_, res) {

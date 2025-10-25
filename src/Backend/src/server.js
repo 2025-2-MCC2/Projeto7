@@ -9,11 +9,12 @@ import path from 'node:path';
 
 import profileRoutes from './routes/profile.routes.js';
 import presenceRoutes from './routes/presence.routes.js';
-import dashboardRoutes from "./routes/dashboard.routes.js";
-import doacoesRoutes from './routes/doacoes.routes.js';
+import dashboardRoutes from "./routes/dashboard.routes.js";;
 import authRoutes from './routes/auth.routes.js';
 import usuarioRoutes from './routes/user.routes.js';
-import mainRoutes from './routes.js';                        // <— se quiser centralizar tudo
+
+//Imports para Grupos, Doações, Relatórios
+import mainRoutes from './Routes/routes.js';       
 
 
 const app = express();
@@ -31,7 +32,6 @@ app.use('/api', authRoutes);
 app.use('/api/usuario', usuarioRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/presence', presenceRoutes);
-app.use("/api", doacoesRoutes);
 app.use("/api", dashboardRoutes);
 app.use('/api', mainRoutes);  
 

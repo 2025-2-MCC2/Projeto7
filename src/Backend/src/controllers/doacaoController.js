@@ -1,5 +1,5 @@
 // controllers/doacaoController.js
-import { pool } from "../db.js";
+import { pool } from "../DataBase/db.js";
 import { pushDashboardUpdate } from "../services/sse.js";
 
 // Utilitário simples para validar payloads

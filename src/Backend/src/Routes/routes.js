@@ -8,13 +8,6 @@ import {
   deleteGrupo,
 } from "../controllers/grupoController.js";
 
-import {
-  getUsuarios,
-  getUsuarioById,
-  createUsuario,
-  updateUsuario,
-  deleteUsuario,
-} from "../controllers/usuarioController.js";
 
 import {
   getMetas,
@@ -40,13 +33,17 @@ import {
   deletePostagem,
 } from "../controllers/postagemController.js";
 
+
 import {
-  getDoacoes,
-  getDoacaoById,
-  createDoacao,
-  updateDoacao,
-  deleteDoacao,
+   listDoacoesByGrupo,
+   getDoacao,
+   createDoacao,
+   updateDoacao,
+   approveDoacao,
+   rejectDoacao,
+   deleteDoacao,
 } from "../controllers/doacaoController.js";
+
 
 import {
   getDoacoesDinheiro,
@@ -75,18 +72,14 @@ import {
 const r = Router();
 
 // Grupos
-r.get("/grupos", getGrupos);
-r.get("/grupos/:id", getGrupoById);
-r.post("/grupos", createGrupo);
-r.put("/grupos/:id", updateGrupo);
-r.delete("/grupos/:id", deleteGrupo);
+r.get("/grupos/:grupoId/doacoes", listDoacoesByGrupo);
+r.get("/grupos/:grupoId/doacoes/:id", getDoacao);
+r.post("/grupos/:grupoId/doacoes", createDoacao);
+r.put("/grupos/:grupoId/doacoes/:id", updateDoacao);
+r.put("/grupos/:grupoId/doacoes/:id/aprovar", approveDoacao);
+r.put("/grupos/:grupoId/doacoes/:id/rejeitar", rejectDoacao);
+r.delete("/grupos/:grupoId/doacoes/:id", deleteDoacao)
 
-// Usuários
-r.get("/usuarios", getUsuarios);
-r.get("/usuarios/:id", getUsuarioById);
-r.post("/usuarios", createUsuario);
-r.put("/usuarios/:id", updateUsuario);
-r.delete("/usuarios/:id", deleteUsuario);
 
 // Metas
 r.get("/metas", getMetas);
@@ -110,11 +103,15 @@ r.put("/postagens/:id", updatePostagem);
 r.delete("/postagens/:id", deletePostagem);
 
 // Doações
-r.get("/doacoes", getDoacoes);
-r.get("/doacoes/:id", getDoacaoById);
-r.post("/doacoes", createDoacao);
-r.put("/doacoes/:id", updateDoacao);
-r.delete("/doacoes/:id", deleteDoacao);
+
+r.get("/grupos/:grupoId/doacoes", listDoacoesByGrupo);
+r.get("/grupos/:grupoId/doacoes/:id", getDoacao);
+r.post("/grupos/:grupoId/doacoes", createDoacao);
+r.put("/grupos/:grupoId/doacoes/:id", updateDoacao);
+r.put("/grupos/:grupoId/doacoes/:id/aprovar", approveDoacao);
+r.put("/grupos/:grupoId/doacoes/:id/rejeitar", rejectDoacao);
+r.delete("/grupos/:grupoId/doacoes/:id", deleteDoacao);
+
 
 // Doações Dinheiro
 r.get("/doacoes-dinheiro", getDoacoesDinheiro);

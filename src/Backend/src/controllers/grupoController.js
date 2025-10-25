@@ -1,5 +1,5 @@
 // controllers/grupoController.js
-import { pool } from "../db.js";
+import { pool } from "../DataBase/db.js";
 
 /** Converte row do banco -> objeto esperado pela UI */
 function mapToClient(row, membros = []) {
