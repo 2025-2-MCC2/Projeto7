@@ -1,14 +1,19 @@
-// src/routes/user.routes.js
-'use strict';
-const express = require('express');
-const ctrl = require('../controllers/user.controller');
+// src/Backend/src/routes/user.routes.js
+import { Router } from 'express';
+import {
+  getUsuarios,
+  getUsuarioById,
+  createUsuario,
+  updateUsuario,
+  deleteUsuario,
+} from '../controllers/usuarioController.js';
 
-const router = express.Router();
+const router = Router();
 
-router.get('/', ctrl.listUsers);
-router.get('/:id', ctrl.getUserById);
-router.post('/', ctrl.createUser);
-router.put('/:id', ctrl.updateUser);
-router.delete('/:id', ctrl.deleteUser);
+router.get('/', getUsuarios);
+router.get('/:id', getUsuarioById);
+router.post('/', createUsuario);
+router.put('/:id', updateUsuario);
+router.delete('/:id', deleteUsuario);
 
-module.exports = router;
+export default router;

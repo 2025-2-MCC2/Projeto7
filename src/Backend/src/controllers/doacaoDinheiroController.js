@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../DataBase/db.js";
 
 // GET todas doações em dinheiro
 export async function getDoacoesDinheiro(_, res) {
@@ -44,24 +44,55 @@ export async function getDoacaoDinheiroById(req, res) {
 
 // POST criar doação em dinheiro
 export async function createDoacaoDinheiro(req, res) {
-  const { ID_doacao, valor_doacao } = req.body;
-  if (!ID_doacao || !valor_doacao) {
-    return res
-      .status(400)
-      .json({ error: "Campos obrigatórios: ID_doacao, valor_doacao" });
+  const { ID_doacao, ID_grupo, valor_doacao, descricao, ID_postagem } = req.body;
+
+  if (!valor_doacao) {
+    return res.status(400).json({ error: "Campo obrigatório: valor_doacao" });
   }
+  if (!ID_doacao && !ID_grupo) {
+    return res.status(400).json({ error: "Envie ID_doacao OU ID_grupo" });
+  }
+
+  const conn = await pool.getConnection();
   try {
-    const [ins] = await pool.query(
-      "INSERT INTO doacao_dinheiro (ID_doacao, valor_doacao) VALUES (?, ?)",
-      [ID_doacao, valor_doacao]
+    await conn.beginTransaction();
+
+    // Se não veio ID_doacao, cria base em 'doacao'
+    let baseId = ID_doacao;
+    if (!baseId) {
+      const [ins] = await conn.query(
+        `INSERT INTO doacao (ID_grupo, descricao, ID_postagem)
+         VALUES (?, ?, ?)`,
+        [ID_grupo, descricao ?? null, ID_postagem ?? null]
+      );
+      baseId = ins.insertId;
+    }
+
+    // Insere/atualiza detalhe em doacao_dinheiro
+    await conn.query(
+      `INSERT INTO doacao_dinheiro (ID_doacao, valor_doacao)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE valor_doacao=VALUES(valor_doacao)`,
+      [baseId, Number(valor_doacao)]
     );
-    const [rows] = await pool.query(
-      "SELECT * FROM doacao_dinheiro WHERE ID_doacao = ?",
-      [ID_doacao]
+
+    await conn.commit();
+
+    // Retorna a doação completa (base + dinheiro)
+    const [[row]] = await pool.query(
+      `SELECT d.ID_doacao, d.ID_grupo, d.descricao, d.doacao_data_registro,
+              dd.valor_doacao
+         FROM doacao d
+         JOIN doacao_dinheiro dd ON dd.ID_doacao = d.ID_doacao
+        WHERE d.ID_doacao = ?`,
+      [baseId]
     );
-    res.status(201).json(rows[0]);
-  } catch {
+    res.status(ID_doacao ? 200 : 201).json(row);
+  } catch (e) {
+    await conn.rollback();
     res.status(500).json({ error: "Erro ao criar doação em dinheiro" });
+  } finally {
+    conn.release();
   }
 }
 

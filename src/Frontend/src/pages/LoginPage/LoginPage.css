@@ -1,5 +1,6 @@
 /* src/pages/LoginPage/LoginPage.css */
 
+/* Fundo */
 body {
   margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -32,11 +33,25 @@ body {
   color: #2e7d32;
   font-size: 1.8rem;
 }
-
 .login-subtitle {
   margin-bottom: 1.5rem;
   color: #555;
   font-size: 0.95rem;
+}
+
+/* Foto somente visual (se existir no perfil salvo) */
+.photo-preview-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+.photo-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4caf50;
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
 }
 
 /* Formulário */
@@ -45,7 +60,6 @@ body {
   flex-direction: column;
   gap: 1rem;
 }
-
 .input-group {
   text-align: left;
 }
@@ -69,13 +83,11 @@ body {
   background: white;
   position: relative;
 }
-
 .input-icon .icon {
   margin-right: 8px;
   color: #4caf50;
   font-size: 1.1rem;
 }
-
 .input-icon input {
   flex: 1;
   border: none;
@@ -102,12 +114,17 @@ body {
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform .2s ease, box-shadow .2s ease;
   width: 100%;
 }
-
 .login-btn:hover {
   background: #1b5e20;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+}
+.login-btn:disabled {
+  opacity: .7;
+  cursor: not-allowed;
 }
 
 /* Links */
@@ -117,12 +134,10 @@ body {
   justify-content: space-between;
   font-size: 0.85rem;
 }
-
 .login-links a {
   color: #2e7d32;
   text-decoration: none;
 }
-
 .login-links a:hover {
   color: #1b5e20;
   text-decoration: underline;
@@ -140,28 +155,22 @@ body {
     font-size: 1.5rem;
   }
 }
+
+/* Mensagens de erro/sucesso */
 .login-message {
   margin-top: 10px;
   font-size: 0.9rem;
   font-weight: bold;
+  /* a cor é controlada inline para refletir sucesso/erro */
 }
 
-.login-message {
-  color: #e53935; /* Vermelho para erro */
-}
-
-.login-message:contains('sucesso') {
-  color: #2e7d32; /* Verde para sucesso */
-}
-
-/* Estilos para o seletor de método de login */
+/* Seletor de método (somente Mentor/Aluno) */
 .login-method-toggle {
   display: flex;
   justify-content: center;
   gap: 10px;
   margin-bottom: 1rem;
 }
-
 .toggle-btn {
   background: #f1f8e9;
   color: #1b4332;
@@ -173,13 +182,13 @@ body {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
-
 .toggle-btn.active {
   background: #4caf50;
   color: white;
   border-color: #4caf50;
 }
-/* Chips de eventos dentro do calendário */
+
+/* (Mantidos) estilos de chips/eventos usados em outras telas */
 .events-in-day {
   margin-top: 4px;
   display: flex;

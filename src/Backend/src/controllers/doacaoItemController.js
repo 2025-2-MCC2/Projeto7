@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../DataBase/db.js";
 
 // GET todas doações em itens
 export async function getDoacoesItem(_, res) {
@@ -42,27 +42,55 @@ export async function getDoacaoItemById(req, res) {
 
 // POST criar doação em item
 export async function createDoacaoItem(req, res) {
-  const { ID_doacao, item_doacao, quantidade, unidade } = req.body;
-  if (!ID_doacao || !item_doacao || !quantidade || !unidade) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Campos obrigatórios: ID_doacao, item_doacao, quantidade, unidade",
-      });
+  const { ID_doacao, ID_grupo, item_doacao, quantidade, unidade, descricao, ID_postagem } = req.body;
+
+  if (!item_doacao || !quantidade || !unidade) {
+    return res.status(400).json({ error: "Campos obrigatórios: item_doacao, quantidade, unidade" });
   }
+  if (!ID_doacao && !ID_grupo) {
+    return res.status(400).json({ error: "Envie ID_doacao OU ID_grupo" });
+  }
+
+  const conn = await pool.getConnection();
   try {
-    const [ins] = await pool.query(
-      "INSERT INTO doacao_item (ID_doacao, item_doacao, quantidade, unidade) VALUES (?, ?, ?, ?)",
-      [ID_doacao, item_doacao, quantidade, unidade]
+    await conn.beginTransaction();
+
+    // Se não veio ID_doacao, cria base
+    let baseId = ID_doacao;
+    if (!baseId) {
+      const [ins] = await conn.query(
+        `INSERT INTO doacao (ID_grupo, descricao, ID_postagem)
+         VALUES (?, ?, ?)`,
+        [ID_grupo, descricao ?? null, ID_postagem ?? null]
+      );
+      baseId = ins.insertId;
+    }
+
+    await conn.query(
+      `INSERT INTO doacao_item (ID_doacao, item_doacao, quantidade, unidade)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE item_doacao=VALUES(item_doacao),
+                               quantidade=VALUES(quantidade),
+                               unidade=VALUES(unidade)`,
+      [baseId, item_doacao, Number(quantidade), unidade]
     );
-    const [rows] = await pool.query(
-      "SELECT * FROM doacao_item WHERE ID_doacao = ?",
-      [ID_doacao]
+
+    await conn.commit();
+
+    const [[row]] = await pool.query(
+      `SELECT d.ID_doacao, d.ID_grupo, d.descricao, d.doacao_data_registro,
+              di.item_doacao, di.quantidade, di.unidade
+         FROM doacao d
+         JOIN doacao_item di ON di.ID_doacao = d.ID_doacao
+        WHERE d.ID_doacao = ?`,
+      [baseId]
     );
-    res.status(201).json(rows[0]);
-  } catch {
+    res.status(ID_doacao ? 200 : 201).json(row);
+  } catch (e) {
+    await conn.rollback();
     res.status(500).json({ error: "Erro ao criar doação em item" });
+  } finally {
+    conn.release();
   }
 }
 

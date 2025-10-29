@@ -1,293 +1,254 @@
 // src/pages/Perfil/PerfilPage.jsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PerfilPage.css';
+import { useAutoPresence } from '../../hooks/usePresence';
+import { useSettings } from '../../hooks/useSettings';
+import { api } from '../../auth/api';
 
-const load = (key, fallback) => {
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-  catch { return fallback; }
+const loadPerfil = () => {
+  try { return JSON.parse(localStorage.getItem('perfil') || '{}'); }
+  catch { return {}; }
 };
-const save = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-
-const upgradePerfil = (p) => {
-  const base = {
-    id: Date.now(),
-    // tipo pode existir internamente ('adm' | 'mentor' | 'aluno'), mas a UI não mostra 'adm'
-    tipo: 'aluno',
-    nome: 'Usuário',
-    email: '',
-    ra: '',
-    telefone: '',
-    fotoUrl: '',
-    preferencias: { tema: 'claro', linguagem: 'pt-BR', notificacoesEmail: true },
-  };
-  if (!p || typeof p !== 'object') return base;
-  return {
-    ...base,
-    ...p,
-    preferencias: { ...base.preferencias, ...(p.preferencias || {}) },
-  };
-};
-
-const applyTheme = (tema) => {
-  const t = tema === 'escuro' ? 'escuro' : 'claro';
-  document.documentElement.setAttribute('data-theme', t);
-};
+const savePerfil = (p) => localStorage.setItem('perfil', JSON.stringify(p));
+const getInitial = (n = 'Usuário') => (String(n).trim()?.[0]?.toUpperCase() || 'U');
 
 export default function PerfilPage() {
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(() => upgradePerfil(load('perfil', {})));
-  const [msg, setMsg] = useState({ type: '', text: '' });
+  const [perfil, setPerfil] = useState(() => loadPerfil());
+  const [copied, setCopied] = useState(false);
+
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [urlInput, setUrlInput] = useState('');
+  const fileRef = useRef(null);
 
   useEffect(() => {
-    document.title = 'Lideranças Embaticas • Meu perfil';
-    applyTheme(perfil?.preferencias?.tema);
+    const onStorage = (e) => {
+      if (e.key === 'perfil') {
+        try { setPerfil(JSON.parse(e.newValue || '{}')); } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // DETECÇÃO AUTOMÁTICA: tem RA => Aluno; senão => Mentor. 'adm' é mascarado como Mentor.
-  const papelUI = useMemo(() => {
-    if (perfil?.tipo === 'adm') return 'mentor'; // oculta admin na UI
-    return perfil?.ra?.toString().trim() ? 'aluno' : 'mentor';
-  }, [perfil]);
+  const { settings } = useSettings();
+  const autoTimeoutMin = settings?.status?.autoTimeoutMin ?? 5;
+  const userId = String(perfil?.ra || perfil?.email || perfil?.nome || 'anon');
 
-  const isAluno = papelUI === 'aluno';
-  const isMentorUI = papelUI === 'mentor';
-  const isAdminInterno = perfil?.tipo === 'adm'; // apenas para validação (sem exibir)
+  const { status } = useAutoPresence({
+    enabled: true,
+    timeoutMin: autoTimeoutMin,
+    userId,
+    onChange: () => {},
+  });
 
-  // RA imutável quando já existe para aluno
-  const raLocked = isAluno && Boolean(perfil.ra);
+  const statusTxt = status;
+  const nome = perfil?.nome || 'Usuário';
+  const email = perfil?.email || '—';
+  const foto = perfil?.fotoUrl || '';
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const isImageFile = (f) => f && f.type?.startsWith('image/');
+  const isAcceptableSize = (f, maxMB = 8) => f && f.size <= maxMB * 1024 * 1024;
 
-    if (name.startsWith('pref.')) {
-      const key = name.replace('pref.', '');
-      const novo = { ...perfil, preferencias: { ...perfil.preferencias, [key]: value } };
-      setPerfil(novo);
-      if (key === 'tema') applyTheme(value); // aplica imediatamente
-      return;
-    }
-
-    if (name === 'ra') {
-      if (raLocked) return;
-      setPerfil((prev) => ({ ...prev, ra: value }));
-      return;
-    }
-
-    setPerfil((prev) => ({ ...prev, [name]: value }));
+  const persistLocalPhoto = (fotoUrl) => {
+    const novo = { ...perfil, fotoUrl };
+    setPerfil(novo);
+    savePerfil(novo);
   };
 
-  const handleToggleNotEmail = () => {
-    setPerfil(prev => ({
-      ...prev,
-      preferencias: { ...prev.preferencias, notificacoesEmail: !prev.preferencias.notificacoesEmail }
-    }));
-  };
+  // ===== Upload (multipart) -> POST /api/profile/photo
+  const handleSelectFile = async (e) => {
+    setError('');
+    const f = e?.target?.files?.[0];
+    if (!f) return;
+    if (!isImageFile(f)) return setError('Selecione um arquivo de imagem.');
+    if (!isAcceptableSize(f, 8)) return setError('Tamanho máximo: 8MB.');
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('photo', f);
+      fd.append('userId', userId);
 
-  const handleFotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setPerfil(prev => ({ ...prev, fotoUrl: String(reader.result) }));
-    reader.readAsDataURL(file);
-  };
+      const r = await api.post('/profile/photo', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
-  const validar = () => {
-    const nomeOk = perfil.nome && perfil.nome.trim().length >= 3;
-    if (!nomeOk) return 'Informe um nome válido (mínimo 3 caracteres).';
-
-    // Admin não é obrigado a preencher nada (acesso fantasma)
-    if (isAdminInterno) return '';
-
-    if (isAluno) {
-      if (!perfil.ra || !String(perfil.ra).trim()) return 'RA é obrigatório para alunos.';
-      return '';
+      if (!r?.data?.url) throw new Error('Falha ao enviar a foto.');
+      persistLocalPhoto(r.data.url);
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Não foi possível enviar a imagem.');
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
-
-    // Mentor (UI): nome, e-mail e telefone obrigatórios
-    if (isMentorUI) {
-      if (!perfil.email || !perfil.email.includes('@')) return 'E-mail é obrigatório e deve ser válido.';
-      if (!perfil.telefone || perfil.telefone.trim().length < 8) return 'Telefone é obrigatório.';
-      return '';
-    }
-
-    return '';
   };
 
-  const salvar = (e) => {
-    e.preventDefault();
-    const erro = validar();
-    if (erro) { setMsg({ type: 'error', text: erro }); return; }
-    save('perfil', perfil);
-    setMsg({ type: 'success', text: '✅ Perfil atualizado com sucesso.' });
-    setTimeout(() => setMsg({ type: '', text: '' }), 3000);
+  // ===== Vincular por URL -> POST /api/profile/photo-link
+  const handleLinkSave = async () => {
+    setError('');
+    const url = (urlInput || '').trim();
+    if (!url) return setError('Informe uma URL.');
+    try {
+      setBusy(true);
+      const r = await api.post('/profile/photo-link', { userId, url });
+      if (!r?.data?.url) throw new Error('Falha ao vincular a foto.');
+      persistLocalPhoto(r.data.url);
+      setUrlInput('');
+    } catch (e) {
+      setError(e?.response?.data?.error || e?.message || 'Erro ao vincular URL de imagem.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // ===== Remover -> DELETE /api/profile/photo
+  const handleRemovePhoto = async () => {
+    setError('');
+    try {
+      setBusy(true);
+      await api.delete('/profile/photo', { data: { userId } });
+      persistLocalPhoto('');
+    } catch (e) {
+      setError(e?.response?.data?.error || e?.message || 'Erro ao remover foto.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCopyEmail = async () => {
+    try { await navigator.clipboard.writeText(email); setCopied(true); setTimeout(() => setCopied(false), 1500); }
+    catch {}
   };
 
   return (
-    <div className="perfil-container">
-      <div className="perfil-card">
+    <div className="perfil-container perfil-view">
+      <div className="perfil-card perfil-card--view" role="region" aria-label="Meu perfil">
         <div className="perfil-header">
           <h1>Meu perfil</h1>
-          {/* Chip do papel (Admin nunca aparece) */}
-          <span className="perfil-badge">{isAluno ? 'Aluno' : 'Mentor'}</span>
+          <span className="perfil-badge" aria-live="polite">{statusTxt}</span>
         </div>
 
-        <form onSubmit={salvar} className="perfil-form">
-          {/* Avatar */}
-          <div className="perfil-row">
-            {perfil.fotoUrl
-              ? <img src={perfil.fotoUrl} alt="Foto do perfil" className="perfil-avatar" />
-              : <div className="perfil-avatar perfil-avatar--placeholder">{perfil.nome?.[0]?.toUpperCase() || 'U'}</div>
-            }
-            <div className="perfil-avatar-actions">
-              <label className="perfil-btn perfil-btn--secondary" style={{ cursor: 'pointer', textAlign: 'center' }}>
-                Trocar foto
-                <input type="file" accept="image/*" onChange={handleFotoUpload} style={{ display: 'none' }} />
-              </label>
-              <input
-                type="url"
-                className="perfil-input"
-                placeholder="Ou cole uma URL de imagem"
-                name="fotoUrl"
-                value={perfil.fotoUrl}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          {/* Nome + Campos por papel */}
-          <div className="perfil-grid-2">
-            <label className="perfil-label">Nome
-              <input
-                name="nome"
-                className="perfil-input"
-                value={perfil.nome}
-                onChange={handleChange}
-                placeholder="Seu nome completo"
-                required
-              />
-            </label>
-
-            {isAluno ? (
-              <label className="perfil-label">RA
-                <input
-                  name="ra"
-                  className="perfil-input"
-                  value={perfil.ra}
-                  onChange={handleChange}
-                  placeholder="Registro do Aluno"
-                  required
-                  readOnly={raLocked}
-                  title={raLocked ? 'O RA não pode ser alterado.' : 'Informe seu RA'}
-                />
-              </label>
+        <div className="perfil-view__top">
+          <div className="perfil-avatar-ring" aria-hidden="true" />
+          <div className="perfil-avatar-wrap">
+            {foto ? (
+              <img src={foto} alt="Foto do perfil" className="perfil-avatar perfil-avatar--lg" />
             ) : (
-              <label className="perfil-label">Telefone {isAdminInterno ? <small>(opcional)</small> : ''}
-                <input
-                  name="telefone"
-                  className="perfil-input"
-                  value={perfil.telefone}
-                  onChange={handleChange}
-                  placeholder="(11) 90000-0000"
-                  required={!isAdminInterno} /* Mentor: obrigatório | Admin: opcional */
-                />
-              </label>
+              <div className="perfil-avatar perfil-avatar--lg perfil-avatar--placeholder" aria-hidden="true">
+                {getInitial(nome)}
+              </div>
             )}
+            <span
+              className={`presence-dot ${statusTxt === 'offline' ? 'offline' : statusTxt === 'ausente' ? 'away' : 'online'}`}
+              aria-hidden="true"
+              title={statusTxt}
+            />
           </div>
 
-          {/* Linha de e-mail: opcional para aluno; obrigatório para mentor (admin opcional) */}
-          {isAluno ? (
-            <div className="perfil-grid-2">
-              <label className="perfil-label">E-mail <small>(opcional)</small>
-                <input
-                  type="email"
-                  name="email"
-                  className="perfil-input"
-                  value={perfil.email}
-                  onChange={handleChange}
-                  placeholder="voce@exemplo.com"
-                />
-              </label>
+          <div className="perfil-view__id">
+            <h2 title={nome} className="perfil-view__name">{nome}</h2>
+            <p className="perfil-view__email" title={email}>
+              <i className="fa-regular fa-envelope" aria-hidden="true"></i> {email}
+            </p>
+          </div>
+        </div>
 
-              <label className="perfil-label">Telefone <small>(opcional)</small>
+        <div className="perfil-upload">
+          <div className={`dropzone ${busy ? 'is-busy' : ''}`}>
+            <div className="dz-icon" aria-hidden="true">
+              <i className="fa-regular fa-image"></i>
+            </div>
+            <div className="dz-text">
+              Envie sua foto do dispositivo
+              {' · '}
+              <label className="link" style={{ cursor: 'pointer' }}>
+                selecionar
                 <input
-                  name="telefone"
-                  className="perfil-input"
-                  value={perfil.telefone}
-                  onChange={handleChange}
-                  placeholder="(11) 90000-0000"
+                  ref={fileRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.gif,.webp,image/*"
+                  hidden
+                  onChange={handleSelectFile}
+                  aria-label="Selecionar arquivo de imagem"
                 />
               </label>
             </div>
-          ) : (
-            <label className="perfil-label">E-mail {isAdminInterno ? <small>(opcional)</small> : ''}
-              <input
-                type="email"
-                name="email"
-                className="perfil-input"
-                value={perfil.email}
-                onChange={handleChange}
-                placeholder="voce@exemplo.com"
-                required={!isAdminInterno}
-              />
-            </label>
-          )}
-
-          <hr className="perfil-divider" />
-
-          {/* Preferências */}
-          <div className="perfil-grid-3">
-            <label className="perfil-label">Tema
-              <select
-                name="pref.tema"
-                className="perfil-input"
-                value={perfil.preferencias.tema}
-                onChange={handleChange}
-                title="Escolha claro ou escuro (aplica automaticamente)."
-              >
-                <option value="claro">Claro</option>
-                <option value="escuro">Escuro</option>
-              </select>
-            </label>
-
-            <label className="perfil-label">Idioma
-              <select
-                name="pref.linguagem"
-                className="perfil-input"
-                value={perfil.preferencias.linguagem}
-                onChange={handleChange}
-              >
-                <option value="pt-BR">Português (Brasil)</option>
-                <option value="en-US">English (US)</option>
-                <option value="es-ES">Español</option>
-              </select>
-            </label>
-
-            <label className="perfil-toggle">
-              <input
-                type="checkbox"
-                checked={perfil.preferencias.notificacoesEmail}
-                onChange={handleToggleNotEmail}
-              />
-              Notificações por e-mail
-            </label>
           </div>
 
-          {msg.text && (
-            <p className={`perfil-msg ${msg.type === 'error' ? 'error' : 'success'}`}>
-              {msg.text}
-            </p>
-          )}
+          <div className="or-sep"><span>ou</span></div>
 
-          <div className="perfil-actions">
-            <button type="button" className="perfil-btn perfil-btn--ghost" onClick={() => navigate('/painel')}>
-              Voltar
-            </button>
-            <button type="submit" className="perfil-btn perfil-btn--primary">
-              Salvar alterações
+          <div className="link-row">
+            <input
+              className="perfil-input"
+              type="url"
+              placeholder="Cole um link de imagem/GIF (https://...)"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              disabled={busy}
+            />
+            <button
+              className="perfil-btn perfil-btn--secondary"
+              onClick={handleLinkSave}
+              disabled={busy || !urlInput.trim()}
+            >
+              <i className="fa-solid fa-link" aria-hidden="true"></i> Usar link
             </button>
           </div>
-        </form>
+
+          <div className="foto-actions">
+            <button
+              className="perfil-btn perfil-btn--danger"
+              onClick={handleRemovePhoto}
+              disabled={busy || !foto}
+            >
+              <i className="fa-regular fa-trash-can" aria-hidden="true"></i> Remover foto
+            </button>
+          </div>
+
+          {error && <p className="perfil-msg error" role="alert">{error}</p>}
+          {busy && <p className="perfil-msg" role="status">Processando…</p>}
+        </div>
+
+        <div className="perfil-info">
+          <div className="perfil-info__row">
+            <span className="perfil-info__label">Nome</span>
+            <span className="perfil-info__value" title={nome}>{nome}</span>
+          </div>
+          <div className="perfil-info__row">
+            <span className="perfil-info__label">E‑mail</span>
+            <span className="perfil-info__value" title={email}>{email}</span>
+          </div>
+        </div>
+
+        <div className="perfil-actions">
+          <button type="button" className="perfil-btn perfil-btn--ghost" onClick={() => navigate(-1)}>
+            <i className="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar
+          </button>
+
+          <button
+            type="button"
+            className="perfil-btn perfil-btn--secondary"
+            onClick={onCopyEmail}
+            title="Copiar e‑mail para a área de transferência"
+          >
+            <i className="fa-regular fa-copy" aria-hidden="true"></i> {copied ? 'Copiado!' : 'Copiar e‑mail'}
+          </button>
+
+          <a className="perfil-btn perfil-btn--secondary" href={`mailto:${email}`}>
+            <i className="fa-regular fa-envelope" aria-hidden="true"></i> Enviar e‑mail
+          </a>
+
+          <button
+            type="button"
+            className="perfil-btn perfil-btn--primary"
+            onClick={() => navigate('/config')}
+            title="Editar informações nas Configurações"
+          >
+            <i className="fa-solid fa-gear" aria-hidden="true"></i> Configurações
+          </button>
+        </div>
       </div>
     </div>
   );

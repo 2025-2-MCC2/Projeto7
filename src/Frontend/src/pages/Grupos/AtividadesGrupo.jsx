@@ -449,7 +449,7 @@ export default function AtividadesGrupo() {
           {atividadesFiltradas.length === 0 ? (
             <div className="empty">
               <p>Nenhuma atividade encontrada para os filtros aplicados.</p>
-              <button className="btn btn-secondary" onClick={() => setOpenNew(true)}>Criar primeira atividade</button>
+              <button className="btn btn-secondary" onClick={() => setOpenNew(true)}>Criar primeira doação</button>
             </div>
           ) : (
             <div className="ativ-list">

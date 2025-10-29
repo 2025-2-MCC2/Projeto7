@@ -1,229 +1,384 @@
 // src/components/Dashboard.jsx
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector,
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, ReferenceLine,
-    LineChart, Line
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, Sector,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, ReferenceLine,
+  LineChart, Line
 } from "recharts";
 import "./Dashboard.css";
 
-// --- Componentes Customizados para os Gráficos ---
+/* =========================
+   Helpers de formatação
+   ========================= */
+const currency = (v) =>
+  Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+    .format(Number(v || 0));
 
-// NOVO: Componente para o Tooltip personalizado
+const shortNum = (v) => {
+  const n = Number(v || 0);
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(".", ",") + " mi";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(".", ",") + " mil";
+  return n.toLocaleString("pt-BR");
+};
+
+const todayStr = () => {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/* =========================
+   Tooltip customizada
+   ========================= */
 const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-        return (
-            <div className="custom-tooltip">
-                <p className="label">{label || payload[0].name}</p>
-                <p className="intro">{`Valor: ${payload[0].value}`}</p>
-            </div>
-        );
-    }
-    return null;
-};
-
-// NOVO: Componente para renderizar a forma da fatia ativa da Pizza (efeito de hover)
-const ActiveShape = (props) => {
-    const RADIAN = Math.PI / 180;
-    const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-    const sin = Math.sin(-RADIAN * midAngle);
-    const cos = Math.cos(-RADIAN * midAngle);
-    const sx = cx + (outerRadius + 10) * cos;
-    const sy = cy + (outerRadius + 10) * sin;
-    const mx = cx + (outerRadius + 30) * cos;
-    const my = cy + (outerRadius + 30) * sin;
-    const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-    const ey = my;
-    const textAnchor = cos >= 0 ? 'start' : 'end';
-
+  if (active && payload && payload.length) {
+    const p = payload[0];
     return (
-        <g>
-            <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
-                {payload.name}
-            </text>
-            <Sector
-                cx={cx}
-                cy={cy}
-                innerRadius={innerRadius}
-                outerRadius={outerRadius}
-                startAngle={startAngle}
-                endAngle={endAngle}
-                fill={fill}
-            />
-            <Sector
-                cx={cx}
-                cy={cy}
-                startAngle={startAngle}
-                endAngle={endAngle}
-                innerRadius={outerRadius + 6}
-                outerRadius={outerRadius + 10}
-                fill={fill}
-            />
-            <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-            <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-            <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`${value} un.`}</text>
-            <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
-                {`(${(percent * 100).toFixed(2)}%)`}
-            </text>
-        </g>
+      <div className="custom-tooltip" role="status">
+        {label && <p className="label">{label}</p>}
+        <p className="intro">
+          {p.name ? `${p.name}: ` : ""}
+          {typeof p.value === "number"
+            ? p.value.toLocaleString("pt-BR")
+            : p.value}
+        </p>
+      </div>
     );
+  }
+  return null;
 };
 
-// NOVO: Funções para gerar "traduções" dos gráficos para texto.
-const getPieChartInsights = (data) => {
-    if (!data || data.length === 0) {
-        return "Nenhum item no inventário para exibir insights.";
-    }
-    const sortedData = [...data].sort((a, b) => b.quantidade - a.quantidade);
-    const topItem = sortedData[0];
-    const total = data.reduce((sum, item) => sum + item.quantidade, 0);
-    return `O item com maior quantidade é "${topItem.nome}" (${topItem.quantidade} unidades), representando ${( (topItem.quantidade / total) * 100 ).toFixed(1)}% do total de itens.`;
+/* =========================
+   Fatia ativa (Pizza)
+   ========================= */
+const ActiveShape = (props) => {
+  const RADIAN = Math.PI / 180;
+  const {
+    cx, cy, midAngle, innerRadius, outerRadius,
+    startAngle, endAngle, fill, payload, percent, value
+  } = props;
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 10) * cos;
+  const sy = cy + (outerRadius + 10) * sin;
+  const mx = cx + (outerRadius + 30) * cos;
+  const my = cy + (outerRadius + 30) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+  const ey = my;
+  const textAnchor = cos >= 0 ? "start" : "end";
+
+  return (
+    <g>
+      <text x={cx} y={cy} dy={-6} textAnchor="middle" fill="var(--text,#333)" fontWeight={700}>
+        {payload.name}
+      </text>
+      <text x={cx} y={cy} dy={16} textAnchor="middle" fill="var(--muted,#666)">
+        {value} {payload.unidade || "un."} ({(percent * 100).toFixed(1)}%)
+      </text>
+      <Sector
+        cx={cx} cy={cy}
+        innerRadius={innerRadius} outerRadius={outerRadius}
+        startAngle={startAngle} endAngle={endAngle} fill={fill}
+      />
+      <Sector
+        cx={cx} cy={cy}
+        innerRadius={outerRadius + 6} outerRadius={outerRadius + 10}
+        startAngle={startAngle} endAngle={endAngle} fill={fill} opacity={0.6}
+      />
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+      <circle cx={ex} cy={ey} r={3} fill={fill} stroke="none" />
+      <text x={ex + (cos >= 0 ? 12 : -12)} y={ey} textAnchor={textAnchor} fill="var(--text,#333)">
+        {`${value.toLocaleString("pt-BR")} ${payload.unidade || "un."}`}
+      </text>
+      <text x={ex + (cos >= 0 ? 12 : -12)} y={ey} dy={18} textAnchor={textAnchor} fill="var(--muted,#999)">
+        {`(${(percent * 100).toFixed(1)}%)`}
+      </text>
+    </g>
+  );
 };
 
-const getBarChartInsights = (grupo) => {
-    // CORREÇÃO: Adiciona fallbacks para evitar NaN se os valores forem undefined.
-    const progresso = grupo.progressoArrecadacao || 0;
-    const meta = grupo.metaArrecadacao || 0;
+const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#a78bfa", "#14b8a6", "#e11d48"];
 
-    const percent = meta > 0 ? (progresso / meta) * 100 : 0;
-    if (percent >= 100) {
-        return `Parabéns! A meta de R$ ${meta.toFixed(2)} foi atingida e superada em ${(percent - 100).toFixed(1)}%.`;
-    }
-    return `Atualmente, ${percent.toFixed(1)}% da meta de R$ ${meta.toFixed(2)} foi alcançada. Faltam R$ ${(meta - progresso).toFixed(2)} para o objetivo.`;
+/* =========================
+   API (NOVO)
+   ========================= */
+const API = {
+  async summary(groupId) {
+    const r = await fetch(`/api/dashboard/${groupId}/summary`);
+    if (!r.ok) throw new Error("Falha ao carregar summary");
+    return r.json();
+  },
+  async inventory(groupId) {
+    const r = await fetch(`/api/dashboard/${groupId}/inventory`);
+    if (!r.ok) throw new Error("Falha ao carregar inventário");
+    return r.json(); // [{nome, unidade, quantidade}]
+  },
+  async timeseries(groupId, range = "30d") {
+    const r = await fetch(`/api/dashboard/${groupId}/timeseries?range=${range}`);
+    if (!r.ok) throw new Error("Falha ao carregar série temporal");
+    return r.json(); // [{data, valor}]
+  },
 };
-
 
 export default function Dashboard({ grupo }) {
-    if (!grupo) {
-        return <div className="dash-container"><p>Nenhum grupo para exibir.</p></div>;
+  if (!grupo) return <div className="dash-card"><p>Selecione um grupo para visualizar.</p></div>;
+
+  /* =========================
+     Estados
+     ========================= */
+  const [activeChart, setActiveChart] = useState("distribuicao"); // 'distribuicao'|'progresso'|'tendencia'
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [filtroItem, setFiltroItem] = useState(null);
+  const [range, setRange] = useState("30d");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Dados vindos do backend (NOVO)
+  const [summary, setSummary] = useState({ meta: 0, progresso: 0, totalItens: 0 });
+  const [inventory, setInventory] = useState([]);      // [{nome, unidade, quantidade}]
+  const [series, setSeries] = useState([]);            // [{data, valor}]
+
+  const totalItens = useMemo(
+    () => (inventory || []).reduce((s, i) => s + Number(i.quantidade || 0), 0),
+    [inventory]
+  );
+
+  const barData = useMemo(
+    () => [{ name: grupo.nome, progresso: Number(summary.progresso || 0), meta: Number(summary.meta || 0) }],
+    [grupo, summary]
+  );
+
+  const pieData = useMemo(
+    () => (inventory || []).map(i => ({ nome: i.nome, unidade: i.unidade, quantidade: Number(i.quantidade || 0) })),
+    [inventory]
+  );
+
+  const onPieEnter = useCallback((_, index) => setActiveIndex(index), []);
+  const onPieClick = useCallback((_, index) => setFiltroItem(pieData[index]?.nome ?? null), [pieData]);
+
+  /* =========================
+     Carregamento inicial + SSE (NOVO)
+     ========================= */
+  useEffect(() => {
+    let abort = false;
+    async function load() {
+      try {
+        setLoading(true); setError("");
+        const [sum, inv, ts] = await Promise.all([
+          API.summary(grupo.id),
+          API.inventory(grupo.id),
+          API.timeseries(grupo.id, range),
+        ]);
+        if (abort) return;
+        setSummary(sum); setInventory(inv); setSeries(ts);
+      } catch (e) {
+        if (!abort) setError(e?.message || "Erro ao carregar dashboard.");
+      } finally {
+        if (!abort) setLoading(false);
+      }
     }
+    load();
 
-    // NOVO: Estado para controlar o gráfico ativo
-    const [activeChart, setActiveChart] = useState('distribuicao');
-    // NOVO: Estado para controlar qual fatia da pizza está ativa (para o efeito de hover)
-    const [activeIndex, setActiveIndex] = useState(0);
-    const onPieEnter = useCallback((_, index) => {
-        setActiveIndex(index);
-    }, [setActiveIndex]);
+    // Assina SSE para atualizações (aprovação de doações / novas doações)
+    const es = new EventSource(`/api/stream/grupos/${grupo.id}`);
+    const handler = async () => {
+      try {
+        const [sum, inv, ts] = await Promise.all([
+          API.summary(grupo.id), API.inventory(grupo.id), API.timeseries(grupo.id, range)
+        ]);
+        setSummary(sum); setInventory(inv); setSeries(ts);
+      } catch {}
+    };
+    es.addEventListener("dashboard", handler);
+    es.addEventListener("heartbeat", () => {}); // mantém conexão viva
 
-    const pieData = grupo.inventario || [];
-    const totalItens = useMemo(() => pieData.reduce((sum, item) => sum + item.quantidade, 0), [pieData]);
+    return () => { abort = true; es.close(); };
+  }, [grupo.id, range]);
 
-    const dadosProgressoGrupos = useMemo(() => [{ name: grupo.nome, progresso: grupo.progressoArrecadacao, meta: grupo.metaArrecadacao }], [grupo]);
-    const mediaProgresso = useMemo(() => {
-        // Em um cenário com múltiplos grupos, você calcularia a média de todos.
-        // Por agora, vamos definir uma média de exemplo.
-        return 2500;
-    }, []);
+  /* =========================
+     Insights
+     ========================= */
+  const getPieChartInsights = (data) => {
+    if (!data || data.length === 0) return "Nenhum item no inventário.";
+    const sorted = [...data].sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
+    const top = sorted[0];
+    const total = data.reduce((s, i) => s + (i.quantidade || 0), 0);
+    const perc = total > 0 ? ((top.quantidade / total) * 100).toFixed(1) : 0;
+    return `Mais presente: "${top.nome}" (${top.quantidade} ${top.unidade || "un."}), ${perc}% do total.`;
+  };
 
-    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
+  const getBarChartInsights = () => {
+    const progresso = summary.progresso || 0;
+    const meta = summary.meta || 0;
+    const percent = meta > 0 ? (progresso / meta) * 100 : 0;
+    if (percent >= 100) {
+      return `Parabéns! A meta de ${currency(meta)} foi atingida e superada em ${(percent - 100).toFixed(1)}%.`;
+    }
+    return `Você atingiu ${percent.toFixed(1)}% da meta de ${currency(meta)}. Faltam ${currency(Math.max(meta - progresso, 0))}.`;
+  };
 
-    return (
-        <div className="dash-container">
-            <div className="dash-card-header">
-                <h2 className="group-title">{grupo.nome}</h2>
-                <div className="header-icons"><span>🕒</span><span>🕔</span><span>📊</span><span>📈</span><span className="filter-icon">🔽</span></div>
-            </div>
-
-            {/* NOVO: Card de Progresso da Meta */}
-            <div className="dash-card">
-                <div className="card-content">
-                    <h3>Progresso da Meta</h3>
-                    <div className="progress-meta-container">
-                        <span>R$ {(grupo.progressoArrecadacao || 0).toFixed(2)}</span>
-                        <progress 
-                            value={grupo.progressoArrecadacao || 0} 
-                            max={grupo.metaArrecadacao || 1} 
-                        />
-                        <span>R$ {(grupo.metaArrecadacao || 0).toFixed(2)}</span>
-                    </div>
-                </div>
-                <div className="card-actions">
-                    <button className="icon-button" title="Adicionar Arrecadação">+</button>
-                </div>
-            </div>
-
-            {/* NOVO: Seletor de Gráficos */}
-            <div className="chart-selector">
-                <button className={activeChart === 'distribuicao' ? 'active' : ''} onClick={() => setActiveChart('distribuicao')}>Distribuição de Itens</button>
-                <button className={activeChart === 'progresso' ? 'active' : ''} onClick={() => setActiveChart('progresso')}>Progresso Financeiro</button>
-            </div>
-
-            {/* NOVO: Renderização condicional dos gráficos */}
-            {activeChart === 'distribuicao' && (
-                <div className="dash-card">
-                    <div className="card-content">
-                        <h3>Distribuição de Itens</h3>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="donut-center-text-total">{totalItens}</text>
-                                <text x="50%" y="50%" dy={20} textAnchor="middle" dominantBaseline="middle" className="donut-center-text-label">Itens</text>
-                                <Pie
-                                    activeIndex={activeIndex}
-                                    activeShape={ActiveShape}
-                                    data={pieData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={100}
-                                    fill="#8884d8"
-                                    dataKey="quantidade"
-                                    onMouseEnter={onPieEnter}
-                                    nameKey="nome"
-                                >
-                                    {pieData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Legend formatter={(value, entry) => <span className="legend-text">{value}</span>} />
-                                <Tooltip content={<CustomTooltip />} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="chart-insight">
-                            <strong>💡 Insight:</strong> {getPieChartInsights(pieData)}
-                        </div>
-                    </div>
-                    <div className="card-actions">
-                        <button className="icon-button" title="Adicionar Item">+</button>
-                        <button className="icon-button" title="Comentários">💬</button>
-                    </div>
-                </div>
-            )}
-
-            {activeChart === 'progresso' && (
-                <div className="dash-card">
-                    <div className="card-content">
-                        <h3>Progresso de Arrecadação</h3>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={dadosProgressoGrupos} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                <defs>
-                                    <linearGradient id="colorProgresso" x1="0" y1="0" x2="1" y2="0">
-                                        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.9} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" domain={[0, 'dataMax + 1000']} />
-                                <YAxis type="category" dataKey="name" width={150} tick={{ width: 140, textAnchor: 'end' }} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(206, 206, 206, 0.2)' }} />
-                                <Legend />
-                                <ReferenceLine x={mediaProgresso} stroke="red" strokeDasharray="3 3" />
-                                <Bar dataKey="progresso" name="Arrecadado" fill="url(#colorProgresso)">
-                                    <LabelList dataKey="progresso" position="right" style={{ fill: 'black' }} formatter={(value) => `R$ ${value}`} />
-                                </Bar>
-                                <Bar dataKey="meta" name="Meta" fill="#e0e0e0" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                        <div className="chart-insight">
-                            <strong>💡 Insight:</strong> {getBarChartInsights(grupo)}
-                        </div>
-                    </div>
-                    <div className="card-actions">
-                        <button className="icon-button" title="Adicionar Arrecadação">+</button>
-                        <button className="icon-button" title="Comentários">💬</button>
-                    </div>
-                </div>
-            )}
+  /* =========================
+     UI
+     ========================= */
+  return (
+    <div className="dash-container">
+      {/* Header */}
+      <div className="dash-card-header">
+        <h3 className="group-title">{grupo.nome}</h3>
+        <div className="header-icons" aria-hidden>
+          <span title="Atualizado">{todayStr()}</span>
         </div>
-    );
+      </div>
+
+      {/* KPIs */}
+      <div className="kpi-grid">
+        <div className="kpi">
+          <span className="kpi-label">Arrecadado</span>
+          <strong className="kpi-value">{currency(summary.progresso)}</strong>
+        </div>
+        <div className="kpi">
+          <span className="kpi-label">Meta</span>
+          <strong className="kpi-value">{currency(summary.meta)}</strong>
+        </div>
+        <div className="kpi">
+          <span className="kpi-label">Restante</span>
+          <strong className="kpi-value">
+            {currency(Math.max((summary.meta || 0) - (summary.progresso || 0), 0))}
+          </strong>
+        </div>
+        <div className="kpi">
+          <span className="kpi-label">Itens totais</span>
+          <strong className="kpi-value">{shortNum(totalItens)}</strong>
+        </div>
+      </div>
+
+      {/* Tabs de gráfico */}
+      <div className="chart-selector" role="tablist" aria-label="Seleção de gráfico">
+        <button role="tab" aria-selected={activeChart === "distribuicao"}
+                className={activeChart === "distribuicao" ? "active" : ""}
+                onClick={() => setActiveChart("distribuicao")}>
+          Distribuição de Itens
+        </button>
+        <button role="tab" aria-selected={activeChart === "progresso"}
+                className={activeChart === "progresso" ? "active" : ""}
+                onClick={() => setActiveChart("progresso")}>
+          Progresso Financeiro
+        </button>
+        <button role="tab" aria-selected={activeChart === "tendencia"}
+                className={activeChart === "tendencia" ? "active" : ""}
+                onClick={() => setActiveChart("tendencia")}>
+          Tendência (SMA)
+        </button>
+      </div>
+
+      {/* Loading/Erro */}
+      {loading && <div className="dash-card"><div className="skeleton-row" /><div className="skeleton-row" /></div>}
+      {error && <div className="dash-card"><p className="message error">{String(error)}</p></div>}
+
+      {/* Distribuição */}
+      {activeChart === "distribuicao" && (
+        <div className="dash-card">
+          <h3>Distribuição de Itens</h3>
+          {pieData.length === 0 ? (
+            <>
+              <p className="muted">Nenhum item cadastrado ainda.</p>
+              <div className="skeleton-row" /><div className="skeleton-row" /><div className="skeleton-row" />
+            </>
+          ) : (
+            <>
+              <div className="card-content">
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="quantidade"
+                      nameKey="nome"
+                      innerRadius={70}
+                      outerRadius={110}
+                      activeIndex={activeIndex}
+                      activeShape={(p) => <ActiveShape {...p} />}
+                      onMouseEnter={onPieEnter}
+                      onClick={onPieClick}
+                    >
+                      {pieData.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="chart-insight" aria-live="polite">
+                <strong>Insight:</strong> {getPieChartInsights(pieData)}
+                {filtroItem && (
+                  <>
+                    {" • "}
+                    <strong>Filtro ativo:</strong> {filtroItem}{" "}
+                    <button className="link" onClick={() => setFiltroItem(null)}>limpar</button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Progresso */}
+      {activeChart === "progresso" && (
+        <div className="dash-card">
+          <h3>Progresso de Arrecadação</h3>
+          <div className="card-content">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={barData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR")}`} />
+                <Tooltip formatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                <Bar dataKey="progresso" fill="var(--primary, #22c55e)" radius={[6, 6, 0, 0]}>
+                  <LabelList dataKey="progresso" position="top"
+                    formatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR")}`} />
+                </Bar>
+                <ReferenceLine
+                  y={barData[0]?.meta || 0}
+                  stroke="var(--danger, #ef4444)"
+                  strokeDasharray="4 4"
+                  label={{ value: "Meta", position: "top", fill: "var(--danger, #ef4444)" }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="chart-insight" aria-live="polite">
+            <strong>Insight:</strong> {getBarChartInsights()}
+          </div>
+        </div>
+      )}
+
+      {/* Tendência */}
+      {activeChart === "tendencia" && (
+        <div className="dash-card">
+          <h3>Tendência de Doações (R$)</h3>
+
+          <div className="range-filter" role="group" aria-label="Período">
+            <button className={range === "7d" ? "active" : ""} onClick={() => setRange("7d")}>7 dias</button>
+            <button className={range === "30d" ? "active" : ""} onClick={() => setRange("30d")}>30 dias</button>
+            <button className={range === "mes" ? "active" : ""} onClick={() => setRange("mes")}>Mês atual</button>
+          </div>
+
+          <div className="card-content">
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={series}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="data"
+                       tickFormatter={(v) => new Date(v + "T00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} />
+                <YAxis tickFormatter={(v) => `R$ ${shortNum(v)}`} />
+                <Tooltip formatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                <Line type="monotone" dataKey="valor" name="Diário" stroke="#22c55e" dot={false} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

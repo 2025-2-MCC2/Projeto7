@@ -318,3 +318,23 @@
 .grupo-card__meta-alimentos {
   margin-top: 8px;
 }
+
+.progress-bar-fill {
+  background: #1b4332; /* */
+  height: 100%; /* */
+  transition: width 0.4s ease-in-out; /* <<<<<< ESSA LINHA FAZ A ANIMAÇÃO */ /* */
+}
+
+/* Adicione um pouco de espaço extra se as barras ficarem muito coladas */
+.meta-alimentos-section {
+  margin-top: 0.75rem; /* Ajuste conforme necessário */
+}
+
+/* Garante que o container da barra tenha a altura correta */
+.progress-bar-container {
+  background: #b7e4c7; /* */
+  height: 8px; /* */
+  border-radius: 4px; /* */
+  overflow: hidden; /* */
+  margin-top: 0.5rem; /* */
+}

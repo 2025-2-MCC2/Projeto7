@@ -1,16 +1,27 @@
-# FECAP - Fundação de Comércio Álvares Penteado
+<h1 align="center">FECAP - Fundação de Comércio Álvares Penteado</h1>
 
 <p align="center">
 <a href= "https://www.fecap.br/"><img src="https://github.com/user-attachments/assets/aed2b4ff-9c3d-4cdf-83da-2aa277a53f82" alt="FECAP - Fundação de Comércio Álvares Penteado" border="0"></a>
 </p>
 
-# Conexões Empáticas
+<h1 align="center">Conexões Empáticas</h1>
 
 ## WebCrawler´s
 
 ## Integrantes: <a href="https://github.com/GuilhermeMonteiro14">Guilherme Monteiro Da Silva</a>, <a href="https://github.com/DebatingAlpaca">João Pedro Da Silva</a>, <a href="https://github.com/Santos-raphael">Raphael De Oliveira Santos</a>, <a href="https://github.com/StefanyO8">Stefany Samira De Oliveira Cubertino</a>
 
-## Professores Orientadores: <a href="https://www.linkedin.com/in/cristina-machado-corr%C3%AAa-leite-630309160" target="_blank"> Cristina Machado Corrêa Leite</a>, <a href="https://www.linkedin.com/in/dolemes/" target="_blank"> David de Oliveira Lemes</a>, <a href="https://www.linkedin.com/in/francisco-escobar/" target="_blank"> Francisco de Souza Escobar </a>, <a href="https://www.linkedin.com/in/katia-bossi/" target="_blank"> Kátia Bossi </a>, <a href="https://www.linkedin.com/in/leonardo-fabris-lugoboni-a3369416/?originalSubdomain=br" target="_blank"> Leonardo Fabris Lugoboni</a>
+## Professores Orientadores: <a href="https://www.linkedin.com/in/cristina-machado-corr%C3%AAa-leite-630309160" target="_blank"> Cristina Machado Corrêa Leite</a>, <a href="https://www.linkedin.com/in/dolemes/" target="_blank"> David de Oliveira Lemes</a>, <a href="https://www.linkedin.com/in/francisco-escobar/" target="_blank"> Francisco de Souza Escobar </a>, <a href="https://www.linkedin.com/in/katia-bossi/" target="_blank"> Kátia Bossi </a>, <a href="https://www.linkedin.com/in/leonardo-fabris-lugoboni-a3369416/?originalSubdomain=br" target="_blank"> Leonardo Fabris Lugoboni</a><br/>
+
+# Entregas
+| Disciplinas | Entrega 1 | Entrega 2 |  
+| :-------: | :------: | :-------: |
+| Desenvolvimento Web Full Stack | [Desenvolvimento Web Full Stack](https://projeto-interdisciplinar-webcrawlers.vercel.app/) | [Desenvolvimento Web Full Stack](https://projeto-interdisciplinar-webcrawlers.vercel.app/) |   
+| Cálculo II | [Cálculo II](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20C%C3%A1lculo%202.pdf) | [Cálculo II](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%202/Entrega%202%20-%20C%C3%A1lculo%202.pdf) |    
+| Projetos em Banco de Dados | [Projetos em Banco de Dados](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Projetos%20em%20Banco%20de%20Dados.pdf) | [Projetos em Banco de Dados](https://github.com/2025-2-MCC2/Projeto7/tree/main/Documentos/Entrega%202/Entrega%202%20-%20Projetos%20em%20Banco%20de%20Dados) |  
+| Gestão Empresarial e Dinâmicas das Organizações | [Gestão Empresarial e Dinâmicas das Organizações](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Gest%C3%A3o%20Empresarial%20e%20Din%C3%A2micas%20das%20Organiza%C3%A7%C3%B5es.pdf) | [Gestão Empresarial e Dinâmicas das Organizações]() |  
+| Projeto Interdisciplinar: Programação Web | [Projeto Interdisciplinar: Programação Web](https://www.figma.com/design/d6d58QWVq8z9luoTVgzR7V/WebCrawler-s?node-id=48-2&t=Ak4S9BNHtQX5Ntdp-1) | [Projeto Interdisciplinar: Programação Web](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Documento%20-%20Projeto%20de%20Extens%C3%A3o%20-%20COM%20Empresa.pdf) |   
+<br/>
+
 
 ## Descrição
 
@@ -44,10 +55,8 @@ Para os administradores, a plataforma disponibiliza um painel completo que permi
 <a href="https://projeto-interdisciplinar-webcrawlers.vercel.app/">Link para o site</a>
 
 ## login e senha para testar:
-Aluno: 12345 (Login para RA)  senha:123456 <br/>
-Admin/Mentor: admin@test.com senha:123456
-
-
+Aluno: 12345 (Login para RA) | senha: 123456 <br/>
+Admin/Mentor: admin@test.com | senha: 123456
 
 
 ## 🛠 Estrutura de pastas

@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../DataBase/db.js";
 
 // GET todas postagens
 export async function getPostagens(_, res) {
