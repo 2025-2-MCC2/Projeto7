@@ -38,4 +38,63 @@
     background: var(--bg);
     color: var(--text);
   }
+  /* Paleta clara (padrão) */
+:root {
+    /* ... seu tema claro continua igual ... */
+    --bg: #f7f8f9;
+    --text: #333333;
+    --muted: #555555;
   
+    --card-bg: #ffffff;
+    --border: #dddddd;
+    --shadow: 0 6px 20px rgba(0,0,0,0.12);
+  
+    --primary: #2e7d32;       
+    --primary-hover: #1b5e20; 
+    --accent: #4caf50;
+    --danger: #d90429;
+    --input-bg: #ffffff;
+}
+
+
+.painel-container[data-theme="escuro"] {
+  /* --- Cores de Fundo e Camadas (MODIFICADAS) --- */
+  
+  /* ANTES: #0f1115. Agora é um cinza-azulado escuro (menos "preto" puro) */
+  --bg: #1A202C;
+  
+  /* ANTES: #171a1f. Agora é um cinza mais claro para os cards (cria profundidade) */
+  --card-bg: #2D3748;
+  
+  /* ANTES: #2a2f33. Agora é uma borda sutil para definir os cards */
+  --border: rgba(255, 255, 255, 0.1); 
+
+  /* --- Cores de Texto (Hierarquia MODIFICADA) --- */
+  
+  /* ANTES: #e6e6e6. Agora é um branco suave para títulos principais (Ex: R$ 390,00) */
+  --text: #FAFAFA;
+  
+  /* ANTES: #a8b3b8. Agora é um cinza mais claro para labels (Ex: "Arrecadado") */
+  --muted: #A0AEC0;
+  
+  /* --- Cores de Ação (Mantidas do seu arquivo) --- */
+  --danger: #ef4444;
+  
+  /* O verde de destaque que você já usa, perfeito para a aba ativa */
+  --primary: #4caf50;
+  --primary-hover: #2e7d32;
+
+  /* --- Inputs (MODIFICADO) --- */
+  
+  /* ANTES: #0f1318. Ajustado para o novo fundo do card */
+  --input-bg: #2D3748; 
+  
+  /* Sombra (Mantida do seu arquivo) */
+  --shadow: 0 8px 28px rgba(0,0,0,0.35);
+  
+  /* Para textos de placeholder (Ex: "Nenhum item cadastrado") */
+  --text-disabled: #718096;
+  
+  /* Para as linhas de "skeleton loading" */
+  --skeleton-color: #4A5568;
+}

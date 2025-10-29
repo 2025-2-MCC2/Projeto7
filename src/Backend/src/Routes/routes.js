@@ -44,23 +44,6 @@ import {
    deleteDoacao,
 } from "../controllers/doacaoController.js";
 
-
-import {
-  getDoacoesDinheiro,
-  getDoacaoDinheiroById,
-  createDoacaoDinheiro,
-  updateDoacaoDinheiro,
-  deleteDoacaoDinheiro,
-} from "../controllers/doacaoDinheiroController.js";
-
-import {
-  getDoacoesItem,
-  getDoacaoItemById,
-  createDoacaoItem,
-  updateDoacaoItem,
-  deleteDoacaoItem,
-} from "../controllers/doacaoItemController.js";
-
 import {
   getArquivos,
   getArquivoById,
@@ -118,20 +101,6 @@ r.put("/grupos/:grupoId/doacoes/:id/aprovar", approveDoacao);
 r.put("/grupos/:grupoId/doacoes/:id/rejeitar", rejectDoacao);
 r.delete("/grupos/:grupoId/doacoes/:id", deleteDoacao);
 
-
-// Doações Dinheiro
-r.get("/doacoes-dinheiro", getDoacoesDinheiro);
-r.get("/doacoes-dinheiro/:id", getDoacaoDinheiroById);
-r.post("/doacoes-dinheiro", createDoacaoDinheiro);
-r.put("/doacoes-dinheiro/:id", updateDoacaoDinheiro);
-r.delete("/doacoes-dinheiro/:id", deleteDoacaoDinheiro);
-
-// Doações Item
-r.get("/doacoes-item", getDoacoesItem);
-r.get("/doacoes-item/:id", getDoacaoItemById);
-r.post("/doacoes-item", createDoacaoItem);
-r.put("/doacoes-item/:id", updateDoacaoItem);
-r.delete("/doacoes-item/:id", deleteDoacaoItem);
 
 // Arquivos
 r.get("/arquivos", getArquivos);
