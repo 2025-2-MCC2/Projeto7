@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS grupo_membro (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_membro_grupo ON grupo_membro (ID_grupo);
+CREATE INDEX IF NOT EXISTS idx_membro_grupo ON grupo_membro (ID_grupo);
 
 -- ============================================================
 -- USUARIO
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS usuario (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_usuario_id_grupo ON usuario (ID_grupo);
+CREATE INDEX IF NOT EXISTS idx_usuario_id_grupo ON usuario (ID_grupo);
 
 -- ============================================================
 -- METAS (por grupo)
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS metas (
   COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE INDEX idx_metas_id_grupo ON metas (ID_grupo);
+CREATE INDEX IF NOT EXISTS idx_metas_id_grupo ON metas (ID_grupo);
 
 -- ============================================================
 -- RELATORIO (por grupo; período)
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS relatorio (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_relatorio_id_grupo ON relatorio (ID_grupo);
+CREATE INDEX IF NOT EXISTS idx_relatorio_id_grupo ON relatorio (ID_grupo);
 
 -- ============================================================
 -- POSTAGEM (por usuário)
@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS postagem (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_postagem_id_usuario ON postagem (ID_usuario);
+CREATE INDEX IF NOT EXISTS idx_postagem_id_usuario ON postagem (ID_usuario);
 
 -- ============================================================
 -- DOACAO (ATUALIZADA: Ligada ao Grupo, contém todos os dados)
@@ -211,33 +211,18 @@ CREATE TABLE IF NOT EXISTS doacao (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_doacao_id_postagem ON doacao (ID_postagem);
+ALTER TABLE doacao
 
--- Subtipo: dinheiro
-CREATE TABLE IF NOT EXISTS doacao_dinheiro (
-  ID_doacao     INT PRIMARY KEY,
-  valor_doacao  DECIMAL(12,2) NOT NULL,
-  CONSTRAINT fk_doacao_dinheiro_doacao FOREIGN KEY (ID_doacao)
-    REFERENCES doacao (ID_doacao)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci;
+  ADD COLUMN aprovada_em DATETIME NULL,
+  ADD COLUMN aprovada_por INT NULL,
+  ADD COLUMN rejeitada_em DATETIME NULL,
+  ADD COLUMN rejeitada_por INT NULL,
+  ADD COLUMN observacao TEXT NULL;
 
--- Subtipo: item
-CREATE TABLE IF NOT EXISTS doacao_item (
-  ID_doacao   INT PRIMARY KEY,
-  item_doacao VARCHAR(50) NOT NULL,
-  quantidade  DECIMAL(12,3) NOT NULL,
-  unidade     VARCHAR(10)   NOT NULL, -- ex.: 'kg','g','un','l'
-  CONSTRAINT fk_doacao_item_doacao FOREIGN KEY (ID_doacao)
-    REFERENCES doacao (ID_doacao)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci;
+-- 2) Índices úteis (acelera queries por aprovador ou status)
+CREATE INDEX IF NOT EXISTS idx_doacao_aprovada_por ON doacao (aprovada_por);
+CREATE INDEX IF NOT EXISTS idx_doacao_rejeitada_por ON doacao (rejeitada_por);
+
 
 -- ============================================================
 -- ARQUIVO (anexos de doação e/ou de postagem)
@@ -262,8 +247,8 @@ CREATE TABLE IF NOT EXISTS arquivo (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX idx_arquivo_id_doacao   ON arquivo (ID_doacao);
-CREATE INDEX idx_arquivo_id_postagem ON arquivo (ID_postagem);
+CREATE INDEX IF NOT EXISTS idx_arquivo_id_doacao   ON arquivo (ID_doacao);
+CREATE INDEX IF NOT EXISTS idx_arquivo_id_postagem ON arquivo (ID_postagem);
 
 -- ============================================================
 -- USER PRESENCE (online/ausente/offline)
@@ -362,11 +347,13 @@ GROUP BY d.ID_grupo; -- Agrupa para garantir que MIN() funcione corretamente se 
 INSERT INTO user_presence (user_id, status) VALUES ('adm@test.com', 'offline')
 ON DUPLICATE KEY UPDATE status=VALUES(status);
 
-
-select * FROM grupo;
-select *
-from doacao;
-select  * from usuario;
+-- Verificações (Descomente se precisar)
+-- SELECT 'Grupos:' AS Tabela; SELECT * FROM grupo;
+-- SELECT 'Membros:' AS Tabela; SELECT * FROM grupo_membro;
+-- SELECT 'Usuários:' AS Tabela; SELECT * FROM usuario;
+-- SELECT 'Metas:' AS Tabela; SELECT * FROM metas;
+-- SELECT 'Doações:' AS Tabela; SELECT * FROM doacao;
+-- SELECT 'Arquivos:' AS Tabela; SELECT * FROM arquivo;
 
 
 
