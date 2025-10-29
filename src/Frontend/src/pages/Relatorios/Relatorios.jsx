@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Relatorios.css';
 
@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS = {
   remindersOn: false,
 };
 
+//
 const safeGet = (k, fallback) => {
   try {
     const raw = localStorage.getItem(k);
@@ -32,15 +33,16 @@ const safeGet = (k, fallback) => {
     return fallback;
   }
 };
+//
 const safeSet = (k, v) => {
   try {
     localStorage.setItem(k, JSON.stringify(v));
   } catch {}
 };
 
-const pad2 = (n) => String(n).padStart(2, '0');
-const getMonthKey = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
-const toISO = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
+const pad2 = (n) => String(n).padStart(2, '0'); //
+const getMonthKey = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`; //
+const toISO = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`; //
 
 /**
  * Regra de edição:
@@ -48,6 +50,7 @@ const toISO = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
  * - Sempre permitido se status = AJUSTES.
  * - Bloqueado se status = APROVADO.
  */
+//
 const isEditable = (report, now = new Date(), deadlineDay = DEFAULT_SETTINGS.deadlineDay) => {
   if (!report) return true;
   if (report.status === STATUS.APROVADO) return false;
@@ -62,44 +65,6 @@ const isEditable = (report, now = new Date(), deadlineDay = DEFAULT_SETTINGS.dea
 
 /**
  * ===========================
- * MOCKS (trocar por API no futuro)
- * ===========================
- */
-
-const mockGrupos = [
-  { id: 1, nome: "Grupo A", membros: [{ nome: 'Aluno 1', ra: '12345' }] },
-  { id: 2, nome: "Grupo B", membros: [{ nome: 'Aluno 2', ra: '54321' }] },
-  { id: 3, nome: "Grupo C", membros: [{ nome: 'Aluno 3', ra: '98765' }] },
-];
-
-const mockReports = [
-  {
-    id: 1,
-    groupId: 1,
-    groupName: 'Grupo A',
-    authorName: 'Aluno 1',
-    authorRA: '12345',
-    dateISO: '2025-09-30',
-    month: '2025-09',
-    content: 'Arrecadamos R$ 500,00 e 20kg de alimentos.',
-    valorArrecadado: 500,
-    kgAlimentos: 20,
-    qtdCestas: 10,
-    parceiros: ['ONG X', 'Mercado Y'],
-    localAtividade: 'Bairro Centro',
-    status: STATUS.ENVIADO,
-    feedbackMentor: '',
-    versions: [{ at: Date.now() - 1000 * 60 * 60 * 24, content: 'Arrecadamos R$ 500,00 e 20kg de alimentos.' }],
-  }
-];
-
-// ⚠️ Em produção, receba via AuthContext/props.
-const currentUser = { role: 'aluno', name: 'Aluno 1', ra: '12345' };
-// Exemplo mentor:
-// const currentUser = { role: 'mentor', name: 'Mentor X', assignedGroups: ['Grupo A', 'Grupo B'] };
-
-/**
- * ===========================
  * COMPONENTE PRINCIPAL
  * ===========================
  */
@@ -107,84 +72,133 @@ const currentUser = { role: 'aluno', name: 'Aluno 1', ra: '12345' };
 const Relatorios = () => {
   const navigate = useNavigate();
 
-  // Persistência
-  const [settings, setSettings] = useState(() => safeGet(SETTINGS_KEY, DEFAULT_SETTINGS));
-  const [reports, setReports] = useState(() => safeGet(REPORTS_KEY, mockReports));
-  const [drafts, setDrafts] = useState(() => safeGet(DRAFT_KEY, {}));
+  // --- ATUALIZAÇÃO: Carregando dados reais do localStorage ---
+  // Removemos os mocks
+  // Usamos a mesma lógica do PainelInicial
+  const [perfil, setPerfil] = useState(() => 
+    safeGet("perfil", { nome: "Usuário", tipo: "aluno", ra: "12345" })
+  );
+  const [grupos, setGrupos] = useState(() => 
+    safeGet("grupos", [])
+  );
 
-  useEffect(() => safeSet(SETTINGS_KEY, settings), [settings]);
-  useEffect(() => safeSet(REPORTS_KEY, reports), [reports]);
-  useEffect(() => safeSet(DRAFT_KEY, drafts), [drafts]);
+  // Sincroniza perfil e grupos com localStorage (caso outra aba mude)
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "perfil") {
+        setPerfil(safeGet("perfil", { nome: "Usuário", tipo: "aluno", ra: "12345" }));
+      }
+      if (e.key === "grupos") {
+        setGrupos(safeGet("grupos", []));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+  // --- FIM DA ATUALIZAÇÃO ---
+
+
+  // Persistência (lendo do localStorage)
+  const [settings, setSettings] = useState(() => safeGet(SETTINGS_KEY, DEFAULT_SETTINGS)); //
+  const [reports, setReports] = useState(() => safeGet(REPORTS_KEY, [])); // (removido mockReports)
+  const [drafts, setDrafts] = useState(() => safeGet(DRAFT_KEY, {})); //
+
+  useEffect(() => safeSet(SETTINGS_KEY, settings), [settings]); //
+  useEffect(() => safeSet(REPORTS_KEY, reports), [reports]); //
+  useEffect(() => safeSet(DRAFT_KEY, drafts), [drafts]); //
 
   // Mensagens + acessibilidade (foco gerenciado)
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-  const errorRef = useRef(null);
-  const successRef = useRef(null);
+  const [errorMsg, setErrorMsg] = useState(''); //
+  const [successMsg, setSuccessMsg] = useState(''); //
+  const errorRef = useRef(null); //
+  const successRef = useRef(null); //
 
-  const resetMessages = () => {
+  const resetMessages = () => { //
     setErrorMsg('');
     setSuccessMsg('');
   };
 
-  useEffect(() => {
+  useEffect(() => { //
     if (errorMsg && errorRef.current) errorRef.current.focus();
   }, [errorMsg]);
 
-  useEffect(() => {
+  useEffect(() => { //
     if (successMsg && successRef.current) successRef.current.focus();
   }, [successMsg]);
 
-  // Grupos visíveis
-  const gruposVisiveis = useMemo(() => {
-    if (currentUser.role === 'aluno') {
-      return mockGrupos.filter(g => g.membros?.some(m => m.ra === currentUser.ra));
-    }
-    if (currentUser.role === 'mentor') {
-      const setNames = new Set((currentUser.assignedGroups || []).map(n => n.toLowerCase()));
-      return mockGrupos.filter(g => setNames.has(g.nome.toLowerCase()));
-    }
-    return mockGrupos;
-  }, []);
 
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
-  useEffect(() => {
+  // --- ATUALIZAÇÃO: Usando `perfil` e `grupos` reais ---
+  const currentUserRel = useMemo(() => {
+    const role =
+      (perfil.tipo === "mentor" || perfil.tipo === "professor") ? "mentor" : "aluno";
+    const assignedGroups = grupos
+      .filter((g) => (g.mentor || "").toLowerCase() === (perfil.nome || "").toLowerCase())
+      .map((g) => g.nome);
+    return {
+      role,
+      name: perfil.nome || "Usuário",
+      ra: perfil.ra || "",
+      assignedGroups,
+    };
+  }, [perfil, grupos]);
+
+  // Grupos visíveis (baseado no `perfil` real)
+  const gruposVisiveis = useMemo(() => {
+    if (currentUserRel.role === 'aluno') {
+      return grupos.filter(g => g.membros?.some(m => m.ra === currentUserRel.ra));
+    }
+    if (currentUserRel.role === 'mentor') {
+      const setNames = new Set((currentUserRel.assignedGroups || []).map(n => n.toLowerCase()));
+      // Se o mentor não tiver grupos designados, por padrão ele vê todos (ou mude para `grupos` se preferir)
+      if (setNames.size === 0) return grupos; 
+      return grupos.filter(g => setNames.has(g.nome.toLowerCase()));
+    }
+    return grupos;
+  }, [grupos, currentUserRel]);
+  // --- FIM DA ATUALIZAÇÃO ---
+
+
+  const [selectedGroupId, setSelectedGroupId] = useState(null); //
+  useEffect(() => { //
     if (gruposVisiveis.length > 0) setSelectedGroupId(gruposVisiveis[0].id);
     else setSelectedGroupId(null);
   }, [gruposVisiveis]);
 
   // Data da criação/edição (dia/mês/ano)
-  const now = new Date();
-  const [selDay, setSelDay] = useState(now.getDate());
-  const [selMonth, setSelMonth] = useState(now.getMonth() + 1);
-  const [selYear, setSelYear] = useState(now.getFullYear());
-  const selectedDate = useMemo(() => new Date(selYear, selMonth - 1, selDay), [selYear, selMonth, selDay]);
-  const selectedMonthKey = useMemo(() => getMonthKey(selectedDate), [selectedDate]);
+  const now = new Date(); //
+  // --- ATUALIZAÇÃO LÓGICA: Iniciar no dia 1 ---
+  const [selDay, setSelDay] = useState(1); //
+  const [selMonth, setSelMonth] = useState(now.getMonth() + 1); //
+  const [selYear, setSelYear] = useState(now.getFullYear()); //
+  // --- FIM DA ATUALIZAÇÃO ---
+  const selectedDate = useMemo(() => new Date(selYear, selMonth - 1, selDay), [selYear, selMonth, selDay]); //
+  const selectedMonthKey = useMemo(() => getMonthKey(selectedDate), [selectedDate]); //
 
   // Campos do formulário (aluno)
-  const [editingReport, setEditingReport] = useState(null);
-  const [newReportContent, setNewReportContent] = useState('');
-  const [valorArrecadado, setValorArrecadado] = useState('');
-  const [kgAlimentos, setKgAlimentos] = useState('');
-  const [qtdCestas, setQtdCestas] = useState('');
-  const [parceiros, setParceiros] = useState('');
-  const [localAtividade, setLocalAtividade] = useState('');
-  const [statusAtual, setStatusAtual] = useState(STATUS.RASCUNHO);
+  const [editingReport, setEditingReport] = useState(null); //
+  const [newReportContent, setNewReportContent] = useState(''); //
+  const [valorArrecadado, setValorArrecadado] = useState(''); //
+  const [kgAlimentos, setKgAlimentos] = useState(''); //
+  const [qtdCestas, setQtdCestas] = useState(''); //
+  const [parceiros, setParceiros] = useState(''); //
+  const [localAtividade, setLocalAtividade] = useState(''); //
+  const [statusAtual, setStatusAtual] = useState(STATUS.RASCUNHO); //
 
   // Campo inicial para foco
-  const contentRef = useRef(null);
-  useEffect(() => {
+  const contentRef = useRef(null); //
+  useEffect(() => { //
     if (contentRef.current) contentRef.current.focus();
   }, [selectedGroupId]);
 
   // Rascunho: chave por aluno+grupo+mês
-  const draftKey = useMemo(() => {
+  const draftKey = useMemo(() => { //
     if (!selectedGroupId) return '';
-    return `${currentUser.ra || currentUser.name}::${selectedGroupId}::${selectedMonthKey}`;
-  }, [selectedGroupId, selectedMonthKey]);
+    // --- ATUALIZAÇÃO: usa currentUserRel ---
+    return `${currentUserRel.ra || currentUserRel.name}::${selectedGroupId}::${selectedMonthKey}`; //
+  }, [selectedGroupId, selectedMonthKey, currentUserRel]); // Adicionado currentUserRel
 
   // Carregar rascunho salvo ao trocar grupo ou mês
-  useEffect(() => {
+  useEffect(() => { //
     if (!draftKey) return;
     const d = drafts[draftKey];
     if (d) {
@@ -195,6 +209,12 @@ const Relatorios = () => {
       setParceiros(d.parceiros || '');
       setLocalAtividade(d.localAtividade || '');
       setStatusAtual(d.status || STATUS.RASCUNHO);
+      // --- ATUALIZAÇÃO LÓGICA: Iniciar no dia 1 ---
+      if (d.selDay) setSelDay(d.selDay);
+      else setSelDay(1); // Garante o padrão 1
+      if (d.selMonth) setSelMonth(d.selMonth);
+      if (d.selYear) setSelYear(d.selYear);
+      // --- FIM DA ATUALIZAÇÃO ---
     } else {
       setNewReportContent('');
       setValorArrecadado('');
@@ -203,12 +223,17 @@ const Relatorios = () => {
       setParceiros('');
       setLocalAtividade('');
       setStatusAtual(STATUS.RASCUNHO);
+      // --- ATUALIZAÇÃO LÓGICA: Resetar para dia 1 ---
+      setSelDay(1);
+      setSelMonth(now.getMonth() + 1);
+      setSelYear(now.getFullYear());
+      // --- FIM DA ATUALIZAÇÃO ---
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftKey]);
+  }, [draftKey, now]); // Adicionado 'now'
 
   // Auto-salvar rascunho (1s após digitar)
-  useEffect(() => {
+  useEffect(() => { //
     if (!draftKey) return;
     const t = setTimeout(() => {
       setDrafts(prev => ({
@@ -229,62 +254,65 @@ const Relatorios = () => {
   ]);
 
   // Report do mês selecionado do aluno (se existir)
-  const myMonthReport = useMemo(() => {
-    if (currentUser.role !== 'aluno' || !selectedGroupId) return null;
+  const myMonthReport = useMemo(() => { //
+    // --- ATUALIZAÇÃO: usa currentUserRel ---
+    if (currentUserRel.role !== 'aluno' || !selectedGroupId) return null; //
     return (
       reports.find(
         r =>
           r.groupId === selectedGroupId &&
-          r.authorRA === (currentUser.ra || '') &&
+          r.authorRA === (currentUserRel.ra || '') && //
           r.month === selectedMonthKey
       ) || null
     );
-  }, [reports, selectedGroupId, selectedMonthKey]);
+  }, [reports, selectedGroupId, selectedMonthKey, currentUserRel]); // Adicionado currentUserRel
 
-  const podeEditar = useMemo(
+  const podeEditar = useMemo( //
     () => isEditable(myMonthReport || editingReport, new Date(), settings.deadlineDay),
     [myMonthReport, editingReport, settings.deadlineDay]
   );
 
   // Atalho Ctrl/Cmd+S para salvar
-  useEffect(() => {
+  useEffect(() => { //
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        if (currentUser.role === 'aluno') handleCreateOrUpdateReport();
+        // --- ATUALIZAÇÃO: usa currentUserRel ---
+        if (currentUserRel.role === 'aluno') handleCreateOrUpdateReport(); //
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingReport, selectedGroupId, newReportContent, valorArrecadado, kgAlimentos, qtdCestas, parceiros, localAtividade, selDay, selMonth, selYear]);
+  }, [editingReport, selectedGroupId, newReportContent, valorArrecadado, kgAlimentos, qtdCestas, parceiros, localAtividade, selDay, selMonth, selYear, currentUserRel]); // Adicionado currentUserRel
 
-  const setError = (msg) => {
+  const setError = (msg) => { //
     setSuccessMsg('');
     setErrorMsg(msg);
   };
-  const setSuccess = (msg) => {
+  const setSuccess = (msg) => { //
     setErrorMsg('');
     setSuccessMsg(msg);
   };
 
-  const findGroupById = (id) => mockGrupos.find(g => g.id === id);
+  // --- ATUALIZAÇÃO: usa 'grupos' reais ---
+  const findGroupById = (id) => grupos.find(g => g.id === id); //
 
   /**
    * Criar/atualizar relatório (Aluno)
    */
-  const handleCreateOrUpdateReport = () => {
+  const handleCreateOrUpdateReport = () => { //
     resetMessages();
 
-    // Regras básicas
-    if (currentUser.role !== 'aluno') {
+    // Regras básicas (usando currentUserRel)
+    if (currentUserRel.role !== 'aluno') { //
       return setError('Apenas alunos podem criar/editar relatórios.');
     }
     if (!selectedGroupId) {
       return setError('Você precisa estar em um grupo para criar relatório.');
     }
     const selectedGroup = findGroupById(selectedGroupId);
-    if (!selectedGroup || !selectedGroup.membros?.some(m => m.ra === currentUser.ra)) {
+    if (!selectedGroup || !selectedGroup.membros?.some(m => m.ra === currentUserRel.ra)) { //
       return setError('Você não pertence ao grupo selecionado.');
     }
     if (!newReportContent.trim()) {
@@ -303,12 +331,12 @@ const Relatorios = () => {
     const monthKey = `${y}-${pad2(m)}`;
 
     // EDITAR
-    if (editingReport) {
-      if (editingReport.authorRA !== currentUser.ra) {
+    if (editingReport) { //
+      if (editingReport.authorRA !== currentUserRel.ra) { //
         return setError('Você só pode editar o seu próprio relatório.');
       }
 
-      const updated = reports.map(r =>
+      const updated = reports.map(r => //
         r.id === editingReport.id
           ? {
               ...r,
@@ -330,7 +358,7 @@ const Relatorios = () => {
       setEditingReport(null);
       setSuccess('Relatório atualizado com sucesso.');
       // Limpa rascunho desta chave
-      if (draftKey) {
+      if (draftKey) { //
         setDrafts(prev => {
           const copy = { ...prev };
           delete copy[draftKey];
@@ -341,22 +369,22 @@ const Relatorios = () => {
     }
 
     // CRIAR (um por aluno+grupo+mês)
-    const exist = reports.some(
+    const exist = reports.some( //
       r =>
         r.groupId === selectedGroupId &&
-        r.authorRA === currentUser.ra &&
+        r.authorRA === currentUserRel.ra && //
         r.month === monthKey
     );
     if (exist) {
       return setError('Você já possui um relatório para este grupo neste mês. Edite o existente.');
     }
 
-    const newReport = {
+    const newReport = { //
       id: Date.now(),
       groupId: selectedGroupId,
       groupName: selectedGroup.nome,
-      authorName: currentUser.name,
-      authorRA: currentUser.ra,
+      authorName: currentUserRel.name, //
+      authorRA: currentUserRel.ra, //
       dateISO,
       month: monthKey,
       content: newReportContent.trim(),
@@ -373,7 +401,7 @@ const Relatorios = () => {
     setReports(prev => [...prev, newReport]);
     setSuccess('Relatório criado com sucesso.');
     // Limpa rascunho da chave
-    if (draftKey) {
+    if (draftKey) { //
       setDrafts(prev => {
         const copy = { ...prev };
         delete copy[draftKey];
@@ -382,10 +410,11 @@ const Relatorios = () => {
     }
   };
 
-  const handleEdit = (report) => {
+  const handleEdit = (report) => { //
     resetMessages();
-    if (currentUser.role !== 'aluno') return setError('Somente alunos podem editar.');
-    if (report.authorRA !== currentUser.ra) return setError('Você só pode editar o seu próprio relatório.');
+    // --- ATUALIZAÇÃO: usa currentUserRel ---
+    if (currentUserRel.role !== 'aluno') return setError('Somente alunos podem editar.'); //
+    if (report.authorRA !== currentUserRel.ra) return setError('Você só pode editar o seu próprio relatório.'); //
     if (!isEditable(report, new Date(), settings.deadlineDay)) {
       return setError('Edição bloqueada (prazo encerrado ou relatório aprovado).');
     }
@@ -406,7 +435,7 @@ const Relatorios = () => {
     if (contentRef.current) contentRef.current.focus();
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = () => { //
     setEditingReport(null);
     setSuccess('Edição cancelada.');
   };
@@ -416,7 +445,7 @@ const Relatorios = () => {
    * VIEW: ALUNO
    * ===========================
    */
-  const renderStudentView = () => {
+  const renderStudentView = () => { //
     if (gruposVisiveis.length === 0) {
       return <p className="msg warning" role="status">Você precisa fazer parte de um grupo para criar ou ver relatórios.</p>;
     }
@@ -443,6 +472,9 @@ const Relatorios = () => {
             id="group-select"
             value={selectedGroupId || ''}
             onChange={e => setSelectedGroupId(Number(e.target.value))}
+            // --- ATUALIZAÇÃO (Trava para aluno com grupo) ---
+            disabled={currentUserRel.role === 'aluno' && gruposVisiveis.length > 0}
+            // --- FIM DA ATUALIZAÇÃO ---
           >
             {gruposVisiveis.map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}
           </select>
@@ -574,7 +606,7 @@ const Relatorios = () => {
    * VIEW: MENTOR
    * ===========================
    */
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState({ //
     from: { d: '', m: '', y: '' },
     to: { d: '', m: '', y: '' },
     groupId: '',
@@ -582,7 +614,7 @@ const Relatorios = () => {
     author: ''
   });
 
-  const applyFilters = (list) => {
+  const applyFilters = (list) => { //
     let res = [...list];
 
     // Filtro de período (de/até)
@@ -612,9 +644,17 @@ const Relatorios = () => {
     return res;
   };
 
-  const renderMentorView = () => {
-    const assignedNames = new Set((currentUser.assignedGroups || []).map(n => n.toLowerCase()));
-    const assignedReports = reports.filter(r => assignedNames.has(r.groupName.toLowerCase()));
+  const renderMentorView = () => { //
+    // --- ATUALIZAÇÃO: usa currentUserRel ---
+    const assignedNames = new Set((currentUserRel.assignedGroups || []).map(n => n.toLowerCase()));
+    // Lógica atualizada: filtra `reports` (do localStorage)
+    const assignedReports = reports.filter(r => {
+        // Se o mentor não tem grupos definidos, ele vê todos os relatórios
+        if (assignedNames.size === 0) return true;
+        return assignedNames.has(r.groupName.toLowerCase())
+    });
+    // --- FIM DA ATUALIZAÇÃO ---
+    
     const filtered = applyFilters(assignedReports);
 
     return (
@@ -755,7 +795,8 @@ const Relatorios = () => {
         <h2>Página de Relatórios</h2>
       </header>
 
-      {currentUser.role === 'aluno' ? renderStudentView() : renderMentorView()}
+      {/* --- ATUALIZAÇÃO: usa currentUserRel --- */}
+      {currentUserRel.role === 'aluno' ? renderStudentView() : renderMentorView()}
 
       {/* Mensagens invisíveis para screen readers */}
       <div className="sr-only" aria-live="polite">{errorMsg || successMsg}</div>
@@ -764,46 +805,3 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
-
-/**
- * ======================================
- * FUTURO (Export/Import) — Exemplo pronto
- * ======================================
- * 
- * // Baixar arquivo
- * const downloadFile = (filename, content, type = 'application/json') => {
- *   const blob = new Blob([content], { type });
- *   const url = URL.createObjectURL(blob);
- *   const a = document.createElement('a');
- *   a.href = url; a.download = filename; a.click();
- *   URL.revokeObjectURL(url);
- * };
- * 
- * // Exportar JSON:
- * const exportJSON = () => {
- *   downloadFile(`relatorios-${Date.now()}.json`, JSON.stringify(reports, null, 2));
- * };
- * 
- * // Exportar CSV:
- * const exportCSV = () => {
- *   const headers = [
- *     'id','groupId','groupName','authorName','authorRA','dateISO','month','status',
- *     'valorArrecadado','kgAlimentos','qtdCestas','parceiros','localAtividade','content'
- *   ];
- *   const rows = reports.map(r => ([
- *     r.id, r.groupId, r.groupName, r.authorName, r.authorRA, r.dateISO, r.month, r.status,
- *     r.valorArrecadado ?? '', r.kgAlimentos ?? '', r.qtdCestas ?? '',
- *     (r.parceiros || []).join('; '), r.localAtividade ?? '', (r.content || '').replace(/\n/g, ' ')
- *   ]));
- *   const csv = [headers.join(','), ...rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
- *   downloadFile(`relatorios-${Date.now()}.csv`, `\uFEFF${csv}`, 'text/csv;charset=utf-8;');
- * };
- * 
- * // Importar JSON:
- * const importJSON = async (file) => {
- *   const text = await file.text();
- *   const data = JSON.parse(text);
- *   if (!Array.isArray(data)) throw new Error('JSON inválido');
- *   setReports(prev => [...prev, ...data]);
- * };
- */

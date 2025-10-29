@@ -80,6 +80,12 @@ r.put("/grupos/:grupoId/doacoes/:id/aprovar", approveDoacao);
 r.put("/grupos/:grupoId/doacoes/:id/rejeitar", rejectDoacao);
 r.delete("/grupos/:grupoId/doacoes/:id", deleteDoacao)
 
+r.get("/grupos", getGrupos);          // <--- Rota GET /api/grupos (a que estava faltando)
+r.get("/grupos/:id", getGrupoById);   // <--- Rota GET /api/grupos/:id
+r.post("/grupos", createGrupo);       // <--- Rota POST /api/grupos
+r.put("/grupos/:id", updateGrupo);    // <--- Rota PUT /api/grupos/:id
+r.delete("/grupos/:id", deleteGrupo); // <--- Rota DELETE /api/grupos/:id
+
 
 // Metas
 r.get("/metas", getMetas);

@@ -22,8 +22,7 @@ COOKIE_SECURE=fals
 
 Banco de Dados:
 /* ======================================================================
-   BANCO: projetoPI  •  Schema completo + seeds de teste
-   Compatível com MySQL 8.0+ (UTF8MB4)
+   BANCO: projetoPI  
    ====================================================================== */
 
 -- Segurança: evite bloqueios durante recriação

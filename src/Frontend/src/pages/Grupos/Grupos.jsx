@@ -6,10 +6,10 @@ import './Grupos.css';
 /**
  * Grupos.jsx (Unificado)
  * - Combina lógica antiga (localStorage, capa base64, auto-atribuição de mentor)
- *   com o novo comportamento rotas backend (GET/POST/PUT/DELETE /api/grupos).
+ * com o novo comportamento rotas backend (GET/POST/PUT/DELETE /api/grupos).
  * - Ao criar/editar/excluir atualiza:
- *    1) estado local (setGrupos)
- *    2) localStorage (keys: le_grupos_v2, grupos) para compat com PainelInicial
+ * 1) estado local (setGrupos)
+ * 2) localStorage (keys: le_grupos_v2, grupos) para compat com PainelInicial
  *
  * Regras:
  * - Mentor: quando cria -> atribuído como mentor e também membro
@@ -81,13 +81,13 @@ export default function Grupos() {
   /* -------------------------
      Perfil (do localStorage)
      ------------------------- */
-  const [perfil] = useState(() => {
+  const [perfil] = useState(() => { //
     try { return JSON.parse(localStorage.getItem('perfil')) ?? {}; } catch { return {}; }
   });
-  const isStudent = perfil.tipo === 'aluno';
-  const isMentor  = perfil.tipo === 'mentor';
-  const isAdmin   = perfil.tipo === 'adm';
-  const isMentorLike = isMentor || isAdmin;
+  const isStudent = perfil.tipo === 'aluno'; //
+  const isMentor  = perfil.tipo === 'mentor'; //
+  const isAdmin   = perfil.tipo === 'adm'; //
+  const isMentorLike = isMentor || isAdmin; //
 
   /* -------------------------
      Router & navegação
@@ -110,13 +110,13 @@ export default function Grupos() {
      Abas
      ------------------------- */
   const tabs = ['criar', 'editar'];
-  const [aba, setAba] = useState(() => {
+  const [aba, setAba] = useState(() => { //
     const qs = new URLSearchParams(location.search);
     const t = qs.get('tab');
     if (tabs.includes(t)) return t;
     return isStudent ? 'editar' : 'criar';
   });
-  useEffect(() => {
+  useEffect(() => { //
     const qs = new URLSearchParams(location.search);
     const t = qs.get('tab');
     if (t && tabs.includes(t) && t !== aba) setAba(t);
@@ -126,15 +126,15 @@ export default function Grupos() {
   /* =========================
      Inicialização: carregar grupos (backend -> fallback localStorage)
      ========================= */
-  useEffect(() => {
-    LS.migrate();
+  useEffect(() => { //
+    LS.migrate(); //
 
     let abort = false;
     (async () => {
       setLoading(true);
       setError('');
       try {
-        const resp = await fetch(`${API_BASE}/grupos`);
+        const resp = await fetch(`${API_BASE}/grupos`); //
         if (!resp.ok) {
           // fallback: tenta ler do localStorage se backend indisponível
           throw new Error('Falha ao carregar do servidor');
@@ -143,13 +143,13 @@ export default function Grupos() {
         if (!abort) {
           setGrupos(Array.isArray(data) ? data : []);
           // manter compat com PainelInicial: atualiza localStorage
-          LS.set(LS_KEYS.grupos, Array.isArray(data) ? data : []);
-          LS.set(LS_KEYS.legacyGrupos, Array.isArray(data) ? data : []);
+          LS.set(LS_KEYS.grupos, Array.isArray(data) ? data : []); //
+          LS.set(LS_KEYS.legacyGrupos, Array.isArray(data) ? data : []); //
         }
       } catch (e) {
         // tenta ler do localStorage
         try {
-          const arr = LS.get(LS_KEYS.grupos, LS.get(LS_KEYS.legacyGrupos, []));
+          const arr = LS.get(LS_KEYS.grupos, LS.get(LS_KEYS.legacyGrupos, [])); //
           if (!abort) setGrupos(Array.isArray(arr) ? arr : []);
         } catch (er) {
           if (!abort) setError('Erro ao carregar grupos.');
@@ -163,17 +163,17 @@ export default function Grupos() {
   }, []);
 
   // sempre manter localStorage em sincronia com estado
-  useEffect(() => {
+  useEffect(() => { //
     try {
-      LS.set(LS_KEYS.grupos, grupos);
-      LS.set(LS_KEYS.legacyGrupos, grupos);
+      LS.set(LS_KEYS.grupos, grupos); //
+      LS.set(LS_KEYS.legacyGrupos, grupos); //
     } catch {}
   }, [grupos]);
 
   /* =========================
      Filtragem e ordenação
      ========================= */
-  const gruposFiltrados = useMemo(() => {
+  const gruposFiltrados = useMemo(() => { //
     let list = Array.isArray(grupos) ? [...grupos] : [];
     if (q.trim()) {
       const s = q.toLowerCase();
@@ -195,7 +195,7 @@ export default function Grupos() {
   /* =========================
      Badges & Helpers
      ========================= */
-  const getStatusBadges = (g) => {
+  const getStatusBadges = (g) => { //
     const out = [];
     const meta = Number(g.metaArrecadacao ?? 0);
     const prog = Number(g.progressoArrecadacao ?? 0);
@@ -212,15 +212,15 @@ export default function Grupos() {
      CRIAR GRUPO
      ========================= */
   const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState({ nome: '', metaArrecadacao: '', metaAlimentos: '' });
-  const [createMembers, setCreateMembers] = useState(() =>
+  const [createForm, setCreateForm] = useState({ nome: '', metaArrecadacao: '', metaAlimentos: '' }); //
+  const [createMembers, setCreateMembers] = useState(() => //
     isStudent ? [{ nome: perfil.nome ?? '', ra: perfil.ra ?? '', telefone: '' }] : [{ nome: '', ra: '', telefone: '' }]
   );
 
   // capa (base64) - herdado do antigo
-  const [capaUrl, setCapaUrl] = useState('');
-  const capaRef = useRef(null);
-  const onPickCapa = (e) => {
+  const [capaUrl, setCapaUrl] = useState(''); //
+  const capaRef = useRef(null); //
+  const onPickCapa = (e) => { //
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type?.startsWith('image/')) {
@@ -231,15 +231,15 @@ export default function Grupos() {
     rd.onload = () => setCapaUrl(String(rd.result));
     rd.readAsDataURL(f);
   };
-  const removeCapa = () => {
+  const removeCapa = () => { //
     setCapaUrl('');
     if (capaRef.current) capaRef.current.value = '';
   };
 
   // Paste members (bulk)
-  const [pasteOpen, setPasteOpen] = useState(false);
-  const [pasteText, setPasteText] = useState('');
-  const parseLine = (line) => {
+  const [pasteOpen, setPasteOpen] = useState(false); //
+  const [pasteText, setPasteText] = useState(''); //
+  const parseLine = (line) => { //
     const raw = line.trim();
     if (!raw) return null;
     let parts = raw.split(/[;,\t]|\s{2,}/).map(s=>s.trim()).filter(Boolean);
@@ -251,7 +251,7 @@ export default function Grupos() {
     if (!nome || !ra) return null;
     return { nome, ra, telefone };
   };
-  const onPasteMembers = () => {
+  const onPasteMembers = () => { //
     const lines = pasteText.split(/\r?\n/);
     const parsed = [];
     lines.forEach(l => { const m = parseLine(l); if (m) parsed.push(m); });
@@ -264,14 +264,14 @@ export default function Grupos() {
     setPasteOpen(false);
   };
 
-  const createValid = useMemo(() => {
+  const createValid = useMemo(() => { //
     if (!createForm.nome.trim()) return false;
     if (!isStudent && !String(createForm.metaArrecadacao ?? '').length) return false;
     if (createMembers.some(m => !m.nome?.trim() || !m.ra?.trim())) return false;
     return true;
   }, [createForm, createMembers, isStudent]);
 
-  const onCreate = async (e) => {
+  const onCreate = async (e) => { //
     e.preventDefault();
     if (!createValid) {
       setMessage({ type: 'error', text: 'Preencha os campos obrigatórios.' });
@@ -304,7 +304,7 @@ export default function Grupos() {
       };
 
       // POST para backend
-      const resp = await fetch(`${API_BASE}/grupos`, {
+      const resp = await fetch(`${API_BASE}/grupos`, { //
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -324,8 +324,8 @@ export default function Grupos() {
 
       // atualiza estado local e LS
       setGrupos(prev => [novo, ...prev]);
-      LS.set(LS_KEYS.grupos, [novo, ...LS.get(LS_KEYS.grupos, [])]);
-      LS.set(LS_KEYS.legacyGrupos, [novo, ...LS.get(LS_KEYS.legacyGrupos, [])]);
+      LS.set(LS_KEYS.grupos, [novo, ...LS.get(LS_KEYS.grupos, [])]); //
+      LS.set(LS_KEYS.legacyGrupos, [novo, ...LS.get(LS_KEYS.legacyGrupos, [])]); //
 
       // UI cleanup
       setCreateForm({ nome: '', metaArrecadacao: '', metaAlimentos: '' });
@@ -344,14 +344,14 @@ export default function Grupos() {
   /* =========================
      EDITAR GRUPO
      ========================= */
-  const [editId, setEditId] = useState(null);
-  const [editForm, setEditForm] = useState({ nome:'', metaArrecadacao:'', metaAlimentos:'' });
-  const [editMembers, setEditMembers] = useState([{ nome:'', ra:'', telefone:'' }]);
-  const [editCapa, setEditCapa] = useState('');
-  const editCapaRef = useRef(null);
+  const [editId, setEditId] = useState(null); //
+  const [editForm, setEditForm] = useState({ nome:'', metaArrecadacao:'', metaAlimentos:'' }); //
+  const [editMembers, setEditMembers] = useState([{ nome:'', ra:'', telefone:'' }]); //
+  const [editCapa, setEditCapa] = useState(''); //
+  const editCapaRef = useRef(null); //
 
   // pick edit cover (base64)
-  const onPickEditCapa = (e) => {
+  const onPickEditCapa = (e) => { //
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type?.startsWith('image/')) {
@@ -362,12 +362,12 @@ export default function Grupos() {
     rd.onload = () => setEditCapa(String(rd.result));
     rd.readAsDataURL(f);
   };
-  const removeEditCapa = () => {
+  const removeEditCapa = () => { //
     setEditCapa('');
     if (editCapaRef.current) editCapaRef.current.value = '';
   };
 
-  const startEdit = (g) => {
+  const startEdit = (g) => { //
     setEditId(g.id);
     setEditForm({
       nome: g.nome ?? '',
@@ -380,9 +380,9 @@ export default function Grupos() {
   };
 
   // paste members edit
-  const [pasteOpenEdit, setPasteOpenEdit] = useState(false);
-  const [pasteTextEdit, setPasteTextEdit] = useState('');
-  const onPasteMembersEdit = () => {
+  const [pasteOpenEdit, setPasteOpenEdit] = useState(false); //
+  const [pasteTextEdit, setPasteTextEdit] = useState(''); //
+  const onPasteMembersEdit = () => { //
     const lines = pasteTextEdit.split(/\r?\n/);
     const parsed = [];
     lines.forEach(l => { const m = parseLine(l); if (m) parsed.push(m); });
@@ -395,8 +395,8 @@ export default function Grupos() {
     setPasteOpenEdit(false);
   };
 
-  const [saving, setSaving] = useState(false);
-  const onSave = async (e) => {
+  const [saving, setSaving] = useState(false); //
+  const onSave = async (e) => { //
     e.preventDefault();
     if (!editId) return;
     setSaving(true);
@@ -412,7 +412,7 @@ export default function Grupos() {
         capaDataUrl: editCapa || undefined,
       };
 
-      const r = await fetch(`${API_BASE}/grupos/${editId}`, {
+      const r = await fetch(`${API_BASE}/grupos/${editId}`, { //
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -430,9 +430,9 @@ export default function Grupos() {
       const atualizado = await r.json();
       setGrupos(prev => prev.map(x => x.id === editId ? atualizado : x));
       // atualizar localStorage
-      const all = LS.get(LS_KEYS.grupos, []).map(x => x.id === editId ? atualizado : x);
-      LS.set(LS_KEYS.grupos, all);
-      LS.set(LS_KEYS.legacyGrupos, all);
+      const all = LS.get(LS_KEYS.grupos, []).map(x => x.id === editId ? atualizado : x); //
+      LS.set(LS_KEYS.grupos, all); //
+      LS.set(LS_KEYS.legacyGrupos, all); //
 
       setEditId(null);
       setMessage({ type:'success', text:'Grupo atualizado.' });
@@ -447,14 +447,14 @@ export default function Grupos() {
   /* =========================
      EXCLUIR GRUPO
      ========================= */
-  const [confirm, setConfirm] = useState({ open:false, id:null, name:'' });
-  const askDelete = (g) => setConfirm({ open:true, id:g.id, name:g.nome });
-  const doDelete = async () => {
+  const [confirm, setConfirm] = useState({ open:false, id:null, name:'' }); //
+  const askDelete = (g) => setConfirm({ open:true, id:g.id, name:g.nome }); //
+  const doDelete = async () => { //
     const id = confirm.id;
     setConfirm({ open:false, id:null, name:'' });
     if (!id) return;
     try {
-      const r = await fetch(`${API_BASE}/grupos/${id}`, { method: 'DELETE' });
+      const r = await fetch(`${API_BASE}/grupos/${id}`, { method: 'DELETE' }); //
       if (!r.ok) {
         let msg = 'Falha ao excluir';
         try { const j = await r.json(); if (j?.error) msg = j.error; } catch {}
@@ -463,9 +463,9 @@ export default function Grupos() {
 
       setGrupos(prev => prev.filter(x => x.id !== id));
       // atualizar LS
-      const all = LS.get(LS_KEYS.grupos, []).filter(x => x.id !== id);
-      LS.set(LS_KEYS.grupos, all);
-      LS.set(LS_KEYS.legacyGrupos, all);
+      const all = LS.get(LS_KEYS.grupos, []).filter(x => x.id !== id); //
+      LS.set(LS_KEYS.grupos, all); //
+      LS.set(LS_KEYS.legacyGrupos, all); //
 
       if (editId === id) setEditId(null);
       setMessage({ type:'success', text:'Grupo excluído.' });
@@ -687,6 +687,7 @@ export default function Grupos() {
                   <ul className="grupos-list">
                     {gruposFiltrados.map(g => {
                       const badges = getStatusBadges(g);
+                      // Calcula percentual financeiro
                       const percent = Math.min(((Number(g.progressoArrecadacao ?? 0) / Math.max(Number(g.metaArrecadacao ?? 1), 1)) * 100), 100);
 
                       return (
@@ -717,13 +718,59 @@ export default function Grupos() {
                               ))}
                             </div>
 
-                            <p>
-                              Meta: {currency(g.metaArrecadacao)} · Arrecadado: {currency(g.progressoArrecadacao)}
-                            </p>
-
-                            <div className="progress-bar-container">
-                              <div className="progress-bar-fill" style={{ width: `${percent}%` }} />
+                            {/* --- Meta Financeira --- */}
+                            <div>
+                              <strong>Meta Financeira:</strong> {currency(g.metaArrecadacao)}
+                              <br />
+                              <strong>Arrecadado:</strong> {currency(g.progressoArrecadacao)}
                             </div>
+                            <div className="progress-bar-container">
+                              <div
+                                className="progress-bar-fill"
+                                style={{ width: `${percent}%` }}
+                                aria-valuenow={percent}
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                role="progressbar"
+                                aria-label={`Progresso financeiro: ${percent.toFixed(1)}%`}
+                              />
+                            </div>
+
+                            {/* --- Meta Alimentos (NOVA SEÇÃO) --- */}
+                            {g.metaAlimentos && (
+                              <div className="meta-alimentos-section" style={{ marginTop: '0.75rem' }}>
+                                <strong>Meta Alimentos:</strong> {g.metaAlimentos}
+                                
+                                {(() => {
+                                  const match = String(g.metaAlimentos).match(/\d+/);
+                                  const metaNum = match ? parseInt(match[0], 10) : 0;
+                                  
+                                  // Placeholder: O backend PRECISA retornar g.progressoAlimentos
+                                  const progressoNum = g.progressoAlimentos ?? 0; // <<< SUBSTITUIR PELO DADO REAL DO BACKEND
+
+                                  const percentAlimentos = metaNum > 0 ? Math.min((progressoNum / metaNum) * 100, 100) : 0;
+
+                                  return (
+                                    <>
+                                      <br />
+                                      <strong>Progresso Alimentos:</strong> {progressoNum} {metaNum > 0 ? ` / ${metaNum}` : ''}
+                                      
+                                      <div className="progress-bar-container">
+                                        <div
+                                          className="progress-bar-fill"
+                                          style={{ width: `${percentAlimentos}%` }}
+                                          aria-valuenow={percentAlimentos}
+                                          aria-valuemin="0"
+                                          aria-valuemax="100"
+                                          role="progressbar"
+                                          aria-label={`Progresso de alimentos: ${percentAlimentos.toFixed(1)}%`}
+                                        />
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            )}
 
                             {g.membros?.length > 0 && (
                               <div className="member-list">
@@ -740,7 +787,6 @@ export default function Grupos() {
                           </div>
 
                           <div className="grupo-actions" style={{display:'flex', flexDirection:'column', gap:8}}>
-                            {/* Quem pode editar? Mentor/Admin; ou aluno do próprio grupo */}
                             {((!isStudent) ||
                               (isStudent && (g.membros ?? []).some(m => String(m.ra) === String(perfil.ra)))
                             ) && (
@@ -923,7 +969,7 @@ export default function Grupos() {
         </div>
       )}
 
-      {/* Estilos inline pequenos para ajustar avatar */}
+      {/* Estilos inline pequenos para ajustar avatar (mantidos do original) */}
       <style>{`
         .mentor-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: inline-block; border: 2px solid rgba(255,255,255,0.06); }
         .mentor-pill { display:flex; align-items:center; gap:8px; }
@@ -933,8 +979,18 @@ export default function Grupos() {
         .grupo-item { display:flex; gap:12px; padding:12px; border-radius:8px; background:#fff; align-items:flex-start; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:10px; }
         .grupo-cover img { width:100px; height:80px; object-fit:cover; border-radius:6px; }
         .cover-ph { width:100px; height:80px; display:flex; align-items:center; justify-content:center; background:#f2f2f2; border-radius:6px; color:#666; }
-        .progress-bar-container { height:8px; background:#eee; border-radius:8px; overflow:hidden; margin:8px 0; }
-        .progress-bar-fill { height:100%; background:linear-gradient(90deg,#4caf50,#8bc34a); }
+        /* Removido o .progress-bar-container e .progress-bar-fill daqui pois foram adicionados ao CSS */
+        .chip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:.75rem; border:1px solid #b7e4c7; margin-right:4px; }
+        .chip-success { background:#d4edda; color:#155724; border-color:#c3e6cb; }
+        .chip-progress { background:#e2e3e5; color:#383d41; border-color:#d6d8db; }
+        .chip-neutral { background:#f8f9fa; color:#212529; border-color:#dee2e6; }
+        .chip-mentor { background:#d1ecf1; color:#0c5460; border-color:#bee5eb; }
+        .chip-warn { background:#fff3cd; color:#856404; border-color:#ffeeba; }
+        .chip-info { background:#d1e7ff; color:#084298; border-color:#b6d4fe; }
+        .title-row { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+        .badges { margin-bottom:8px; }
+        .sk-row { height:30px; background:linear-gradient(90deg, #eee 25%, #ddd 50%, #eee 75%); background-size:200% 100%; animation:sk-pulse 1.5s infinite ease-in-out; border-radius:8px; margin-bottom:12px; }
+        @keyframes sk-pulse { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
       `}</style>
     </div>
   );

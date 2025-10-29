@@ -1374,4 +1374,65 @@ display: incline-block;
 .painel-container .btn--create i {
   font-size: 14px;
 }
-/*
+
+/* src/pages/PainelInicial/PainelInicial.css */
+
+/* Define a animação do brilho */
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0; /* Começa fora da barra (esquerda) */
+  }
+  100% {
+    background-position: 100% 0; /* Termina fora da barra (direita) */
+  }
+}
+
+.progress-bar {
+  background: #b7e4c7; /* Cor de fundo da barra vazia */ /* */
+  height: 10px;        /* Altura da barra */ /* */
+  border-radius: 5px;  /* Bordas arredondadas */ /* */
+  overflow: hidden;    /* Esconde o que passar do limite */ /* */
+  margin-top: 5px;     /* Espaço acima */ /* */
+  position: relative; /* Necessário para o brilho (::after) */
+}
+
+.progress {
+  background: #1b4332; /* Cor principal da barra preenchida */ /* */
+  height: 100%;        /* Preenche a altura */ /* */
+  width: 0%;           /* Valor inicial ou atualizado pelo React */
+  border-radius: 5px;  /* Garante bordas arredondadas */
+  position: relative;  /* Necessário para o brilho (::after) */
+  overflow: hidden;    /* Garante que o brilho fique dentro da barra */
+  /* Mantém a transição suave para a LARGURA */
+  transition: width 0.4s ease-in-out; /* */
+}
+
+/* Pseudo-elemento para criar o efeito de brilho */
+.progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Gradiente diagonal claro */
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 40%,    /* Transparente até 40% */
+    rgba(255, 255, 255, 0.3) 50%,   /* Pico do brilho (30% opaco) */
+    rgba(255, 255, 255, 0) 60%     /* Transparente após 60% */
+  );
+  background-size: 200% 100%; /* Faz o gradiente ser largo o suficiente para deslizar */
+  /* Aplica a animação */
+  animation: shimmer 1.5s infinite linear; /* Nome, duração, repetição, velocidade */
+}
+
+/* Opcional: Pausar a animação se o usuário preferir menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  .progress::after {
+    animation: none;
+  }
+  .progress {
+      transition: none; /* Remove também a transição da largura */
+  }
+}
