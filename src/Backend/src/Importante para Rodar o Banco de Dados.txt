@@ -5,7 +5,6 @@ MYSQL_USER=root
 MYSQL_PASSWORD=
 MYSQL_DATABASE=projetoPI
 
-
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 
@@ -16,9 +15,10 @@ JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 NODE_ENV=development
 
-
 # Cookies (se usar refresh em cookie httpOnly)
 COOKIE_SECURE=fals
+
+
 
 Banco de Dados:
 /* ======================================================================
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS grupo_membro (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_membro_grupo ON grupo_membro (ID_grupo);
+CREATE INDEX idx_membro_grupo ON grupo_membro (ID_grupo);
 
 -- ============================================================
 -- USUARIO
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS usuario (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_usuario_id_grupo ON usuario (ID_grupo);
+CREATE INDEX idx_usuario_id_grupo ON usuario (ID_grupo);
 
 -- ============================================================
 -- METAS (por grupo)
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS metas (
   COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE INDEX IF NOT EXISTS idx_metas_id_grupo ON metas (ID_grupo);
+CREATE INDEX idx_metas_id_grupo ON metas (ID_grupo);
 
 -- ============================================================
 -- RELATORIO (por grupo; período)
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS relatorio (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_relatorio_id_grupo ON relatorio (ID_grupo);
+CREATE INDEX idx_relatorio_id_grupo ON relatorio (ID_grupo);
 
 -- ============================================================
 -- POSTAGEM (por usuário)
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS postagem (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_postagem_id_usuario ON postagem (ID_usuario);
+CREATE INDEX idx_postagem_id_usuario ON postagem (ID_usuario);
 
 -- ============================================================
 -- DOACAO (por postagem)
@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS doacao (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_doacao_id_postagem ON doacao (ID_postagem);
+CREATE INDEX idx_doacao_id_postagem ON doacao (ID_postagem);
 
 -- Subtipo: dinheiro
 CREATE TABLE IF NOT EXISTS doacao_dinheiro (
@@ -247,8 +247,8 @@ CREATE TABLE IF NOT EXISTS arquivo (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX IF NOT EXISTS idx_arquivo_id_doacao   ON arquivo (ID_doacao);
-CREATE INDEX IF NOT EXISTS idx_arquivo_id_postagem ON arquivo (ID_postagem);
+CREATE INDEX idx_arquivo_id_doacao   ON arquivo (ID_doacao);
+CREATE INDEX idx_arquivo_id_postagem ON arquivo (ID_postagem);
 
 -- ============================================================
 -- USER PRESENCE (online/ausente/offline)
@@ -370,8 +370,3 @@ select * FROM grupo;
 select *
 from doacao;
 select  * from usuario;
-
-
-
-
-
