@@ -1,4 +1,4 @@
-// src/Backend/src/middleware/upload.js
+// src/Backend/src/middlewares/upload.js
 import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';

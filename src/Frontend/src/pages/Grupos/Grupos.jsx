@@ -797,7 +797,7 @@ export default function Grupos() {
                               onClick={()=> navigate(`/grupos/atividade/${g.id}`)}
                               className="btn-secondary"
                             >
-                              Atividades
+                              Doações
                             </button>
 
                             {isMentorLike && (

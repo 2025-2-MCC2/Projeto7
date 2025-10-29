@@ -1,115 +1,291 @@
-/* ===== Configurações ===== */
+/* src/pages/Configuracoes/Configuracoes.css */
+/* ATUALIZADO: Com abas, seções de foto e variáveis do tema global */
+
 .cfg-container {
-    display: grid;
-    gap: 20px;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .cfg-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  
-  .cfg-header h2 {
-    font-size: 1.6rem;
-    font-weight: 700;
-  }
-  
-  .cfg-header .btn-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--card-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s ease;
-  }
-  .cfg-header .btn-back:hover {
-    background: color-mix(in srgb, var(--primary) 8%, var(--card-bg));
-  }
-  
-  .cfg-msg { margin: 0; font-size: 0.95rem; }
-  .cfg-msg.success { color: #16a34a; }
-  .cfg-msg.error { color: #dc2626; }
-  
-  .cfg-card {
-    background: var(--card-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    padding: 18px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .cfg-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  }
-  
-  .cfg-card h3 { margin: 0 0 12px; font-size: 1.2rem; font-weight: 600; }
-  
-  .cfg-row {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 14px;
-    align-items: center;
-    padding: 12px 0;
-    border-top: 1px dashed var(--border);
-  }
-  .cfg-row:first-of-type { border-top: none; }
-  
-  .cfg-label strong { font-size: 1rem; }
-  .cfg-label .muted { color: var(--muted); font-size: 0.85rem; }
-  
-  .cfg-control .input,
-  .cfg-control input[type="number"],
-  .cfg-control select {
-    background: var(--input-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 0.95rem;
-  }
-  
-  .cfg-inline { display: flex; flex-wrap: wrap; gap: 12px; }
-  
-  .grid-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
-  }
-  
-  .btn {
-    border-radius: 8px;
-    padding: 8px 14px;
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.2s ease;
-  }
-  .btn-primary { background: var(--primary); color: #fff; border: none; }
-  .btn-primary:hover { background: var(--primary-hover); }
-  .btn-secondary { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { background: color-mix(in srgb, var(--primary) 8%, var(--card-bg)); }
-  
-  .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
-  .switch input { display: none; }
-  .switch span { position: absolute; inset: 0; background: #9aa1a6; border-radius: 999px; transition: background .2s; }
-  .switch span::after { content: ""; position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; background: #fff; border-radius: 999px; transition: transform .2s; }
-  .switch input:checked + span { background: var(--primary); }
-  .switch input:checked + span::after { transform: translateX(20px); }
-  
-  @media (max-width: 768px) {
-    .cfg-row { grid-template-columns: 1fr; }
-  }
+  display: grid;
+  gap: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.cfg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cfg-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+}
+
+.cfg-header .btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+}
+.cfg-header .btn-back:hover {
+  background: color-mix(in srgb, var(--primary) 8%, var(--card-bg));
+  border-color: var(--border);
+}
+
+/* --- Abas de Navegação --- */
+.cfg-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 10px;
+}
+.cfg-tab-button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 3px solid transparent;
+  transform: translateY(2px); /* Alinha com a borda de baixo */
+  transition: color 0.2s, border-color 0.2s;
+}
+.cfg-tab-button:hover {
+  color: var(--text);
+}
+.cfg-tab-button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.cfg-tab-button i {
+  font-size: 0.9em;
+}
+
+/* Card principal */
+.cfg-card {
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  animation: fadeIn 0.4s ease-out backwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cfg-card h3 {
+  margin: 0 0 16px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Linha de configuração (Label + Controle) */
+.cfg-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  align-items: flex-start; /* Alinha no topo para labels longas */
+  padding: 16px 0;
+  border-top: 1px dashed var(--border);
+}
+.cfg-row-vertical {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px dashed var(--border);
+}
+.cfg-card > div:first-of-type.cfg-row,
+.cfg-card > div:first-of-type.cfg-row-vertical {
+  border-top: none;
+  padding-top: 4px;
+}
+
+.cfg-label strong {
+  font-size: 1rem;
+  font-weight: 600;
+  display: block;
+}
+.cfg-label .muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Controles (Inputs, selects, botões) */
+.cfg-control {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cfg-control .input,
+.cfg-control input,
+.cfg-control select {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cfg-control .input:focus,
+.cfg-control input:focus,
+.cfg-control select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+  outline: none;
+}
+
+.cfg-control select {
+  width: auto;
+  min-width: 240px;
+}
+
+/* Controles na mesma linha */
+.cfg-inline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.cfg-inline .input {
+  width: auto;
+  flex-grow: 1;
+}
+.cfg-inline .btn {
+  flex-shrink: 0;
+}
+.cfg-inline label { /* Para Radio buttons */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.grid-3 .btn {
+  grid-column: 1 / -1; /* Botão ocupa a linha inteira */
+  margin-top: 5px;
+  max-width: 200px; /* Limita largura do botão */
+}
+
+/* --- Botões --- */
+.btn {
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:not(:disabled):hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+.btn-secondary { background: var(--card-bg); color: var(--text); border-color: var(--border); }
+.btn-secondary:not(:disabled):hover { background: color-mix(in srgb, var(--text) 5%, var(--card-bg)); border-color: color-mix(in srgb, var(--text) 20%, var(--border)); }
+
+.btn-danger-outline { background: var(--danger-outline-bg); color: var(--danger); border-color: var(--danger); }
+.btn-danger-outline:not(:disabled):hover { background: color-mix(in srgb, var(--danger) 20%, var(--danger-outline-bg)); }
+
+/* --- Seção Foto de Perfil (Estilos de PerfilPage.css) --- */
+.cfg-profile-pic {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.avatar-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.avatar-preview-initials {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 600;
+}
+.dropzone {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 16px;
+  display: grid; place-items: center; gap: 6px;
+  background: color-mix(in srgb, var(--bg) 50%, var(--card-bg));
+  transition: background .2s ease, border-color .2s ease;
+}
+.dropzone:hover { background: color-mix(in srgb, var(--primary) 6%, var(--card-bg)); }
+.dropzone.is-busy { opacity: .7; pointer-events: none; }
+.dz-icon { font-size: 28px; color: var(--muted); }
+.dz-text { color: var(--muted); }
+.link { background:transparent; border:none; color:var(--primary); cursor:pointer; font-weight:700; padding:0 4px; }
+.link:hover { text-decoration: underline; }
+.or-sep { text-align: center; margin: 10px 0; color: var(--muted); font-size: 0.85rem; }
+.link-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+
+
+/* --- Switch Toggle (2FA) --- */
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+.switch input { display: none; }
+.switch span { position: absolute; inset: 0; background: #9aa1a6; border-radius: 999px; transition: background .2s; cursor: pointer; }
+.switch span::after { content: ""; position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; background: #fff; border-radius: 999px; transition: transform .2s; }
+.switch input:checked + span { background: var(--primary); }
+.switch input:checked + span::after { transform: translateX(20px); }
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .cfg-header { flex-direction: column; align-items: flex-start; }
+  .cfg-tabs { flex-wrap: nowrap; overflow-x: auto; } /* Permite rolar abas no mobile */
+  .cfg-tab-button { white-space: nowrap; }
+  .cfg-row { grid-template-columns: 1fr; gap: 8px; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-3 .btn { max-width: none; } /* Botão ocupa 100% no mobile */
+  .link-row { grid-template-columns: 1fr; }
+}

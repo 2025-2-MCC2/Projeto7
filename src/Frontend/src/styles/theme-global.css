@@ -1,0 +1,123 @@
+src/styles/theme-global.css
+/* Arquivo de tema mestre ATUALIZADO v2.
+   - Tema claro usa cores de botão originais (verde estilo styles.css).
+   - Tema escuro usa tons mais escuros derivados.
+   - Controla todo o app, exceto Home e PainelInicial. */
+
+/* ==================================
+   1. TEMA CLARO (Light Mode - Padrão)
+   ================================== */
+:root {
+  /* Cores de Fundo e Texto */
+  --bg: #f0fdf4;                     /* Fundo verde bem claro (Original PainelInicial.css) */
+  --text: #1b4332;                   /* Texto verde escuro (Original PainelInicial.css) */
+  --muted: #2d6a4f;                  /* Texto silenciado verde médio (Original PainelInicial.css) */
+  --card-bg: #e6f7eb;                /* Fundo do card claro (Original PainelInicial.css) */
+  --border: #b7e4c7;                 /* Borda clara (Original PainelInicial.css) */
+  --input-bg: #ffffff;               /* Input branco */
+
+  /* --- Cores de Ação (Botões - ORIGINAIS do seu estilo preferido) --- */
+  --primary: #1b4332;                /* Botão primário (Verde Escuro - PainelInicial/Config) */
+  --primary-hover: #2d6a4f;          /* Hover Verde Médio */
+  --primary-text: #ffffff;
+
+  --secondary: #28a745;              /* Verde (Aprovar) */
+  --secondary-hover: #218838;
+  --secondary-text: #ffffff;
+
+  --warning: #ffc107;                /* Amarelo (Rejeitar) */
+  --warning-hover: #e0a800;
+  --warning-text: #212529;
+
+  --danger: #d90429;                 /* Vermelho (Excluir - Original) */
+  --danger-hover: #b00020;
+  --danger-text: #ffffff;
+  --danger-outline-bg: rgba(217, 4, 41, 0.05);
+
+  /* Cores de Status (Badges, Bordas - Baseado no claro) */
+  --status-pending-bg: #fff3cd;
+  --status-pending-text: #856404;
+  --status-pending-border: #ffeeba;
+  --status-approved-bg: #d4edda;
+  --status-approved-text: #155724;
+  --status-approved-border: #c3e6cb;
+  --status-rejected-bg: #f8d7da;
+  --status-rejected-text: #721c24;
+  --status-rejected-border: #f5c6cb;
+
+  /* Outros */
+  --shadow: 0 4px 15px rgba(0,0,0,0.07); /* Sombra mais sutil */
+}
+
+/* ==================================
+   2. TEMA ESCURO (Dark Mode)
+   ================================== */
+html[data-theme="escuro"] {
+  /* Cores de Fundo e Texto */
+  --bg: #0f1115;
+  --text: #e6e6e6;
+  --muted: #a8b3b8;
+  --card-bg: #171a1f;
+  --border: #2a2f33;
+  --input-bg: #0f1318;
+
+  /* --- Cores de Ação (TONS MAIS ESCUROS das cores ORIGINAIS do claro) --- */
+  --primary: #1b4332;                /* Mantém o verde escuro original */
+  --primary-hover: #2d6a4f;          /* Hover um pouco mais claro */
+  --primary-text: #ffffff;
+
+  --secondary: #218838;              /* Verde (Aprovar) - Tom mais escuro */
+  --secondary-hover: #28a745;
+  --secondary-text: #ffffff;
+
+  --warning: #e0a800;                /* Amarelo (Rejeitar) - Tom mais escuro */
+  --warning-hover: #ffc107;
+  --warning-text: #212529;
+
+  --danger: #b00020;                 /* Vermelho (Excluir) - Tom mais escuro */
+  --danger-hover: #d90429;
+  --danger-text: #ffffff;
+  --danger-outline-bg: rgba(239, 68, 68, 0.1);
+
+  /* Cores de Status (Adaptadas para fundo escuro) */
+  --status-pending-bg: color-mix(in srgb, var(--status-pending-text) 15%, transparent);
+  --status-pending-text: #ffeeba;
+  --status-pending-border: var(--status-pending-text);
+  --status-approved-bg: color-mix(in srgb, var(--status-approved-text) 15%, transparent);
+  --status-approved-text: #c3e6cb;
+  --status-approved-border: var(--status-approved-text);
+  --status-rejected-bg: color-mix(in srgb, var(--status-rejected-text) 15%, transparent);
+  --status-rejected-text: #f5c6cb;
+  --status-rejected-border: var(--status-rejected-text);
+
+  /* Outros */
+  --shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
+
+/* ==================================
+   3. APLICAÇÃO GLOBAL (Exceto Home)
+   ================================== */
+body:not(.home-active) {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease-out, color 0.2s ease-out;
+}
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+  margin: 0;
+  line-height: 1.5;
+}
+html, body, #root { min-height: 100%; }
+#root { display: flex; flex-direction: column; }
+
+/* Animação de brilho (shimmer) - Mantida */
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* ==================================
+   4. Estilos Utilitários (Opcional)
+   ================================== */
+.text-muted { color: var(--muted); }
+.text-danger { color: var(--danger); }

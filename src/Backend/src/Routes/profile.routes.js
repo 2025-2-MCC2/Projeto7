@@ -1,7 +1,7 @@
 // src/Backend/src/routes/profile.routes.js
 import { Router } from 'express';
 import { uploadPhoto, linkPhoto, removePhoto } from '../controllers/profileController.js';
-import { makeProfileUpload } from '../middleware/upload.js';
+import { makeProfileUpload } from '../middlewares/upload.js';
 
 const router = Router();
 const upload = makeProfileUpload();

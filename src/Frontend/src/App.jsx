@@ -24,7 +24,7 @@ import RegisterPage from './pages/RegisterPage/Registerpage.jsx';
 import Grupos from './pages/Grupos/Grupos.jsx';
 import PerfilPage from './pages/Perfil/PerfilPage.jsx';
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
-import AtividadesGrupo from './pages/Grupos/AtividadesGrupo.jsx';
+import AtividadesGrupo from './pages/Grupos/DoacaoGrupo.jsx';
 import Configuracoes from './pages/Configuracoes/Configuracoes.jsx';
 
 import img1 from './assets/img1.jpg';
