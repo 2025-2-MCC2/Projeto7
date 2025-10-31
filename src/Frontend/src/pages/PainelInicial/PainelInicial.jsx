@@ -91,7 +91,9 @@ export default function PainelInicial() {
       setLoadingGrupos(true);
       setErrorGrupos("");
       try {
-        const resp = await fetch(`${API_BASE}/grupos`);
+        const resp = await fetch(`${API_BASE}/grupos`, {
+          credentials: "include",
+        });
         if (!resp.ok) {
           const errText = await resp.text();
           console.error("API Error:", resp.status, errText);
@@ -168,6 +170,7 @@ export default function PainelInicial() {
     try {
       // --- ADICIONAR CHAMADA API DELETE ---
       const response = await fetch(`${API_BASE}/grupos/${id}`, {
+        credentials: "include",
         method: "DELETE",
       });
       if (!response.ok) {
