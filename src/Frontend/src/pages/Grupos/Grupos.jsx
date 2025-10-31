@@ -155,7 +155,9 @@ export default function Grupos() {
       setLoading(true);
       setError("");
       try {
-        const resp = await fetch(`${API_BASE}/grupos`); //
+        const resp = await fetch(`${API_BASE}/grupos`, {
+  credentials: "include",
+}); //
         if (!resp.ok) {
           // fallback: tenta ler do localStorage se backend indisponível
           throw new Error("Falha ao carregar do servidor");
@@ -383,7 +385,7 @@ export default function Grupos() {
 
       // POST para backend
       const resp = await fetch(`${API_BASE}/grupos`, {
-        //
+        credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

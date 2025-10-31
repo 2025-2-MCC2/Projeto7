@@ -192,7 +192,9 @@ export default function DoacaoGrupo() {
       }
       setLoadingGrupo(true);
       try {
-        const response = await fetch(`${API_BASE}/grupos/${groupId}`);
+        const response = await fetch(`${API_BASE}/grupos/${groupId}`, {
+          credentials: "include",
+        });
         if (!response.ok)
           throw new Error(
             `Grupo ${groupId} não encontrado (${response.status})`
@@ -298,13 +300,15 @@ export default function DoacaoGrupo() {
         (a, b) =>
           new Date(b.doacao_data_registro || 0) -
           new Date(a.doacao_data_registro || 0)
-      ); //
+      );
+    //
     else if (order === "antigos")
       list.sort(
         (a, b) =>
           new Date(a.doacao_data_registro || 0) -
           new Date(b.doacao_data_registro || 0)
-      ); //
+      );
+    //
     else if (order === "a_z")
       list.sort((a, b) =>
         (a.item_doacao || a.doador_nome || "").localeCompare(
@@ -373,7 +377,7 @@ export default function DoacaoGrupo() {
     };
     try {
       const response = await fetch(`${API_BASE}/grupos/${groupId}/doacoes`, {
-        //
+        credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" /* Authorization? */ },
         body: JSON.stringify(payload),
