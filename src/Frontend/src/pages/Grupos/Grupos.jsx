@@ -22,19 +22,10 @@ import "./Grupos.css";
 /* =========================
    Config da API
    ========================= */
-// const API_BASE =
-//   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
-//   "https://projeto-interdisciplinar-2.onrender.com/api";
-// // ajuste se necessário
-
-// API_BASE: prioriza a variável de ambiente VITE_API_URL (sem barra final).
-// Fallback para a URL do backend (render). Troque pela sua URL se necessário.
-const RAW_VITE = import.meta.env.VITE_API_URL;
-console.log("🔥 RAW VITE_API_URL:", RAW_VITE);
-export const API_BASE =
-  RAW_VITE?.replace(/\/+$/, "") ||
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
   "https://projeto-interdisciplinar-2.onrender.com/api";
-console.log("🔥 API_BASE em Grupos.jsx =", API_BASE);
+// // ajuste se necessário
 
 /* =========================
    LocalStorage helpers (compatibilidade com antigo)
