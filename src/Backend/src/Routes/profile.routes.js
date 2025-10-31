@@ -6,13 +6,19 @@ import { makeProfileUpload } from '../middlewares/upload.js';
 const router = Router();
 const upload = makeProfileUpload();
 
+// =======================================================
+// Rota de Upload (POST /api/profile/upload)
+// Esta rota está correta.
+// =======================================================
 // multipart/form-data (campo "photo") + body.userId
-router.post('/photo', upload, uploadPhoto);
+router.post('/upload', upload, uploadPhoto);
+
 
 // body: { userId, url }
-router.post('/photo-link', linkPhoto);
+router.post('/link', linkPhoto);
 
 // body: { userId }
-router.delete('/photo', removePhoto);
+router.post('/remove', removePhoto);
 
 export default router;
+

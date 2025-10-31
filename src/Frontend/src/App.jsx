@@ -26,6 +26,7 @@ import PerfilPage from './pages/Perfil/PerfilPage.jsx';
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
 import AtividadesGrupo from './pages/Grupos/DoacaoGrupo.jsx';
 import Configuracoes from './pages/Configuracoes/Configuracoes.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage.jsx';
 
 import img1 from './assets/img1.jpg';
 import img2 from './assets/img2.jpg';
@@ -127,6 +128,7 @@ export default function App() {
           {/* Rotas públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrar" element={<RegisterPage />} />
+          <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
 
           {/* Home com Footer (único) */}
           <Route element={<LayoutComFooter />}>
