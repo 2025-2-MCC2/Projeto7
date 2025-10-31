@@ -52,7 +52,7 @@ app.use("/api", authRoutes); // Login / Registro
 app.use("/api/usuario", usuarioRoutes); // Usuários
 app.use("/api/profile", profileRoutes); // Perfis
 app.use("/api", dashboardRoutes); // Painel
-app.use("/api", sseRoutes); // SSE (notificações)
+app.use("/api", requireAuth, sseRoutes); // SSE (notificações)
 
 // ===== Rotas protegidas =====
 // Tudo que requer autenticação vem abaixo

@@ -282,6 +282,7 @@ export default function Dashboard({ grupo }) {
       "https://projeto-interdisciplinar-2.onrender.com/api";
     // Assina SSE para atualizações (aprovação de doações / novas doações)
     const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
+      credentials: "include",
       withCredentials: true,
     });
     const handler = async () => {
