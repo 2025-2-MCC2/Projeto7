@@ -22,7 +22,7 @@ import "./Grupos.css";
 /* =========================
    Config da API
    ========================= */
-const API_BASE = "Frontendsrcauthapi.js"; // ajuste se necessário
+const API_BASE = "Frontend/src/auth/api.js"; // ajuste se necessário
 
 /* =========================
    LocalStorage helpers (compatibilidade com antigo)
