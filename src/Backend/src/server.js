@@ -26,9 +26,26 @@ const ORIGIN =
   "http://localhost:5173";
 const PORT = process.env.PORT || 3000;
 
+// Suporte a múltiplas origens (Vercel + localhost)
+const allowedOrigins = CORS_ORIGIN.split(",").map((o) =>
+  o.trim().replace(/\/$/, "")
+); // remove barra final, se tiver
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origem ${origin} não permitida pelo CORS`));
+      }
+    },
+    credentials: true,
+  })
+);
+
 // Segurança e middlewares básicos
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors({ origin: ORIGIN, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
@@ -70,5 +87,5 @@ await initDb();
 
 app.listen(PORT, () => {
   console.log(`✅ API ON em http://localhost:${PORT}`);
-  console.log(`   CORS origin: ${ORIGIN}`);
+  console.log(`   CORS liberado para: ${allowedOrigins.join(", ")}`);
 });
