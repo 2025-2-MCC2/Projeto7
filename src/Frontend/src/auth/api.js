@@ -1,7 +1,5 @@
 import axios from "axios";
 
-import axios from "axios";
-
 const raw = import.meta.env.VITE_API_URL;
 console.log("🔥 RAW VITE_API_URL =", raw);
 
