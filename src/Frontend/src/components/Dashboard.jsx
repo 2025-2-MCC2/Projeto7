@@ -277,8 +277,13 @@ export default function Dashboard({ grupo }) {
     }
     load();
 
+    const API_BASE =
+      import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+      "https://projeto-interdisciplinar-2.onrender.com/api";
     // Assina SSE para atualizações (aprovação de doações / novas doações)
-    const es = new EventSource(`/api/stream/grupos/${grupo.id}`);
+    const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
+      withCredentials: true,
+    });
     const handler = async () => {
       try {
         const [sum, inv, ts] = await Promise.all([
