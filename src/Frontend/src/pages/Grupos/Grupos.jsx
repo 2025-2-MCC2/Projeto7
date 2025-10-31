@@ -22,7 +22,10 @@ import "./Grupos.css";
 /* =========================
    Config da API
    ========================= */
-const API_BASE = "/api.js"; // ajuste se necessário
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://projeto-interdisciplinar-2.onrender.com/api";
+// ajuste se necessário
 
 /* =========================
    LocalStorage helpers (compatibilidade com antigo)
