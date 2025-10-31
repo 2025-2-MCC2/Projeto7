@@ -1,13 +1,13 @@
-// src/DataBase/db.js 
-import 'dotenv/config';
-import mysql from 'mysql2/promise';
+// src/DataBase/db.js
+import "dotenv/config";
+import mysql from "mysql2/promise";
 
 const {
-  MYSQL_HOST = '127.0.0.1',           // IPv4 evita surpresa com IPv6 (localhost -> ::1)
-  MYSQL_PORT = 3306,
-  MYSQL_USER = 'root',
-  MYSQL_PASSWORD = '',
-  MYSQL_DATABASE = 'projetoPI',       // <<-- não deixe vazio em prod
+  MYSQLHOST = "gondola.proxy.rlwy.net", // IPv4 evita surpresa com IPv6 (localhost -> ::1)
+  MYSQLPORT = "54989",
+  MYSQLUSER = "root",
+  MYSQLPASSWORD = "tDEfFWGlqslSZsnWLOqfSrXVVOcXiHlD",
+  MYSQLDATABASE = "railway", // <<-- não deixe vazio em prod
 } = process.env;
 
 export let pool;
@@ -15,18 +15,20 @@ export let pool;
 /** Cria o database caso não exista */
 async function ensureDatabase() {
   const serverPool = await mysql.createPool({
-    host: MYSQL_HOST,
-    port: Number(MYSQL_PORT),
-    user: MYSQL_USER,
-    password: MYSQL_PASSWORD,
+    host: MYSQLHOST,
+    port: Number(MYSQLPORT),
+    user: MYSQLUSER,
+    password: MYSQLPASSWORD,
     connectionLimit: 5,
   });
 
-  if (!MYSQL_DATABASE) {
-    console.warn('⚠️  MYSQL_DATABASE está vazio no .env. Defina para evitar ER_NO_DB_ERROR.');
+  if (!MYSQLDATABASE) {
+    console.warn(
+      "⚠️  MYSQL_DATABASE está vazio no .env. Defina para evitar ER_NO_DB_ERROR."
+    );
   } else {
     await serverPool.query(
-      `CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`
+      `CREATE DATABASE IF NOT EXISTS \`${MYSQLDATABASE}\`
        DEFAULT CHARACTER SET utf8mb4
        DEFAULT COLLATE utf8mb4_unicode_ci;`
     );
@@ -96,16 +98,16 @@ export async function initDb() {
   await ensureDatabase();
 
   pool = await mysql.createPool({
-    host: MYSQL_HOST,
-    port: Number(MYSQL_PORT),
-    user: MYSQL_USER,
-    password: MYSQL_PASSWORD,
-    database: MYSQL_DATABASE || undefined, // se vazio, ER_NO_DB_ERROR
+    host: MYSQLHOST,
+    port: Number(MYSQLPORT),
+    user: MYSQLUSER,
+    password: MYSQLPASSWORD,
+    database: MYSQLDATABASE || undefined, // se vazio, ER_NO_DB_ERROR
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
     multipleStatements: false, // OK (executamos queries separadas)
-    charset: 'utf8mb4',        // ajuste correto de charset
+    charset: "utf8mb4", // ajuste correto de charset
   });
 
   // Cria tabelas (idempotente)
@@ -113,16 +115,23 @@ export async function initDb() {
 
   // Log do DB ativo
   try {
-    const [r] = await pool.query('SELECT DATABASE() AS db');
-    console.log(`🗄️  MySQL conectado. DATABASE() = ${r?.[0]?.db || '(nenhum selecionado)'}`);
+    const [r] = await pool.query("SELECT DATABASE() AS db");
+    console.log(
+      `🗄️  MySQL conectado. DATABASE() = ${
+        r?.[0]?.db || "(nenhum selecionado)"
+      }`
+    );
   } catch (e) {
-    console.error('❌ Falha ao testar conexão MySQL:', e?.message || e);
+    console.error("❌ Falha ao testar conexão MySQL:", e?.message || e);
   }
   return pool;
 }
 
 /** Acesse o pool depois de initDb() */
 export function getDb() {
-  if (!pool) throw new Error('Pool MySQL não inicializado. Chame initDb() no bootstrap.');
+  if (!pool)
+    throw new Error(
+      "Pool MySQL não inicializado. Chame initDb() no bootstrap."
+    );
   return pool;
 }
