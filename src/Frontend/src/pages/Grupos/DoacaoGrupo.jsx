@@ -58,7 +58,9 @@ function Lightbox({ open, items, index, onClose, onPrev, onNext, onRemove, showR
  * --------------------------------------------------------------------------*/
 const GRUPOS_KEY = "grupos"; //
 const PERFIL_KEY = "perfil"; //
-const API_BASE = '/api.js'; // Base da API backend
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://projeto-interdisciplinar-2.onrender.com/api";
 const ACCEPT_ATTACH = "application/pdf,image/png,image/jpeg,image/jpg"; //
 
 // Helper para formatar data/hora
