@@ -8,12 +8,12 @@ import path from 'node:path';
 import { initDb } from './DataBase/db.js';
 
 // Rotas principais
-import profileRoutes from './routes/profile.routes.js';
-import presenceRoutes from './routes/presence.routes.js';
-import dashboardRoutes from './routes/dashboard.routes.js';
-import authRoutes from './routes/auth.routes.js';
-import usuarioRoutes from './routes/user.routes.js';
-import sseRoutes from './routes/sse.routes.js';
+import profileRoutes from './Routes/profile.routes.js';
+import presenceRoutes from './Routes/presence.routes.js';
+import dashboardRoutes from './Routes/dashboard.routes.js';
+import authRoutes from './Routes/auth.routes.js';
+import usuarioRoutes from './Routes/user.routes.js';
+import sseRoutes from './Routes/sse.routes.js';
 import mainRoutes from './Routes/routes.js';
 
 // 🔒 Middleware de autenticação (seu middleware original)
