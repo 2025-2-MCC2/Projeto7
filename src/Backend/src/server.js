@@ -21,10 +21,8 @@ import { requireAuth } from "./middlewares/requireAuth.js";
 
 const app = express();
 
-const ORIGIN =
-  "https://projeto-interdisciplinar-webcrawlers.vercel.app/" ||
-  "http://localhost:5173";
 const PORT = process.env.PORT || 3000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
 // Suporte a múltiplas origens (Vercel + localhost)
 const allowedOrigins = CORS_ORIGIN.split(",").map((o) =>
