@@ -156,8 +156,8 @@ export default function Grupos() {
       setError("");
       try {
         const resp = await fetch(`${API_BASE}/grupos`, {
-  credentials: "include",
-}); //
+          credentials: "include",
+        }); //
         if (!resp.ok) {
           // fallback: tenta ler do localStorage se backend indisponível
           throw new Error("Falha ao carregar do servidor");
@@ -522,7 +522,7 @@ export default function Grupos() {
       };
 
       const r = await fetch(`${API_BASE}/grupos/${editId}`, {
-        //
+        credentials: "include",
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -567,7 +567,10 @@ export default function Grupos() {
     setConfirm({ open: false, id: null, name: "" });
     if (!id) return;
     try {
-      const r = await fetch(`${API_BASE}/grupos/${id}`, { method: "DELETE" }); //
+      const r = await fetch(`${API_BASE}/grupos/${id}`, {
+        credentials: "include",
+        method: "DELETE",
+      }); //
       if (!r.ok) {
         let msg = "Falha ao excluir";
         try {

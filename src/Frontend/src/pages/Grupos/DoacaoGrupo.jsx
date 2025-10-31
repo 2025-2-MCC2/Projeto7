@@ -425,6 +425,7 @@ export default function DoacaoGrupo() {
     try {
       const r = await fetch(
         `${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}`,
+        { credentials: "include" },
         { method: "DELETE" /* Headers? */ }
       ); //
       if (!r.ok) {
@@ -607,6 +608,7 @@ export default function DoacaoGrupo() {
         const response = await fetch(
           `${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}/aprovar`,
           {
+            credentials: "include",
             method: "PUT",
             headers: { "Content-Type": "application/json" /* Auth? */ },
           }
@@ -644,6 +646,7 @@ export default function DoacaoGrupo() {
         const response = await fetch(
           `${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}/rejeitar`,
           {
+            credentials: "include",
             method: "PUT",
             headers: { "Content-Type": "application/json" /* Auth? */ },
             body: JSON.stringify({ observacao: observacao ?? null }),
