@@ -1,10 +1,18 @@
 import axios from "axios";
 
+import axios from "axios";
+
+const raw = import.meta.env.VITE_API_URL;
+console.log("🔥 RAW VITE_API_URL =", raw);
+
+export const API_BASE = (raw || "/api").replace(/\/+$/, "");
+console.log("🔥 API_BASE =", API_BASE);
+
 // FRONT aponta para back na 3000:
-export const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(
-  /\/+$/,
-  ""
-);
+// export const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(
+//   /\/+$/,
+//   ""
+// );
 
 export const AUTH_STORAGE = import.meta.env.VITE_AUTH_STORAGE || "cookie";
 
