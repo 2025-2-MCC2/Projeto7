@@ -275,7 +275,7 @@ export default function LoginPage() {
         </form>
 
         <div className="login-links">
-          <Link to="#">Esqueci minha senha</Link>
+          <Link to="/esqueci-senha">Esqueci minha senha</Link>
           <Link to="/registrar">Criar conta</Link>
         </div>
       </div>

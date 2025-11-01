@@ -1,19 +1,17 @@
 // src/pages/Perfil/PerfilPage.jsx
-// ATUALIZADO: Versão "View-Only" (somente visualização).
 // Lógica de edição e upload foi movida para Configuracoes.jsx
-
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PerfilPage.css';
 import { useAutoPresence } from '../../hooks/usePresence';
 import { useSettings } from '../../hooks/useSettings';
-// Removido: import { api } from '../../auth/api';
 
 // Helpers (mantidos)
 const loadPerfil = () => {
   try { return JSON.parse(localStorage.getItem('perfil') || '{}'); }
   catch { return {}; }
 };
+
 const getInitial = (n = 'Usuário') => {
   const parts = String(n).trim().split(/\s+/);
   const first = parts[0]?.[0] ?? "";
@@ -26,8 +24,6 @@ export default function PerfilPage() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState(() => loadPerfil());
   const [copied, setCopied] = useState(false);
-
-  // Removemos: busy, error, urlInput, fileRef
 
   // Sincroniza o perfil com localStorage se outra aba mudar
   useEffect(() => {
@@ -56,12 +52,13 @@ export default function PerfilPage() {
   const email = perfil?.email || '—';
   const foto = perfil?.fotoUrl || '';
 
-  // Removidas: persistLocalPhoto, handleSelectFile, handleLinkSave, handleRemovePhoto
-
   const onCopyEmail = async () => {
     if (!email || email === '—') return;
-    try { await navigator.clipboard.writeText(email); setCopied(true); setTimeout(() => setCopied(false), 1500); }
-    catch {}
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   };
 
   return (
@@ -72,7 +69,6 @@ export default function PerfilPage() {
           <span className="perfil-badge" aria-live="polite">{statusTxt}</span>
         </div>
 
-        {/* Seção de Visualização (inalterada) */}
         <div className="perfil-view__top">
           <div className="perfil-avatar-ring" aria-hidden="true" />
           <div className="perfil-avatar-wrap">
@@ -80,7 +76,7 @@ export default function PerfilPage() {
               <img src={foto} alt="Foto do perfil" className="perfil-avatar perfil-avatar--lg" />
             ) : (
               <div className="perfil-avatar perfil-avatar--lg perfil-avatar--placeholder" aria-hidden="true">
-                {getInitials(nome)}
+                {getInitial(nome)}
               </div>
             )}
             <span
@@ -97,9 +93,6 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* REMOVIDO: Seção de Upload (perfil-upload) */}
-
-        {/* Informações Read-Only (inalteradas) */}
         <div className="perfil-info">
           <div className="perfil-info__row">
             <span className="perfil-info__label">Nome</span>
@@ -109,7 +102,6 @@ export default function PerfilPage() {
             <span className="perfil-info__label">E-mail</span>
             <span className="perfil-info__value" title={email}>{email}</span>
           </div>
-          {/* Adicione outros campos read-only se desejar (RA, Grupo, etc.) */}
           {perfil.ra && (
             <div className="perfil-info__row">
               <span className="perfil-info__label">RA</span>
@@ -118,13 +110,11 @@ export default function PerfilPage() {
           )}
         </div>
 
-        {/* Ações (botão de Edição agora leva para /config) */}
         <div className="perfil-actions">
           <button type="button" className="perfil-btn perfil-btn--ghost" onClick={() => navigate(-1)}>
             <i className="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar
           </button>
           <button
-            type="button"
             className="perfil-btn perfil-btn--secondary"
             onClick={onCopyEmail}
             title="Copiar e-mail"
@@ -135,7 +125,7 @@ export default function PerfilPage() {
           <button
             type="button"
             className="perfil-btn perfil-btn--primary"
-            onClick={() => navigate('/config')} // <-- AÇÃO PRINCIPAL
+            onClick={() => navigate('/config')}
             title="Editar perfil e configurações"
           >
             <i className="fa-solid fa-gear" aria-hidden="true"></i> Configurações

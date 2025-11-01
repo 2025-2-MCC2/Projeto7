@@ -17,13 +17,6 @@ import {
   deleteMeta,
 } from "../controllers/metasController.js";
 
-import {
-  getRelatorios,
-  getRelatorioById,
-  createRelatorio,
-  updateRelatorio,
-  deleteRelatorio,
-} from "../controllers/relatorioController.js";
 
 import {
   getPostagens,
@@ -76,13 +69,6 @@ r.get("/metas/:id", getMetaById);
 r.post("/metas", createMeta);
 r.put("/metas/:id", updateMeta);
 r.delete("/metas/:id", deleteMeta);
-
-// Relatórios
-r.get("/relatorios", getRelatorios);
-r.get("/relatorios/:id", getRelatorioById);
-r.post("/relatorios", createRelatorio);
-r.put("/relatorios/:id", updateRelatorio);
-r.delete("/relatorios/:id", deleteRelatorio);
 
 // Postagens
 r.get("/postagens", getPostagens);

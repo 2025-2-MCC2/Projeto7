@@ -8,13 +8,14 @@ import path from "node:path";
 import { initDb } from "./DataBase/db.js";
 
 // Rotas principais
-import profileRoutes from "./Routes/profile.routes.js";
-import presenceRoutes from "./Routes/presence.routes.js";
-import dashboardRoutes from "./Routes/dashboard.routes.js";
-import authRoutes from "./Routes/auth.routes.js";
-import usuarioRoutes from "./Routes/user.routes.js";
-import sseRoutes from "./Routes/sse.routes.js";
-import mainRoutes from "./Routes/routes.js";
+import profileRoutes from './routes/profile.routes.js';
+import presenceRoutes from './routes/presence.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import usuarioRoutes from './routes/user.routes.js';
+import sseRoutes from './routes/sse.routes.js';
+import mainRoutes from './routes/routes.js';
+import relatorioMensalRoutes from './routes/relatorioMensal.routes.js'
 
 // 🔒 Middleware de autenticação (seu middleware original)
 import { requireAuth } from "./middlewares/requireAuth.js";
@@ -56,9 +57,9 @@ app.use("/api", requireAuth, sseRoutes); // SSE (notificações)
 
 // ===== Rotas protegidas =====
 // Tudo que requer autenticação vem abaixo
-app.use("/api/presence", requireAuth, presenceRoutes); // Presença protegida
-app.use("/api", requireAuth, mainRoutes); // Grupos / Doações / Metas / etc.
-
+app.use('/api/presence', requireAuth, presenceRoutes); // Presença protegida
+app.use('/api', requireAuth, mainRoutes);    // Grupos / Doações / Metas / etc.
+app.use('/api', requireAuth, relatorioMensalRoutes);           
 // ===== Health check =====
 app.get(["/health", "/api/health"], (_req, res) => res.json({ ok: true }));
 

@@ -1,30 +1,26 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+/*
+ ATUALIZADO:
+ - Remove duplicação de /api nos endpoints (usa /relatorios-mensais).
+ - Move useMemo(s) de filtros do mentor para o topo do componente (ordem de Hooks estável).
+ - toLocaleString seguro com (valor ?? 0).
+ - Remove dependência de 'now' no carregamento de rascunho.
+*/
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../../auth/api';
 import './Relatorios.css';
 
-/**
- * ===========================
- * CONSTANTES E UTILIDADES
- * ===========================
- */
-
+// --- Constantes ---
 const STATUS = {
   RASCUNHO: 'rascunho',
   ENVIADO: 'enviado',
   APROVADO: 'aprovado',
   AJUSTES: 'ajustes',
 };
-
-const SETTINGS_KEY = 'relatorios_prefs';
-const REPORTS_KEY = 'relatorios';
 const DRAFT_KEY = 'relatorios_drafts';
 
-const DEFAULT_SETTINGS = {
-  deadlineDay: 5, // último dia para editar o mês anterior
-  remindersOn: false,
-};
-
-//
+// --- Helpers ---
 const safeGet = (k, fallback) => {
   try {
     const raw = localStorage.getItem(k);
@@ -33,34 +29,21 @@ const safeGet = (k, fallback) => {
     return fallback;
   }
 };
-//
 const safeSet = (k, v) => {
   try {
     localStorage.setItem(k, JSON.stringify(v));
   } catch {}
 };
-
-const pad2 = (n) => String(n).padStart(2, '0'); //
-const getMonthKey = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`; //
-const toISO = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`; //
-
-/**
- * Regra de edição:
- * - Permitido até o dia `deadlineDay` do mês seguinte ao `report.month` (YYYY-MM).
- * - Sempre permitido se status = AJUSTES.
- * - Bloqueado se status = APROVADO.
- */
-//
-const isEditable = (report, now = new Date(), deadlineDay = DEFAULT_SETTINGS.deadlineDay) => {
-  if (!report) return true;
-  if (report.status === STATUS.APROVADO) return false;
-  if (report.status === STATUS.AJUSTES) return true;
-
-  const [yy, mm] = report.month.split('-').map(Number);
-  // Prazo: até o dia `deadlineDay` do mês seguinte (inclusive)
-  // Ex.: mês 2025-09 => pode editar até 2025-10-(deadlineDay)
-  const lock = new Date(yy, (mm - 1) + 1, deadlineDay + 1, 0, 0, 0); // 0-based months
-  return now < lock;
+const pad2 = (n) => String(n).padStart(2, '0');
+const getMonthKey = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+const toISO = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
+const isEditable = (report) => {
+  if (!report) return true; // Criando novo
+  return (
+    report.status === STATUS.AJUSTES ||
+    report.status === STATUS.RASCUNHO ||
+    report.status === STATUS.ENVIADO
+  );
 };
 
 /**
@@ -68,137 +51,115 @@ const isEditable = (report, now = new Date(), deadlineDay = DEFAULT_SETTINGS.dea
  * COMPONENTE PRINCIPAL
  * ===========================
  */
-
-const Relatorios = () => {
+export default function Relatorios() {
   const navigate = useNavigate();
 
-  // --- ATUALIZAÇÃO: Carregando dados reais do localStorage ---
-  // Removemos os mocks
-  // Usamos a mesma lógica do PainelInicial
-  const [perfil, setPerfil] = useState(() => 
-    safeGet("perfil", { nome: "Usuário", tipo: "aluno", ra: "12345" })
-  );
-  const [grupos, setGrupos] = useState(() => 
-    safeGet("grupos", [])
+  // --- Perfil (carregado do localStorage) ---
+  const [perfil] = useState(() =>
+    safeGet('perfil', { nome: 'Usuário', tipo: 'aluno', ra: '12345', id: null, assignedGroups: [] })
   );
 
-  // Sincroniza perfil e grupos com localStorage (caso outra aba mude)
+  // --- Estado principal (dados vindos da API) ---
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [drafts, setDrafts] = useState(() => safeGet(DRAFT_KEY, {}));
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const errorRef = useRef(null);
+  const successRef = useRef(null);
+
+  // Carrega dados da API ao iniciar
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === "perfil") {
-        setPerfil(safeGet("perfil", { nome: "Usuário", tipo: "aluno", ra: "12345" }));
+    async function loadData() {
+      try {
+        setLoading(true);
+        const res = await api.get('/relatorios-mensais'); // <- sem /api duplicado
+        setReports(res.data);
+      } catch (err) {
+        console.error('Erro ao carregar relatórios:', err);
+        setErrorMsg('Falha ao carregar relatórios. Tente recarregar a página.');
+      } finally {
+        setLoading(false);
       }
-      if (e.key === "grupos") {
-        setGrupos(safeGet("grupos", []));
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    }
+    loadData();
   }, []);
-  // --- FIM DA ATUALIZAÇÃO ---
 
+  // Persiste rascunhos
+  useEffect(() => safeSet(DRAFT_KEY, drafts), [drafts]);
 
-  // Persistência (lendo do localStorage)
-  const [settings, setSettings] = useState(() => safeGet(SETTINGS_KEY, DEFAULT_SETTINGS)); //
-  const [reports, setReports] = useState(() => safeGet(REPORTS_KEY, [])); // (removido mockReports)
-  const [drafts, setDrafts] = useState(() => safeGet(DRAFT_KEY, {})); //
-
-  useEffect(() => safeSet(SETTINGS_KEY, settings), [settings]); //
-  useEffect(() => safeSet(REPORTS_KEY, reports), [reports]); //
-  useEffect(() => safeSet(DRAFT_KEY, drafts), [drafts]); //
-
-  // Mensagens + acessibilidade (foco gerenciado)
-  const [errorMsg, setErrorMsg] = useState(''); //
-  const [successMsg, setSuccessMsg] = useState(''); //
-  const errorRef = useRef(null); //
-  const successRef = useRef(null); //
-
-  const resetMessages = () => { //
-    setErrorMsg('');
-    setSuccessMsg('');
-  };
-
-  useEffect(() => { //
+  // Foco em mensagens
+  useEffect(() => {
     if (errorMsg && errorRef.current) errorRef.current.focus();
   }, [errorMsg]);
-
-  useEffect(() => { //
+  useEffect(() => {
     if (successMsg && successRef.current) successRef.current.focus();
   }, [successMsg]);
 
+  const resetMessages = () => {
+    setErrorMsg('');
+    setSuccessMsg('');
+  };
+  const setError = (msg) => {
+    setSuccessMsg('');
+    setErrorMsg(msg);
+  };
+  const setSuccess = (msg) => {
+    setErrorMsg('');
+    setSuccessMsg(msg);
+  };
 
-  // --- ATUALIZAÇÃO: Usando `perfil` e `grupos` reais ---
-  const currentUserRel = useMemo(() => {
-    const role =
-      (perfil.tipo === "mentor" || perfil.tipo === "professor") ? "mentor" : "aluno";
-    const assignedGroups = grupos
-      .filter((g) => (g.mentor || "").toLowerCase() === (perfil.nome || "").toLowerCase())
-      .map((g) => g.nome);
-    return {
-      role,
-      name: perfil.nome || "Usuário",
-      ra: perfil.ra || "",
-      assignedGroups,
-    };
-  }, [perfil, grupos]);
+  // --- Usuário atual (role/atribuições) ---
+  const currentUserRel = useMemo(
+    () => ({
+      role: perfil.tipo === 'mentor' || perfil.tipo === 'adm' ? 'mentor' : 'aluno',
+      name: perfil.nome || 'Usuário',
+      ra: perfil.ra || '',
+      id: perfil.id, // ID do usuário no banco
+      assignedGroups: perfil.assignedGroups || [], // nomes de grupos (mentor)
+    }),
+    [perfil]
+  );
 
-  // Grupos visíveis (baseado no `perfil` real)
+  // TODO: Os grupos também deveriam vir da API
+  const [grupos] = useState(() => safeGet('grupos', []));
   const gruposVisiveis = useMemo(() => {
     if (currentUserRel.role === 'aluno') {
-      return grupos.filter(g => g.membros?.some(m => m.ra === currentUserRel.ra));
+      return grupos.filter((g) => g.membros?.some((m) => m.ra === currentUserRel.ra));
     }
-    if (currentUserRel.role === 'mentor') {
-      const setNames = new Set((currentUserRel.assignedGroups || []).map(n => n.toLowerCase()));
-      // Se o mentor não tiver grupos designados, por padrão ele vê todos (ou mude para `grupos` se preferir)
-      if (setNames.size === 0) return grupos; 
-      return grupos.filter(g => setNames.has(g.nome.toLowerCase()));
-    }
+    // mentor/adm vê todos (ou filtrará por assignedGroups nos relatórios)
     return grupos;
   }, [grupos, currentUserRel]);
-  // --- FIM DA ATUALIZAÇÃO ---
 
-
-  const [selectedGroupId, setSelectedGroupId] = useState(null); //
-  useEffect(() => { //
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  useEffect(() => {
     if (gruposVisiveis.length > 0) setSelectedGroupId(gruposVisiveis[0].id);
     else setSelectedGroupId(null);
   }, [gruposVisiveis]);
 
-  // Data da criação/edição (dia/mês/ano)
-  const now = new Date(); //
-  // --- ATUALIZAÇÃO LÓGICA: Iniciar no dia 1 ---
-  const [selDay, setSelDay] = useState(1); //
-  const [selMonth, setSelMonth] = useState(now.getMonth() + 1); //
-  const [selYear, setSelYear] = useState(now.getFullYear()); //
-  // --- FIM DA ATUALIZAÇÃO ---
-  const selectedDate = useMemo(() => new Date(selYear, selMonth - 1, selDay), [selYear, selMonth, selDay]); //
-  const selectedMonthKey = useMemo(() => getMonthKey(selectedDate), [selectedDate]); //
+  // --- Formulário (Aluno) ---
+  const [selDay, setSelDay] = useState(1);
+  const [selMonth, setSelMonth] = useState(() => new Date().getMonth() + 1);
+  const [selYear, setSelYear] = useState(() => new Date().getFullYear());
+  const selectedDate = useMemo(() => new Date(selYear, selMonth - 1, selDay), [selYear, selMonth, selDay]);
+  const selectedMonthKey = useMemo(() => getMonthKey(selectedDate), [selectedDate]);
 
-  // Campos do formulário (aluno)
-  const [editingReport, setEditingReport] = useState(null); //
-  const [newReportContent, setNewReportContent] = useState(''); //
-  const [valorArrecadado, setValorArrecadado] = useState(''); //
-  const [kgAlimentos, setKgAlimentos] = useState(''); //
-  const [qtdCestas, setQtdCestas] = useState(''); //
-  const [parceiros, setParceiros] = useState(''); //
-  const [localAtividade, setLocalAtividade] = useState(''); //
-  const [statusAtual, setStatusAtual] = useState(STATUS.RASCUNHO); //
+  const [editingReport, setEditingReport] = useState(null);
+  const [newReportContent, setNewReportContent] = useState('');
+  const [valorArrecadado, setValorArrecadado] = useState('');
+  const [kgAlimentos, setKgAlimentos] = useState('');
+  const [qtdCestas, setQtdCestas] = useState('');
+  const [parceiros, setParceiros] = useState('');
+  const [localAtividade, setLocalAtividade] = useState('');
+  const contentRef = useRef(null);
 
-  // Campo inicial para foco
-  const contentRef = useRef(null); //
-  useEffect(() => { //
-    if (contentRef.current) contentRef.current.focus();
-  }, [selectedGroupId]);
-
-  // Rascunho: chave por aluno+grupo+mês
-  const draftKey = useMemo(() => { //
+  const draftKey = useMemo(() => {
     if (!selectedGroupId) return '';
-    // --- ATUALIZAÇÃO: usa currentUserRel ---
-    return `${currentUserRel.ra || currentUserRel.name}::${selectedGroupId}::${selectedMonthKey}`; //
-  }, [selectedGroupId, selectedMonthKey, currentUserRel]); // Adicionado currentUserRel
+    return `${currentUserRel.id}::${selectedGroupId}::${selectedMonthKey}`;
+  }, [selectedGroupId, selectedMonthKey, currentUserRel.id]);
 
-  // Carregar rascunho salvo ao trocar grupo ou mês
-  useEffect(() => { //
+  // Carrega rascunho quando trocar grupo/mês/usuário
+  useEffect(() => {
     if (!draftKey) return;
     const d = drafts[draftKey];
     if (d) {
@@ -208,13 +169,9 @@ const Relatorios = () => {
       setQtdCestas(d.qtdCestas || '');
       setParceiros(d.parceiros || '');
       setLocalAtividade(d.localAtividade || '');
-      setStatusAtual(d.status || STATUS.RASCUNHO);
-      // --- ATUALIZAÇÃO LÓGICA: Iniciar no dia 1 ---
       if (d.selDay) setSelDay(d.selDay);
-      else setSelDay(1); // Garante o padrão 1
       if (d.selMonth) setSelMonth(d.selMonth);
       if (d.selYear) setSelYear(d.selYear);
-      // --- FIM DA ATUALIZAÇÃO ---
     } else {
       setNewReportContent('');
       setValorArrecadado('');
@@ -222,299 +179,426 @@ const Relatorios = () => {
       setQtdCestas('');
       setParceiros('');
       setLocalAtividade('');
-      setStatusAtual(STATUS.RASCUNHO);
-      // --- ATUALIZAÇÃO LÓGICA: Resetar para dia 1 ---
+      // defaults de data: hoje
+      const today = new Date();
       setSelDay(1);
-      setSelMonth(now.getMonth() + 1);
-      setSelYear(now.getFullYear());
-      // --- FIM DA ATUALIZAÇÃO ---
+      setSelMonth(today.getMonth() + 1);
+      setSelYear(today.getFullYear());
     }
+    // NÃO incluir 'now' em deps para não rodar a cada render
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftKey, now]); // Adicionado 'now'
+  }, [draftKey]);
 
-  // Auto-salvar rascunho (1s após digitar)
-  useEffect(() => { //
+  // Auto-salvar rascunho
+  useEffect(() => {
     if (!draftKey) return;
     const t = setTimeout(() => {
-      setDrafts(prev => ({
+      setDrafts((prev) => ({
         ...prev,
         [draftKey]: {
           content: newReportContent,
-          valorArrecadado, kgAlimentos, qtdCestas, parceiros, localAtividade,
-          status: statusAtual,
-          selDay, selMonth, selYear
-        }
+          valorArrecadado,
+          kgAlimentos,
+          qtdCestas,
+          parceiros,
+          localAtividade,
+          selDay,
+          selMonth,
+          selYear,
+        },
       }));
     }, 1000);
     return () => clearTimeout(t);
   }, [
     draftKey,
-    newReportContent, valorArrecadado, kgAlimentos, qtdCestas, parceiros, localAtividade, statusAtual,
-    selDay, selMonth, selYear
+    newReportContent,
+    valorArrecadado,
+    kgAlimentos,
+    qtdCestas,
+    parceiros,
+    localAtividade,
+    selDay,
+    selMonth,
+    selYear,
   ]);
 
-  // Report do mês selecionado do aluno (se existir)
-  const myMonthReport = useMemo(() => { //
-    // --- ATUALIZAÇÃO: usa currentUserRel ---
-    if (currentUserRel.role !== 'aluno' || !selectedGroupId) return null; //
+  // Relatório do mês (do aluno logado)
+  const myMonthReport = useMemo(() => {
+    if (currentUserRel.role !== 'aluno' || !selectedGroupId) return null;
     return (
       reports.find(
-        r =>
+        (r) =>
           r.groupId === selectedGroupId &&
-          r.authorRA === (currentUserRel.ra || '') && //
+          r.authorId === currentUserRel.id &&
           r.month === selectedMonthKey
       ) || null
     );
-  }, [reports, selectedGroupId, selectedMonthKey, currentUserRel]); // Adicionado currentUserRel
+  }, [reports, selectedGroupId, selectedMonthKey, currentUserRel]);
 
-  const podeEditar = useMemo( //
-    () => isEditable(myMonthReport || editingReport, new Date(), settings.deadlineDay),
-    [myMonthReport, editingReport, settings.deadlineDay]
-  );
-
-  // Atalho Ctrl/Cmd+S para salvar
-  useEffect(() => { //
-    const onKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        // --- ATUALIZAÇÃO: usa currentUserRel ---
-        if (currentUserRel.role === 'aluno') handleCreateOrUpdateReport(); //
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingReport, selectedGroupId, newReportContent, valorArrecadado, kgAlimentos, qtdCestas, parceiros, localAtividade, selDay, selMonth, selYear, currentUserRel]); // Adicionado currentUserRel
-
-  const setError = (msg) => { //
-    setSuccessMsg('');
-    setErrorMsg(msg);
-  };
-  const setSuccess = (msg) => { //
-    setErrorMsg('');
-    setSuccessMsg(msg);
-  };
-
-  // --- ATUALIZAÇÃO: usa 'grupos' reais ---
-  const findGroupById = (id) => grupos.find(g => g.id === id); //
+  const podeEditar = useMemo(() => isEditable(editingReport || myMonthReport), [myMonthReport, editingReport]);
 
   /**
-   * Criar/atualizar relatório (Aluno)
+   * ===========================
+   * Salvar (Criar/Atualizar) na API
+   * ===========================
    */
-  const handleCreateOrUpdateReport = () => { //
+  const handleCreateOrUpdateReport = async () => {
     resetMessages();
-
-    // Regras básicas (usando currentUserRel)
-    if (currentUserRel.role !== 'aluno') { //
-      return setError('Apenas alunos podem criar/editar relatórios.');
+    if (currentUserRel.role !== 'aluno' || !currentUserRel.id) {
+      return setError('Perfil de aluno inválido. Faça login novamente.');
     }
     if (!selectedGroupId) {
       return setError('Você precisa estar em um grupo para criar relatório.');
     }
-    const selectedGroup = findGroupById(selectedGroupId);
-    if (!selectedGroup || !selectedGroup.membros?.some(m => m.ra === currentUserRel.ra)) { //
-      return setError('Você não pertence ao grupo selecionado.');
-    }
     if (!newReportContent.trim()) {
-      if (contentRef.current) contentRef.current.focus();
+      contentRef.current?.focus();
       return setError('O conteúdo do relatório não pode estar vazio.');
     }
-    if (!podeEditar) {
-      return setError('Edição bloqueada (prazo encerrado ou relatório aprovado).');
-    }
 
-    const y = Number(selYear), m = Number(selMonth), d = Number(selDay);
-    if (isNaN(y) || isNaN(m) || isNaN(d)) {
-      return setError('Data inválida.');
-    }
-    const dateISO = toISO(y, m, d);
-    const monthKey = `${y}-${pad2(m)}`;
+    const payload = {
+      groupId: selectedGroupId,
+      authorId: currentUserRel.id, // ID do autor
+      dateISO: toISO(selYear, selMonth, selDay),
+      month: selectedMonthKey,
+      content: newReportContent.trim(),
+      valorArrecadado: Number(valorArrecadado) || 0,
+      kgAlimentos: Number(kgAlimentos) || 0,
+      qtdCestas: Number(qtdCestas) || 0,
+      parceiros: parceiros.split(',').map((s) => s.trim()).filter(Boolean),
+      localAtividade: localAtividade.trim(),
+    };
 
-    // EDITAR
-    if (editingReport) { //
-      if (editingReport.authorRA !== currentUserRel.ra) { //
-        return setError('Você só pode editar o seu próprio relatório.');
+    try {
+      if (editingReport) {
+        // ATUALIZAR (PUT)
+        const res = await api.put(`/relatorios-mensais/${editingReport.id}`, {
+          ...payload,
+          authorId: editingReport.authorId, // checagem no backend
+        });
+        setReports(reports.map((r) => (r.id === editingReport.id ? res.data : r)));
+        setEditingReport(null);
+        setSuccess('Relatório atualizado com sucesso.');
+      } else {
+        // CRIAR (POST)
+        const res = await api.post('/relatorios-mensais', payload);
+        setReports([res.data, ...reports]); // Novo no topo
+        setSuccess('Relatório criado com sucesso.');
       }
 
-      const updated = reports.map(r => //
-        r.id === editingReport.id
-          ? {
-              ...r,
-              dateISO,
-              month: monthKey,
-              content: newReportContent.trim(),
-              valorArrecadado: Number(valorArrecadado) || 0,
-              kgAlimentos: Number(kgAlimentos) || 0,
-              qtdCestas: Number(qtdCestas) || 0,
-              parceiros: parceiros.split(',').map(s => s.trim()).filter(Boolean),
-              localAtividade: localAtividade.trim(),
-              status: STATUS.ENVIADO, // ao atualizar, volta para ENVIADO
-              versions: [...(r.versions || []), { at: Date.now(), content: newReportContent.trim() }],
-            }
-          : r
-      );
-
-      setReports(updated);
-      setEditingReport(null);
-      setSuccess('Relatório atualizado com sucesso.');
-      // Limpa rascunho desta chave
-      if (draftKey) { //
-        setDrafts(prev => {
+      // Limpa rascunho
+      if (draftKey) {
+        setDrafts((prev) => {
           const copy = { ...prev };
           delete copy[draftKey];
           return copy;
         });
       }
-      return;
+    } catch (err) {
+      console.error('Erro ao salvar relatório:', err);
+      setError(err.response?.data?.error || 'Erro ao salvar. Tente novamente.');
     }
+  };
 
-    // CRIAR (um por aluno+grupo+mês)
-    const exist = reports.some( //
-      r =>
-        r.groupId === selectedGroupId &&
-        r.authorRA === currentUserRel.ra && //
-        r.month === monthKey
-    );
-    if (exist) {
-      return setError('Você já possui um relatório para este grupo neste mês. Edite o existente.');
+  // Carrega dados para edição (aluno)
+  const handleEdit = (report) => {
+    resetMessages();
+    if (currentUserRel.role !== 'aluno' || report.authorId !== currentUserRel.id) {
+      return setError('Você só pode editar o seu próprio relatório.');
     }
+    if (!isEditable(report)) {
+      return setError('Edição bloqueada (relatório aprovado). Peça ao mentor para marcar como "ajustes".');
+    }
+    setEditingReport(report);
+    setSelectedGroupId(report.groupId);
+    const [yy, mm, dd] = report.dateISO.split('T')[0].split('-').map(Number);
+    setSelYear(yy);
+    setSelMonth(mm);
+    setSelDay(dd);
+    setNewReportContent(report.content);
+    setValorArrecadado(report.valorArrecadado ?? '');
+    setKgAlimentos(report.kgAlimentos ?? '');
+    setQtdCestas(report.qtdCestas ?? '');
+    setParceiros((report.parceiros ?? []).join(', '));
+    setLocalAtividade(report.localAtividade ?? '');
 
-    const newReport = { //
-      id: Date.now(),
-      groupId: selectedGroupId,
-      groupName: selectedGroup.nome,
-      authorName: currentUserRel.name, //
-      authorRA: currentUserRel.ra, //
-      dateISO,
-      month: monthKey,
-      content: newReportContent.trim(),
-      valorArrecadado: Number(valorArrecadado) || 0,
-      kgAlimentos: Number(kgAlimentos) || 0,
-      qtdCestas: Number(qtdCestas) || 0,
-      parceiros: parceiros.split(',').map(s => s.trim()).filter(Boolean),
-      localAtividade: localAtividade.trim(),
-      status: STATUS.ENVIADO,
-      feedbackMentor: '',
-      versions: [{ at: Date.now(), content: newReportContent.trim() }],
-    };
-
-    setReports(prev => [...prev, newReport]);
-    setSuccess('Relatório criado com sucesso.');
-    // Limpa rascunho da chave
-    if (draftKey) { //
-      setDrafts(prev => {
+    // Limpa o rascunho para não sobrescrever a edição
+    if (draftKey) {
+      setDrafts((prev) => {
         const copy = { ...prev };
         delete copy[draftKey];
         return copy;
       });
     }
+    contentRef.current?.focus();
   };
 
-  const handleEdit = (report) => { //
-    resetMessages();
-    // --- ATUALIZAÇÃO: usa currentUserRel ---
-    if (currentUserRel.role !== 'aluno') return setError('Somente alunos podem editar.'); //
-    if (report.authorRA !== currentUserRel.ra) return setError('Você só pode editar o seu próprio relatório.'); //
-    if (!isEditable(report, new Date(), settings.deadlineDay)) {
-      return setError('Edição bloqueada (prazo encerrado ou relatório aprovado).');
-    }
-
-    setEditingReport(report);
-    setSelectedGroupId(report.groupId);
-    const [yy, mm, dd] = report.dateISO.split('-').map(Number);
-    setSelYear(yy); setSelMonth(mm); setSelDay(dd);
-
-    setNewReportContent(report.content);
-    setValorArrecadado(report.valorArrecadado ?? '');
-    setKgAlimentos(report.kgAlimentos ?? '');
-    setQtdCestas(report.qtdCestas ?? '');
-    setParceiros((report.parceiros || []).join(', '));
-    setLocalAtividade(report.localAtividade ?? '');
-    setStatusAtual(report.status || STATUS.RASCUNHO);
-
-    if (contentRef.current) contentRef.current.focus();
-  };
-
-  const handleCancelEdit = () => { //
+  const handleCancelEdit = () => {
     setEditingReport(null);
-    setSuccess('Edição cancelada.');
+    resetMessages();
+    const d = drafts[draftKey];
+    if (d) setNewReportContent(d.content || '');
   };
 
   /**
    * ===========================
-   * VIEW: ALUNO
+   * Ações do Mentor
    * ===========================
    */
-  const renderStudentView = () => { //
+  const [mentorFeedback, setMentorFeedback] = useState({});
+  const onMentorChange = (id, field, value) => {
+    setMentorFeedback((prev) => ({
+      ...prev,
+      [id]: {
+        ...(prev[id] || {}),
+        [field]: value,
+      },
+    }));
+  };
+  const handleMentorSave = async (report) => {
+    const feedback = mentorFeedback[report.id]?.feedback ?? report.feedbackMentor;
+    const status = mentorFeedback[report.id]?.status ?? report.status;
+    try {
+      const res = await api.put(`/relatorios-mensais/${report.id}/status`, {
+        status,
+        feedbackMentor: feedback,
+        mentorId: currentUserRel.id,
+      });
+      setReports(reports.map((r) => (r.id === report.id ? res.data : r)));
+      setMentorFeedback((prev) => ({ ...prev, [report.id]: undefined }));
+      setSuccess(`Relatório de ${report.authorName} atualizado.`);
+    } catch (err) {
+      console.error('Erro ao atualizar status:', err);
+      setError(err.response?.data?.error || 'Falha ao salvar feedback.');
+    }
+  };
+
+  /**
+   * ===========================
+   * Exportação
+   * ===========================
+   */
+  const [filters, setFilters] = useState({
+    from: '',
+    to: '',
+    groupId: '',
+    status: '',
+    author: '',
+  });
+  const handleExport = (format) => {
+    const queryParams = new URLSearchParams();
+    if (filters.groupId) queryParams.append('groupId', filters.groupId);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.author) queryParams.append('author', filters.author);
+    // TODO: Filtros de data (from/to)
+
+    const url = `${api.defaults.baseURL}/relatorios-mensais/export/${format}?${queryParams.toString()}`;
+    window.open(url, '_blank');
+  };
+
+  /**
+   * ===========================
+   * MEMOs promovidos (Mentor)
+   * ===========================
+   */
+  const assignedNames = useMemo(
+    () => new Set((currentUserRel.assignedGroups ?? []).map((n) => n.toLowerCase())),
+    [currentUserRel.assignedGroups]
+  );
+
+  const mentorGroups = useMemo(() => {
+    if (assignedNames.size === 0) return grupos; // vê todos
+    return grupos.filter((g) => assignedNames.has(g.nome.toLowerCase()));
+  }, [grupos, assignedNames]);
+
+  const filteredReports = useMemo(() => {
+    let list = [...reports];
+
+    // Restringe aos grupos atribuídos (se houver)
+    if (assignedNames.size > 0) {
+      list = list.filter((r) => assignedNames.has(r.groupName.toLowerCase()));
+    }
+
+    // Filtros da UI
+    if (filters.groupId) {
+      list = list.filter((r) => String(r.groupId) === String(filters.groupId));
+    }
+    if (filters.status) {
+      list = list.filter((r) => r.status === filters.status);
+    }
+    if (filters.author) {
+      const q = filters.author.toLowerCase();
+      list = list.filter(
+        (r) => r.authorName.toLowerCase().includes(q) || (r.authorRA || '').includes(q)
+      );
+    }
+
+    // Ordena por data desc
+    list.sort((a, b) => (a.dateISO < b.dateISO ? 1 : a.dateISO > b.dateISO ? -1 : 0));
+    return list;
+  }, [reports, filters, assignedNames]);
+
+  // --- Views ---
+  const renderStudentView = () => {
+    if (loading) return null;
+
     if (gruposVisiveis.length === 0) {
-      return <p className="msg warning" role="status">Você precisa fazer parte de um grupo para criar ou ver relatórios.</p>;
+      return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <p className="msg warning" role="status">
+            Você precisa fazer parte de um grupo para criar ou ver relatórios.
+          </p>
+        </motion.div>
+      );
     }
 
     const hasReportThisMonth = Boolean(myMonthReport);
+    const isReportApproved = myMonthReport?.status === STATUS.APROVADO;
 
     return (
-      <div className="view-container">
+      <motion.div
+        className="view-container"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <header className="subheader">
-          <h3>Seu Relatório Mensal</h3>
+          <h3>{editingReport ? 'Editando Relatório' : 'Seu Relatório Mensal'}</h3>
           <div className="status-pill">
-            {hasReportThisMonth ? (
-              <span className="pill success">Mês {selectedMonthKey}: enviado ✅</span>
+            {hasReportThisMonth && !editingReport ? (
+              <span className={`pill ${isReportApproved ? 'success' : 'warning'}`}>
+                Mês {selectedMonthKey}: {myMonthReport.status}
+              </span>
             ) : (
-              <span className="pill warning">Mês {selectedMonthKey}: pendente ⚠️</span>
+              <span className="pill warning">
+                Mês {selectedMonthKey}: {editingReport ? 'editando' : 'pendente'}
+              </span>
             )}
           </div>
         </header>
 
         {/* Seleção de Grupo */}
         <div className="row">
-          <label htmlFor="group-select"><strong>Grupo:</strong></label>
+          <label htmlFor="group-select">
+            <strong>Grupo:</strong>
+          </label>
           <select
             id="group-select"
+            className="input"
             value={selectedGroupId || ''}
-            onChange={e => setSelectedGroupId(Number(e.target.value))}
-            // --- ATUALIZAÇÃO (Trava para aluno com grupo) ---
-            disabled={currentUserRel.role === 'aluno' && gruposVisiveis.length > 0}
-            // --- FIM DA ATUALIZAÇÃO ---
+            onChange={(e) => setSelectedGroupId(Number(e.target.value))}
+            disabled={!!editingReport || (currentUserRel.role === 'aluno' && gruposVisiveis.length === 1)}
           >
-            {gruposVisiveis.map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}
+            {gruposVisiveis.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.nome}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Data (dia/mês/ano) */}
         <div className="row">
-          <label><strong>Data do relatório:</strong></label>
-          <select aria-label="Dia" value={selDay} onChange={e => setSelDay(Number(e.target.value))}>
-            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}
+          <label>
+            <strong>Data do relatório:</strong>
+          </label>
+          <select
+            className="input"
+            aria-label="Dia"
+            value={selDay}
+            onChange={(e) => setSelDay(Number(e.target.value))}
+            disabled={!podeEditar}
+          >
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
           </select>
-          <select aria-label="Mês" value={selMonth} onChange={e => setSelMonth(Number(e.target.value))}>
-            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{pad2(m)}</option>)}
+          <select
+            className="input"
+            aria-label="Mês"
+            value={selMonth}
+            onChange={(e) => setSelMonth(Number(e.target.value))}
+            disabled={!podeEditar}
+          >
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m}>
+                {pad2(m)}
+              </option>
+            ))}
           </select>
-          <select aria-label="Ano" value={selYear} onChange={e => setSelYear(Number(e.target.value))}>
-            {Array.from({ length: 6 }, (_, i) => now.getFullYear() - 3 + i).map(y => <option key={y} value={y}>{y}</option>)}
+          <select
+            className="input"
+            aria-label="Ano"
+            value={selYear}
+            onChange={(e) => setSelYear(Number(e.target.value))}
+            disabled={!podeEditar}
+          >
+            {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 3 + i).map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Campos estruturados */}
         <div className="grid grid-2">
-          <label>Valor arrecadado (R$)
-            <input type="number" min="0" step="0.01" value={valorArrecadado} onChange={e => setValorArrecadado(e.target.value)} disabled={!podeEditar} />
+          <label>
+            Valor arrecadado (R$)
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={valorArrecadado}
+              onChange={(e) => setValorArrecadado(e.target.value)}
+              disabled={!podeEditar}
+            />
           </label>
-          <label>Kg de alimentos
-            <input type="number" min="0" step="0.1" value={kgAlimentos} onChange={e => setKgAlimentos(e.target.value)} disabled={!podeEditar} />
+          <label>
+            Kg de alimentos
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={kgAlimentos}
+              onChange={(e) => setKgAlimentos(e.target.value)}
+              disabled={!podeEditar}
+            />
           </label>
-          <label>Cestas básicas (qtde)
-            <input type="number" min="0" step="1" value={qtdCestas} onChange={e => setQtdCestas(e.target.value)} disabled={!podeEditar} />
+          <label>
+            Cestas básicas (qtde)
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={qtdCestas}
+              onChange={(e) => setQtdCestas(e.target.value)}
+              disabled={!podeEditar}
+            />
           </label>
-          <label>Parceiros (separar por vírgula)
-            <input type="text" value={parceiros} onChange={e => setParceiros(e.target.value)} disabled={!podeEditar} />
+          <label>
+            Parceiros (separar por vírgula)
+            <input
+              type="text"
+              value={parceiros}
+              onChange={(e) => setParceiros(e.target.value)}
+              disabled={!podeEditar}
+            />
           </label>
-          <label>Local da atividade
-            <input type="text" value={localAtividade} onChange={e => setLocalAtividade(e.target.value)} disabled={!podeEditar} />
+          <label>
+            Local da atividade
+            <input
+              type="text"
+              value={localAtividade}
+              onChange={(e) => setLocalAtividade(e.target.value)}
+              disabled={!podeEditar}
+            />
           </label>
         </div>
 
         {/* Conteúdo descritivo */}
-        <label>Descrição do mês
+        <label>
+          Descrição do mês
           <textarea
             ref={contentRef}
             value={newReportContent}
@@ -524,9 +608,11 @@ const Relatorios = () => {
             disabled={!podeEditar}
           />
         </label>
+
         {!podeEditar && (
           <p className="msg info" role="status">
-            Edição bloqueada (prazo encerrado ou relatório aprovado). Se precisar alterar, peça ao mentor para marcar como “ajustes”.
+            Edição bloqueada (relatório aprovado). Se precisar alterar, peça ao mentor para marcar como
+            “ajustes”.
           </p>
         )}
 
@@ -537,271 +623,318 @@ const Relatorios = () => {
             onClick={handleCreateOrUpdateReport}
             disabled={!podeEditar || !newReportContent.trim() || !selectedGroupId}
           >
-            {editingReport ? 'Atualizar Relatório' : 'Criar Relatório'}
+            <i className="fa-solid fa-paper-plane"></i>
+            {editingReport ? 'Atualizar Relatório' : 'Enviar Relatório'}
           </button>
           {editingReport && (
-            <button className="btn-secondary" onClick={handleCancelEdit}>Cancelar</button>
+            <button className="btn-secondary" onClick={handleCancelEdit}>
+              Cancelar
+            </button>
           )}
         </div>
 
-        {/* Mensagens com foco gerenciado */}
-        {errorMsg && (
-          <p className="msg error" tabIndex={-1} ref={errorRef} aria-live="assertive">
-            {errorMsg}
-          </p>
-        )}
-        {successMsg && (
-          <p className="msg success" tabIndex={-1} ref={successRef} aria-live="polite">
-            {successMsg}
-          </p>
-        )}
-
-        {/* Visualização do relatório atual (se existir e não estiver em edição) */}
+        {/* Visualização do relatório atual */}
         {myMonthReport && !editingReport && (
-          <div className="report-view">
-            <h4>Relatório do mês atual</h4>
-            <p><strong>Status:</strong> <span className={`status-chip ${myMonthReport.status}`}>{myMonthReport.status}</span></p>
-            <p><strong>Autor:</strong> {myMonthReport.authorName}</p>
-            <p><strong>Grupo:</strong> {myMonthReport.groupName}</p>
-            <p><strong>Data:</strong> {myMonthReport.dateISO}</p>
-            <p><strong>Valor arrecadado:</strong> R$ {Number(myMonthReport.valorArrecadado || 0).toFixed(2)}</p>
-            <p><strong>Kg de alimentos:</strong> {Number(myMonthReport.kgAlimentos || 0)} kg</p>
-            <p><strong>Cestas básicas:</strong> {Number(myMonthReport.qtdCestas || 0)}</p>
+          <motion.div className="report-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <h4>Relatório Enviado ({myMonthReport.month})</h4>
+            <p>
+              <strong>Status:</strong>{' '}
+              <span className={`status-chip ${myMonthReport.status}`}>{myMonthReport.status}</span>
+            </p>
+            <p>
+              <strong>Autor:</strong> {myMonthReport.authorName}
+            </p>
+            <p>
+              <strong>Grupo:</strong> {myMonthReport.groupName}
+            </p>
+            <p>
+              <strong>Data:</strong> {new Date(myMonthReport.dateISO).toLocaleDateString()}
+            </p>
+            <p>
+              <strong>Valor arrecadado:</strong>{' '}
+              {(myMonthReport.valorArrecadado ?? 0).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              })}
+            </p>
+            <p>
+              <strong>Kg de alimentos:</strong> {myMonthReport.kgAlimentos} kg
+            </p>
+            <p>
+              <strong>Cestas básicas:</strong> {myMonthReport.qtdCestas}
+            </p>
             {myMonthReport.parceiros?.length > 0 && (
-              <p><strong>Parceiros:</strong> {myMonthReport.parceiros.join(', ')}</p>
+              <p>
+                <strong>Parceiros:</strong> {myMonthReport.parceiros.join(', ')}
+              </p>
             )}
             {myMonthReport.localAtividade && (
-              <p><strong>Local da atividade:</strong> {myMonthReport.localAtividade}</p>
+              <p>
+                <strong>Local da atividade:</strong> {myMonthReport.localAtividade}
+              </p>
             )}
-            <p><strong>Descrição:</strong> {myMonthReport.content}</p>
-
+            <p>
+              <strong>Descrição:</strong> {myMonthReport.content}
+            </p>
             {myMonthReport.feedbackMentor && (
               <div className="feedback-box">
                 <strong>Feedback do mentor:</strong>
                 <p>{myMonthReport.feedbackMentor}</p>
               </div>
             )}
-
-            {isEditable(myMonthReport, new Date(), settings.deadlineDay) && (
-              <button className="btn-tertiary" onClick={() => handleEdit(myMonthReport)}>Editar</button>
+            {isEditable(myMonthReport) && (
+              <button className="btn-tertiary" onClick={() => handleEdit(myMonthReport)}>
+                <i className="fa-solid fa-pen"></i> Editar
+              </button>
             )}
-          </div>
+          </motion.div>
         )}
 
-        {/* Export/Import FUTURO (desabilitado por enquanto) */}
+        {/* Export/Import (Aluno) */}
         <div className="toolbar">
-          <button className="btn-ghost" disabled title="Em breve">Exportar JSON</button>
-          <button className="btn-ghost" disabled title="Em breve">Exportar CSV</button>
-          <label className="btn-ghost disabled" title="Em breve">
-            Importar JSON
-            <input type="file" accept="application/json" hidden disabled />
-          </label>
+          <button className="btn-ghost" onClick={() => handleExport('pdf')} disabled={!myMonthReport}>
+            <i className="fa-solid fa-file-pdf"></i> Exportar PDF
+          </button>
+          <button className="btn-ghost" disabled title="Em breve">
+            <i className="fa-solid fa-file-csv"></i> Exportar CSV
+          </button>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
-  /**
-   * ===========================
-   * VIEW: MENTOR
-   * ===========================
-   */
-  const [filters, setFilters] = useState({ //
-    from: { d: '', m: '', y: '' },
-    to: { d: '', m: '', y: '' },
-    groupId: '',
-    status: '',
-    author: ''
-  });
-
-  const applyFilters = (list) => { //
-    let res = [...list];
-
-    // Filtro de período (de/até)
-    const { from, to } = filters;
-    const fromISO = (from.d && from.m && from.y) ? toISO(from.y, from.m, from.d) : null;
-    const toISOv = (to.d && to.m && to.y) ? toISO(to.y, to.m, to.d) : null;
-
-    res = res.filter(r => {
-      if (fromISO && r.dateISO < fromISO) return false;
-      if (toISOv && r.dateISO > toISOv) return false;
-      return true;
-    });
-
-    if (filters.groupId) {
-      res = res.filter(r => String(r.groupId) === String(filters.groupId));
-    }
-    if (filters.status) {
-      res = res.filter(r => r.status === filters.status);
-    }
-    if (filters.author) {
-      const q = filters.author.toLowerCase();
-      res = res.filter(r => r.authorName.toLowerCase().includes(q));
-    }
-
-    // Ordena por data decrescente
-    res.sort((a, b) => (a.dateISO < b.dateISO ? 1 : a.dateISO > b.dateISO ? -1 : 0));
-    return res;
-  };
-
-  const renderMentorView = () => { //
-    // --- ATUALIZAÇÃO: usa currentUserRel ---
-    const assignedNames = new Set((currentUserRel.assignedGroups || []).map(n => n.toLowerCase()));
-    // Lógica atualizada: filtra `reports` (do localStorage)
-    const assignedReports = reports.filter(r => {
-        // Se o mentor não tem grupos definidos, ele vê todos os relatórios
-        if (assignedNames.size === 0) return true;
-        return assignedNames.has(r.groupName.toLowerCase())
-    });
-    // --- FIM DA ATUALIZAÇÃO ---
-    
-    const filtered = applyFilters(assignedReports);
+  const renderMentorView = () => {
+    if (loading) return null;
 
     return (
-      <div className="view-container">
+      <motion.div className="view-container" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <header className="subheader">
-          <h3>Relatórios dos Grupos Designados</h3>
+          <h3>Relatórios dos Grupos</h3>
+          <div className="export-buttons">
+            <button className="btn-secondary" onClick={() => handleExport('pdf')}>
+              <i className="fa-solid fa-file-pdf"></i> Exportar PDF
+            </button>
+            <button className="btn-secondary" onClick={() => handleExport('csv')} disabled title="Em breve">
+              <i className="fa-solid fa-file-csv"></i> Exportar CSV
+            </button>
+          </div>
         </header>
 
         {/* Filtros */}
         <div className="filters">
+          {/* (Opcional) filtros de data futuramente */}
           <div className="filter-block">
-            <span>De:</span>
-            <select aria-label="Dia de" value={filters.from.d} onChange={e => setFilters(f => ({ ...f, from: { ...f.from, d: e.target.value } }))}>
-              <option value="">DD</option>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={pad2(d)}>{pad2(d)}</option>)}
-            </select>
-            <select aria-label="Mês de" value={filters.from.m} onChange={e => setFilters(f => ({ ...f, from: { ...f.from, m: e.target.value } }))}>
-              <option value="">MM</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={pad2(m)}>{pad2(m)}</option>)}
-            </select>
-            <select aria-label="Ano de" value={filters.from.y} onChange={e => setFilters(f => ({ ...f, from: { ...f.from, y: e.target.value } }))}>
-              <option value="">AAAA</option>
-              {Array.from({ length: 10 }, (_, i) => now.getFullYear() - 5 + i).map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-
-          <div className="filter-block">
-            <span>Até:</span>
-            <select aria-label="Dia até" value={filters.to.d} onChange={e => setFilters(f => ({ ...f, to: { ...f.to, d: e.target.value } }))}>
-              <option value="">DD</option>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={pad2(d)}>{pad2(d)}</option>)}
-            </select>
-            <select aria-label="Mês até" value={filters.to.m} onChange={e => setFilters(f => ({ ...f, to: { ...f.to, m: e.target.value } }))}>
-              <option value="">MM</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={pad2(m)}>{pad2(m)}</option>)}
-            </select>
-            <select aria-label="Ano até" value={filters.to.y} onChange={e => setFilters(f => ({ ...f, to: { ...f.to, y: e.target.value } }))}>
-              <option value="">AAAA</option>
-              {Array.from({ length: 10 }, (_, i) => now.getFullYear() - 5 + i).map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-
-          <div className="filter-block">
-            <label>Grupo
-              <select value={filters.groupId} onChange={e => setFilters(f => ({ ...f, groupId: e.target.value }))}>
-                <option value="">Todos</option>
-                {gruposVisiveis.map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}
+            <label>
+              Grupo
+              <select
+                className="input"
+                value={filters.groupId}
+                onChange={(e) => setFilters((f) => ({ ...f, groupId: e.target.value }))}
+              >
+                <option value="">Todos os grupos</option>
+                {mentorGroups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.nome}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
-
           <div className="filter-block">
-            <label>Status
-              <select value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}>
-                <option value="">Todos</option>
-                {Object.values(STATUS).map(s => <option key={s} value={s}>{s}</option>)}
+            <label>
+              Status
+              <select
+                className="input"
+                value={filters.status}
+                onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
+              >
+                <option value="">Todos os status</option>
+                {Object.values(STATUS).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
-
           <div className="filter-block">
-            <label>Autor
-              <input type="text" placeholder="Buscar por autor" value={filters.author} onChange={e => setFilters(f => ({ ...f, author: e.target.value }))} />
+            <label>
+              Autor (Nome ou RA)
+              <input
+                type="text"
+                className="input"
+                placeholder="Buscar por autor..."
+                value={filters.author}
+                onChange={(e) => setFilters((f) => ({ ...f, author: e.target.value }))}
+              />
             </label>
           </div>
         </div>
 
-        {/* Lista */}
-        {filtered.length === 0 ? (
-          <p>Nenhum relatório encontrado para os filtros selecionados.</p>
-        ) : (
-          filtered.map(report => (
-            <div key={report.id} className="report-card">
-              <div className="report-head">
-                <h4>{report.groupName}</h4>
-                <span className={`status-chip ${report.status}`}>{report.status}</span>
-              </div>
-              <div className="report-meta">
-                <span><strong>Data:</strong> {report.dateISO}</span>
-                <span><strong>Mês ref.:</strong> {report.month}</span>
-                <span><strong>Autor:</strong> {report.authorName}</span>
-              </div>
-              <div className="report-body">
-                <p><strong>Valor:</strong> R$ {Number(report.valorArrecadado || 0).toFixed(2)}</p>
-                <p><strong>Kg:</strong> {Number(report.kgAlimentos || 0)} kg</p>
-                <p><strong>Cestas:</strong> {Number(report.qtdCestas || 0)}</p>
-                {report.parceiros?.length > 0 && <p><strong>Parceiros:</strong> {report.parceiros.join(', ')}</p>}
-                {report.localAtividade && <p><strong>Local:</strong> {report.localAtividade}</p>}
-                <p><strong>Descrição:</strong> {report.content}</p>
-              </div>
+        {/* Lista de relatórios */}
+        <div className="report-list-mentor">
+          <AnimatePresence>
+            {filteredReports.length === 0 ? (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="msg info">
+                Nenhum relatório encontrado para os filtros selecionados.
+              </motion.p>
+            ) : (
+              filteredReports.map((report) => (
+                <motion.div
+                  key={report.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className="report-card"
+                >
+                  <div className="report-head">
+                    <h4>{report.groupName}</h4>
+                    <span className={`status-chip ${report.status}`}>{report.status}</span>
+                  </div>
 
-              {/* Feedback e status */}
-              <div className="mentor-actions">
-                <label>Feedback ao aluno
-                  <textarea
-                    value={report.feedbackMentor || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setReports(prev => prev.map(r => r.id === report.id ? { ...r, feedbackMentor: val } : r));
-                    }}
-                    rows={3}
-                  />
-                </label>
+                  <div className="report-meta">
+                    <span>
+                      <strong>Data:</strong> {new Date(report.dateISO).toLocaleDateString()}
+                    </span>
+                    <span>
+                      <strong>Mês ref.:</strong> {report.month}
+                    </span>
+                    <span>
+                      <strong>Autor:</strong> {report.authorName} ({report.authorRA})
+                    </span>
+                  </div>
 
-                <label>Status
-                  <select
-                    value={report.status}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: val } : r));
-                    }}
-                  >
-                    {Object.values(STATUS).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
-              </div>
-            </div>
-          ))
-        )}
+                  <div className="report-body">
+                    <p>
+                      <strong>Valor:</strong>{' '}
+                      {(report.valorArrecadado ?? 0).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </p>
+                    <p>
+                      <strong>Kg:</strong> {report.kgAlimentos} kg
+                    </p>
+                    <p>
+                      <strong>Cestas:</strong> {report.qtdCestas}
+                    </p>
+                    {report.parceiros?.length > 0 && (
+                      <p>
+                        <strong>Parceiros:</strong> {report.parceiros.join(', ')}
+                      </p>
+                    )}
+                    {report.localAtividade && (
+                      <p>
+                        <strong>Local:</strong> {report.localAtividade}
+                      </p>
+                    )}
+                    <p>
+                      <strong>Descrição:</strong> {report.content}
+                    </p>
+                  </div>
 
-        {/* Export/Import FUTURO (desabilitado por enquanto) */}
-        <div className="toolbar">
-          <button className="btn-ghost" disabled title="Em breve">Exportar JSON</button>
-          <button className="btn-ghost" disabled title="Em breve">Exportar CSV</button>
-          <label className="btn-ghost disabled" title="Em breve">
-            Importar JSON
-            <input type="file" accept="application/json" hidden disabled />
-          </label>
+                  {/* Ações do Mentor */}
+                  <div className="mentor-actions">
+                    <label>
+                      Feedback ao aluno
+                      <textarea
+                        className="input"
+                        value={mentorFeedback[report.id]?.feedback ?? (report.feedbackMentor || '')}
+                        onChange={(e) => onMentorChange(report.id, 'feedback', e.target.value)}
+                        rows={3}
+                        placeholder="Escreva um feedback (ex: 'Ótimo trabalho!')"
+                      />
+                    </label>
+
+                    <div className="grid grid-2">
+                      <label>
+                        Status
+                        <select
+                          className="input"
+                          value={mentorFeedback[report.id]?.status ?? report.status}
+                          onChange={(e) => onMentorChange(report.id, 'status', e.target.value)}
+                        >
+                          {Object.values(STATUS).map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <button
+                        className="btn-primary"
+                        onClick={() => handleMentorSave(report)}
+                        style={{ alignSelf: 'flex-end' }}
+                      >
+                        <i className="fa-solid fa-check"></i>
+                        Aprovar / Salvar
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
+  // --- Render principal ---
   return (
     <div className="relatorios-container">
       <header className="relatorios-header">
-        <button className="btn-back" onClick={() => navigate(-1)} aria-label="Voltar">‹ Voltar</button>
+        <button className="btn-back" onClick={() => navigate(-1)} aria-label="Voltar">
+          ‹ Voltar
+        </button>
         <h2>Página de Relatórios</h2>
       </header>
 
-      {/* --- ATUALIZAÇÃO: usa currentUserRel --- */}
-      {currentUserRel.role === 'aluno' ? renderStudentView() : renderMentorView()}
+      {/* Mensagens Globais */}
+      <AnimatePresence>
+        {errorMsg && (
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="msg error"
+            tabIndex={-1}
+            ref={errorRef}
+            aria-live="assertive"
+          >
+            {errorMsg}
+          </motion.p>
+        )}
+        {successMsg && (
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="msg success"
+            tabIndex={-1}
+            ref={successRef}
+            aria-live="polite"
+          >
+            {successMsg}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
-      {/* Mensagens invisíveis para screen readers */}
-      <div className="sr-only" aria-live="polite">{errorMsg || successMsg}</div>
+      {loading ? (
+        <div className="loading-spinner">Carregando relatórios...</div>
+      ) : currentUserRel.role === 'aluno' ? (
+        renderStudentView()
+      ) : (
+        renderMentorView()
+      )}
+
+      {/* Mensagens invisíveis para leitores de tela */}
+      <div className="sr-only" aria-live="polite">
+        {errorMsg || successMsg}
+      </div>
     </div>
   );
-};
-
-export default Relatorios;
+}

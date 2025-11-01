@@ -1,5 +1,5 @@
 // src/Backend/src/services/sse.js
-const clientsByGroup = new Map(); // key: grupoId (string) -> Set(res)
+const clientsByGroup = new Map(); 
 let globalClients = new Set();
 const HEARTBEAT_MS = 25_000;
 
