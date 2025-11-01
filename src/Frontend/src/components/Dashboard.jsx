@@ -20,6 +20,10 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://projeto-interdisciplinar-2.onrender.com/api";
+
 /* =========================
    Helpers de formatação
    ========================= */
@@ -167,14 +171,14 @@ const COLORS = [
    ========================= */
 const API = {
   async summary(groupId) {
-    const r = await fetch(`/api/dashboard/${groupId}/summary`, {
+    const r = await fetch(`${API_BASE}/dashboard/${groupId}/summary`, {
       credentials: "include",
     });
     if (!r.ok) throw new Error("Falha ao carregar summary");
     return r.json();
   },
   async inventory(groupId) {
-    const r = await fetch(`/api/dashboard/${groupId}/inventory`, {
+    const r = await fetch(`${API_BASE}/dashboard/${groupId}/inventory`, {
       credentials: "include",
     });
     if (!r.ok) throw new Error("Falha ao carregar inventário");
@@ -182,7 +186,7 @@ const API = {
   },
   async timeseries(groupId, range = "30d") {
     const r = await fetch(
-      `/api/dashboard/${groupId}/timeseries?range=${range}`,
+      `${API_BASE}/dashboard/${groupId}/timeseries?range=${range}`,
       {
         credentials: "include",
       }
@@ -277,9 +281,6 @@ export default function Dashboard({ grupo }) {
     }
     load();
 
-    const API_BASE =
-      import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
-      "https://projeto-interdisciplinar-2.onrender.com/api";
     // Assina SSE para atualizações (aprovação de doações / novas doações)
     const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
       credentials: "include",
