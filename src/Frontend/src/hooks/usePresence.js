@@ -1,6 +1,6 @@
 // src/hooks/usePresence.js
 import { useEffect, useRef, useState } from 'react';
-import { api } from '../auth/api';
+import { api } from '../auth/api.js';
 
 const LS_PREFIX = 'presence:';
 

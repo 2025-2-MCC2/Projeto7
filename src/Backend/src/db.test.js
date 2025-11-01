@@ -1,23 +1,25 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
 
-const { MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB } = process.env;
+const { MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE } =
+  process.env;
 
 const testConnection = async () => {
   try {
     const conn = await mysql.createConnection({
-      host: MYSQL_HOST,
-      user: MYSQL_USER,
-      password: MYSQL_PASSWORD,
-      database: MYSQL_DB,
+      host: MYSQLHOST,
+      user: MYSQLUSER,
+      port: Number(MYSQLPORT),
+      password: MYSQLPASSWORD,
+      database: MYSQLDATABASE,
     });
 
     const [rows] = await conn.query("SELECT NOW() AS agora");
-    console.log("✅ Conectado ao MySQL • Data/Hora:", rows[0].agora);
+    console.log("✅ Conectado ao Railway(MySQL) • Data/Hora:", rows[0].agora);
 
     await conn.end();
   } catch (err) {
-    console.error("❌ Erro ao conectar no MySQL:", err.message);
+    console.error("❌ Erro ao conectar no Railway(MySQL):", err.message);
     process.exit(1);
   }
 };
