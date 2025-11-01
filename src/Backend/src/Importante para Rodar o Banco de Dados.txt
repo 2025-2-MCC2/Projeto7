@@ -1,12 +1,14 @@
-# Colocar no .env:
-MYSQL_HOST=127.0.0.1 ou localhost
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=
-MYSQL_DATABASE=projetoPI
+# .env do railway 
+MYSQL_PUBLIC_URL="mysql://root:tDEfFWGlqslSZsnWLOqfSrXVVOcXiHlD@gondola.proxy.rlwy.net:54989/railway"
+MYSQLDATABASE="railway"
+MYSQLHOST="gondola.proxy.rlwy.net"
+MYSQLPASSWORD="tDEfFWGlqslSZsnWLOqfSrXVVOcXiHlD"
+MYSQLPORT="54989"
+MYSQLUSER="root"
+
 
 PORT=3000
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=https://projeto-interdisciplinar-webcrawlers.vercel.app
 
 # JWT (obrigatório para não dar 500)
 JWT_SECRET=uma_chave_super_segura_aqui
