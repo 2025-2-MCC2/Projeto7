@@ -10,7 +10,7 @@ import {
 
 import './styles/theme.css';
 
-import { AuthProvider } from './auth/useAuth.jsx';
+import { AuthProvider } from './auth/AuthProvider.jsx';
 import ProtectedRoute from './auth/ProtectedRoute';
 
 import Header from './components/Header.jsx';
