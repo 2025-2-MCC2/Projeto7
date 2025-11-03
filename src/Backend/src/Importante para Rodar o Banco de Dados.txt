@@ -9,6 +9,7 @@ MYSQLUSER="root"
 
 PORT=3000
 CORS_ORIGIN=https://projeto-interdisciplinar-webcrawlers.vercel.app
+CORS_ORIGIN=http://localhost:5173
 
 # JWT (obrigatório para não dar 500)
 JWT_SECRET=uma_chave_super_segura_aqui
