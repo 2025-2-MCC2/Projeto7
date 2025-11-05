@@ -1,91 +1,312 @@
-CREATE DATABASE projetoPI;
-USE projetoPI;
+/* ======================================================================
+   BANCO: projetoPI
+   ====================================================================== */
 
-CREATE TABLE grupo (
-    ID_grupo INT PRIMARY KEY AUTO_INCREMENT,
-    nome_grupo VARCHAR(50) UNIQUE NOT NULL,
-    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    mentor VARCHAR(50) UNIQUE NOT NULL
+
+-- 1) Database
+CREATE DATABASE IF NOT EXISTS `projetoPI`;
+
+
+USE `projetoPI`;
+
+-- 2) DROP TABLES (ordem reversa de dependências)
+DROP TABLE IF EXISTS arquivo;
+DROP TABLE IF EXISTS doacao;
+DROP TABLE IF EXISTS postagem;
+DROP TABLE IF EXISTS relatorio;
+DROP TABLE IF EXISTS metas;
+DROP TABLE IF EXISTS user_presence;
+DROP TABLE IF EXISTS usuario;
+DROP TABLE IF EXISTS grupo_membro;
+DROP TABLE IF EXISTS grupo;
+
+
+/* ======================================================================
+   TABELAS
+   ====================================================================== */
+
+-- ============================================================
+-- GRUPO
+-- >> ID_grupo << é a chave primária que identifica cada grupo.
+--    Use este ID ao registrar doações para grupos específicos.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS grupo (
+  ID_grupo           INT AUTO_INCREMENT PRIMARY KEY,
+  nome_grupo         VARCHAR(120) NOT NULL,
+  meta_arrecadacao   DECIMAL(12,2) DEFAULT 0,
+  meta_alimentos     VARCHAR(120),
+  capa_url           VARCHAR(255),
+  mentor             VARCHAR(120) NULL,
+  mentor_id          INT NULL,
+  criado_em          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em      DATETIME NULL ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE usuario (
-    ID_usuario INT PRIMARY KEY AUTO_INCREMENT,
-    RA INT UNIQUE NOT NULL,
-    nome_usuario VARCHAR(50) NOT NULL,
-    email VARCHAR(50) UNIQUE NOT NULL,
-    senha VARCHAR(50) NOT NULL,
-    cargo VARCHAR(10) NOT NULL,
-    ID_grupo INT,
-    FOREIGN KEY (ID_grupo)
-        REFERENCES grupo (ID_grupo)
+
+-- ================================
+-- GRUPO_MEMBRO (1:N com grupo)
+-- ================================
+CREATE TABLE IF NOT EXISTS grupo_membro (
+  ID_membro  INT AUTO_INCREMENT PRIMARY KEY,
+  ID_grupo   INT NOT NULL,
+  nome       VARCHAR(120) NOT NULL,
+  ra         VARCHAR(32) NOT NULL,
+  telefone   VARCHAR(32),
+  CONSTRAINT fk_membro_grupo FOREIGN KEY (ID_grupo)
+    REFERENCES grupo(ID_grupo)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
-CREATE TABLE metas (
-    ID_metas INT PRIMARY KEY AUTO_INCREMENT,
-    descricao VARCHAR(100),
-    valor_esperado FLOAT NOT NULL,
-    meta_data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    meta_data_final DATE NOT NULL,
-    status VARCHAR(25),
-    ID_grupo INT NOT NULL,
-    FOREIGN KEY (ID_grupo)
-        REFERENCES grupo (ID_grupo)
+CREATE INDEX idx_membro_grupo ON grupo_membro (ID_grupo);
+
+-- ============================================================
+-- USUARIO
+-- ============================================================
+CREATE TABLE IF NOT EXISTS usuario (
+  ID_usuario     INT PRIMARY KEY AUTO_INCREMENT,
+  RA             VARCHAR(32)  NULL,
+  nome_usuario   VARCHAR(120) NOT NULL,
+  email          VARCHAR(160) NULL,
+  senha          VARCHAR(255) NOT NULL,
+  cargo          VARCHAR(10)  NOT NULL,
+  ID_grupo       INT          NULL,
+  foto_url       VARCHAR(500) NULL,
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_usuario_email UNIQUE (email),
+  CONSTRAINT uq_usuario_ra    UNIQUE (RA),
+  CONSTRAINT fk_usuario_grupo FOREIGN KEY (ID_grupo)
+    REFERENCES grupo (ID_grupo)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
 );
 
-CREATE TABLE relatorio (
-    ID_relatorio INT PRIMARY KEY AUTO_INCREMENT,
-    periodo_inicio DATE NOT NULL,
-    periodo_fim DATE NOT NULL,
-    relatorio_data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    ID_grupo INT NOT NULL,
-    FOREIGN KEY (ID_grupo)
-        REFERENCES grupo (ID_grupo)
+CREATE INDEX idx_usuario_id_grupo ON usuario (ID_grupo);
+
+-- ============================================================
+-- METAS (por grupo)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS metas (
+  ID_metas             INT PRIMARY KEY AUTO_INCREMENT,
+  descricao            VARCHAR(100) NOT NULL,
+  valor_esperado       DECIMAL(12,2) NOT NULL,
+  meta_data_criacao    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  meta_data_final      DATE NULL,
+  status               VARCHAR(25)  NULL,
+  ID_grupo             INT NOT NULL,
+  CONSTRAINT fk_metas_grupo FOREIGN KEY (ID_grupo)
+    REFERENCES grupo (ID_grupo)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
-CREATE TABLE postagem (
-    ID_postagem INT PRIMARY KEY AUTO_INCREMENT,
-    conteudo VARCHAR(255) NOT NULL,
-    postagem_data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    tipo_postagem VARCHAR(255) NOT NULL,
-    ID_usuario INT NOT NULL,
-    FOREIGN KEY (ID_usuario)
-        REFERENCES usuario (ID_usuario)
+
+CREATE INDEX idx_metas_id_grupo ON metas (ID_grupo);
+
+-- ============================================================
+-- RELATORIO (por grupo; período)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS relatorio (
+  ID_relatorio           INT PRIMARY KEY AUTO_INCREMENT,
+  periodo_inicio         DATE NOT NULL,
+  periodo_fim            DATE NOT NULL,
+  relatorio_data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ID_grupo               INT NOT NULL,
+  CONSTRAINT fk_relatorio_grupo FOREIGN KEY (ID_grupo)
+    REFERENCES grupo (ID_grupo)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
-CREATE TABLE doacao (
-    ID_doacao INT PRIMARY KEY AUTO_INCREMENT,
-    descricao VARCHAR(100) NOT NULL,
-    doacao_data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    ID_postagem INT NOT NULL,
-    FOREIGN KEY (ID_postagem)
-        REFERENCES postagem (ID_postagem)
+CREATE INDEX idx_relatorio_id_grupo ON relatorio (ID_grupo);
+
+-- ============================================================
+-- POSTAGEM (por usuário)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS postagem (
+  ID_postagem          INT PRIMARY KEY AUTO_INCREMENT,
+  conteudo             VARCHAR(255) NOT NULL,
+  postagem_data_envio  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  tipo_postagem        VARCHAR(255) NULL,
+  ID_usuario           INT NOT NULL,
+  CONSTRAINT fk_postagem_usuario FOREIGN KEY (ID_usuario)
+    REFERENCES usuario (ID_usuario)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
-CREATE TABLE doacao_dinheiro (
-    ID_doacao INT PRIMARY KEY NOT NULL,
-    valor_doacao FLOAT NOT NULL,
-    FOREIGN KEY (ID_doacao)
-        REFERENCES doacao (ID_doacao)
+CREATE INDEX idx_postagem_id_usuario ON postagem (ID_usuario);
+
+-- ============================================================
+-- DOACAO (ATUALIZADA: Ligada ao Grupo, contém todos os dados)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS doacao (
+  ID_doacao            INT PRIMARY KEY AUTO_INCREMENT,
+  ID_grupo             INT NOT NULL,
+  ID_usuario_registro  INT NOT NULL,
+  ID_postagem          INT NULL,
+  doacao_data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status_doacao        ENUM('pendente', 'aprovada', 'rejeitada') NOT NULL DEFAULT 'pendente',
+
+  -- Campos para identificar a doação
+  tipo_doacao          ENUM('dinheiro', 'item') NOT NULL,
+  doador_nome          VARCHAR(120) NULL,
+  descricao            VARCHAR(255) NULL,
+
+  -- Campos específicos (preenchidos conforme o tipo_doacao)
+  valor_doacao         DECIMAL(12, 2) NULL,   -- Para tipo 'dinheiro'
+  item_doacao          VARCHAR(100) NULL,     -- Para tipo 'item' (ex: "Cesta básica", "Arroz")
+  quantidade           DECIMAL(10, 3) NULL,   -- Para tipo 'item' (ex: 10.000)
+  unidade              VARCHAR(10) NULL,      -- Para tipo 'item' (ex: 'kg', 'un', 'L')
+
+  -- Constraints
+  CONSTRAINT fk_doacao_grupo FOREIGN KEY (ID_grupo)
+    REFERENCES grupo (ID_grupo)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_doacao_usuario_registro FOREIGN KEY (ID_usuario_registro)
+    REFERENCES usuario (ID_usuario)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_doacao_postagem FOREIGN KEY (ID_postagem)
+    REFERENCES postagem (ID_postagem)
+    ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-CREATE TABLE doacao_item (
-    ID_doacao INT PRIMARY KEY NOT NULL,
-    item_doacao VARCHAR(50) NOT NULL,
-    quantidade FLOAT NOT NULL,
-    unidade INT NOT NULL,
-    FOREIGN KEY (ID_doacao)
-        REFERENCES doacao (ID_doacao)
+ALTER TABLE doacao
+
+  ADD COLUMN aprovada_em DATETIME NULL,
+  ADD COLUMN aprovada_por INT NULL,
+  ADD COLUMN rejeitada_em DATETIME NULL,
+  ADD COLUMN rejeitada_por INT NULL,
+  ADD COLUMN observacao TEXT NULL;
+
+-- 2) Índices úteis (acelera queries por aprovador ou status)
+CREATE INDEX idx_doacao_aprovada_por ON doacao (aprovada_por);
+CREATE INDEX idx_doacao_rejeitada_por ON doacao (rejeitada_por);
+
+
+-- ============================================================
+-- ARQUIVO (anexos de doação e/ou de postagem)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS arquivo (
+  ID_arquivo   INT PRIMARY KEY AUTO_INCREMENT,
+  path_arquivo VARCHAR(500) NOT NULL,
+  tipo_mime    VARCHAR(100) NOT NULL,
+  nome_original VARCHAR(255) NULL,
+  tamanho_bytes INT NULL,
+  ID_doacao    INT NULL,
+  ID_postagem  INT NULL,
+  CONSTRAINT fk_arquivo_doacao FOREIGN KEY (ID_doacao)
+    REFERENCES doacao (ID_doacao)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_arquivo_postagem FOREIGN KEY (ID_postagem)
+    REFERENCES postagem (ID_postagem)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 
-CREATE TABLE arquivo (
-    ID_arquivo INT PRIMARY KEY AUTO_INCREMENT,
-    tipo_arquivo VARCHAR(25) NOT NULL,
-    caminho_arquivo VARCHAR(255) NOT NULL,
-    ID_doacao INT NOT NULL,
-    ID_postagem INT NOT NULL,
-    FOREIGN KEY (ID_doacao)
-        REFERENCES doacao (ID_doacao),
-    FOREIGN KEY (ID_postagem)
-        REFERENCES postagem (ID_postagem)
+CREATE INDEX idx_arquivo_id_doacao   ON arquivo (ID_doacao);
+CREATE INDEX idx_arquivo_id_postagem ON arquivo (ID_postagem);
+
+-- ============================================================
+-- USER PRESENCE (online/ausente/offline)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_presence (
+  user_id      VARCHAR(64) PRIMARY KEY,
+  status       ENUM('online','ausente','offline') NOT NULL DEFAULT 'offline',
+  last_seen    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+/* ======================================================================
+   SEEDS DE TESTE (ATUALIZADOS PARA O NOVO SCHEMA)
+   - Senhas em TEXTO (para dev).
+   ====================================================================== */
+
+-- Grupo "padrão" (ID=1)
+INSERT INTO grupo (ID_grupo, nome_grupo, mentor)
+SELECT 1, 'Grupo Exemplo', 'Mentor Teste'
+WHERE NOT EXISTS (SELECT 1 FROM grupo WHERE ID_grupo = 1 LIMIT 1)
+ON DUPLICATE KEY UPDATE nome_grupo=VALUES(nome_grupo), mentor=VALUES(mentor);
+
+-- Limpa usuários de teste
+DELETE FROM usuario WHERE email IN ('adm@test.com','mentor@test.com') OR RA = '12345';
+
+-- ADM
+INSERT INTO usuario (RA, nome_usuario, email, senha, cargo, ID_grupo, foto_url)
+VALUES (NULL, 'Administrador', 'adm@test.com', 'admin123', 'adm', NULL, NULL);
+
+-- Mentor
+INSERT INTO usuario (RA, nome_usuario, email, senha, cargo, ID_grupo, foto_url)
+VALUES (NULL, 'Mentor Teste', 'mentor@test.com', '123456', 'mentor', NULL, NULL);
+
+-- Aluno (no grupo ID=1)
+INSERT INTO usuario (RA, nome_usuario, email, senha, cargo, ID_grupo, foto_url)
+VALUES ('12345', 'Aluno Exemplo', NULL, '123456', 'aluno', 1, NULL);
+
+-- Membros do grupo ID=1
+DELETE FROM grupo_membro WHERE ID_grupo = 1;
+INSERT INTO grupo_membro (ID_grupo, nome, ra, telefone) VALUES
+(1, 'Aluno Exemplo', '12345', '1199999-0000'),
+(1, 'Colega 2', '54321', '1198888-0000');
+
+-- Meta para o grupo ID=1
+DELETE FROM metas WHERE ID_grupo = 1 AND descricao = 'Campanha 1º semestre';
+INSERT INTO metas (descricao, valor_esperado, meta_data_final, status, ID_grupo) VALUES
+('Campanha 1º semestre', 2500.00, DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'aberta', 1);
+
+-- Postagem exemplo (do aluno RA 12345) - Opcional
+DELETE FROM postagem WHERE ID_usuario = (SELECT ID_usuario FROM usuario WHERE RA='12345');
+INSERT INTO postagem (conteudo, tipo_postagem, ID_usuario)
+SELECT 'Registrando doações para o Grupo Exemplo!', 'texto', u.ID_usuario
+FROM usuario u WHERE u.RA='12345' LIMIT 1;
+
+-- Limpa doações antigas do grupo 1 para evitar duplicatas ao rodar seed
+DELETE FROM doacao WHERE ID_grupo = 1;
+
+-- SEED Doação DINHEIRO (Grupo 1, Aluno 12345 registrou, Aprovada)
+INSERT INTO doacao (ID_grupo, ID_usuario_registro, ID_postagem, status_doacao, tipo_doacao, doador_nome, descricao, valor_doacao)
+SELECT
+  1,
+  (SELECT ID_usuario FROM usuario WHERE RA='12345' LIMIT 1),
+  (SELECT ID_postagem FROM postagem ORDER BY ID_postagem DESC LIMIT 1), -- Pega última postagem (opcional)
+  'aprovada',
+  'dinheiro',
+  'Empresa Parceira A',
+  'Doação via Pix para campanha',
+  390.00 -- Valor atualizado para teste
+WHERE EXISTS (SELECT 1 FROM grupo WHERE ID_grupo=1) AND EXISTS (SELECT 1 FROM usuario WHERE RA='12345');
+
+-- SEED Doação ITEM (Grupo 1, Aluno 12345 registrou, Pendente)
+INSERT INTO doacao (ID_grupo, ID_usuario_registro, ID_postagem, status_doacao, tipo_doacao, doador_nome, descricao, item_doacao, quantidade, unidade)
+SELECT
+  1,
+  (SELECT ID_usuario FROM usuario WHERE RA='12345' LIMIT 1),
+  NULL, -- Sem postagem associada
+  'pendente',
+  'item',
+  'Mercado Vizinho',
+  'Entrega de cestas básicas',
+  'Cesta básica',
+  15.000, -- Quantidade atualizada para teste
+  'un'
+WHERE EXISTS (SELECT 1 FROM grupo WHERE ID_grupo=1) AND EXISTS (SELECT 1 FROM usuario WHERE RA='12345');
+
+-- Anexo exemplo (ligado à primeira doação de dinheiro)
+-- Assume que a doação de dinheiro terá o menor ID_doacao para o grupo 1
+DELETE FROM arquivo WHERE ID_doacao IN (SELECT ID_doacao FROM doacao WHERE ID_grupo=1);
+INSERT INTO arquivo (path_arquivo, tipo_mime, nome_original, tamanho_bytes, ID_doacao)
+SELECT '/uploads/comprovantes/comp_exemplo.pdf', 'application/pdf', 'comprovante_exemplo.pdf', 12345, MIN(d.ID_doacao)
+FROM doacao d WHERE d.ID_grupo = 1 AND d.tipo_doacao = 'dinheiro'
+GROUP BY d.ID_grupo; -- Agrupa para garantir que MIN() funcione corretamente se houver múltiplas doações
+
+-- Presença
+INSERT INTO user_presence (user_id, status) VALUES ('adm@test.com', 'offline')
+ON DUPLICATE KEY UPDATE status=VALUES(status);
+
+-- Verificações (Descomente se precisar)
+-- SELECT 'Grupos:' AS Tabela; SELECT * FROM grupo;
+-- SELECT 'Membros:' AS Tabela; SELECT * FROM grupo_membro;
+-- SELECT 'Usuários:' AS Tabela; SELECT * FROM usuario;
+-- SELECT 'Metas:' AS Tabela; SELECT * FROM metas;
+-- SELECT 'Doações:' AS Tabela; SELECT * FROM doacao;
+-- SELECT 'Arquivos:' AS Tabela; SELECT * FROM arquivo;
