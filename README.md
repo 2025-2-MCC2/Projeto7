@@ -60,6 +60,7 @@ Para os administradores, a plataforma disponibiliza um painel completo que permi
 Aluno: 12345 | senha: 123456 <br/>
 Mentor: mentorn@test.com | senha: 123456
 
+<h2>Não consegue fazer login? <a href="NãoConsegueLogar?.md">Clique aqui</a></h2>
 
 ## 🛠 Estrutura de pastas
 
