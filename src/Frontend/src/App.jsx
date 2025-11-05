@@ -5,33 +5,34 @@ import {
   Routes,
   Route,
   Outlet,
-  Navigate,
 } from 'react-router-dom';
 
+// Estilos globais do projeto 
+import './styles/styles.css';
 import './styles/theme.css';
 
-import { AuthProvider } from './auth/AuthProvider.jsx';
+// Autenticação / proteção de rotas
+import { AuthProvider } from './auth/useAuth.jsx';
 import ProtectedRoute from './auth/ProtectedRoute';
 
-import Header from './components/Header.jsx';
-import SectionHero from './components/SectionHero.jsx';
-import MetricCard from './components/MetricCard.jsx';
-import LoginPage from './pages/LoginPage/LoginPage.jsx';
+// Layout compartilhado
 import Footer from './components/footer.jsx';
-import PainelInicial from './pages/PainelInicial/PainelInicial.jsx';
-// import Dashboard from './components/Dashboard.jsx'; // (opcional) use se tiver rota dedicada
+
+// Páginas públicas
+import Home from './pages/HomePage/Home.jsx';
+import Resultados from './pages/Resultados/Resultados.jsx';    
+import Error404 from './pages/Error404Page/Error404.jsx';
+import LoginPage from './pages/LoginPage/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage/Registerpage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage.jsx';
+
+// Páginas protegidas
+import PainelInicial from './pages/PainelInicial/PainelInicial.jsx';
 import Grupos from './pages/Grupos/Grupos.jsx';
 import PerfilPage from './pages/Perfil/PerfilPage.jsx';
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
 import AtividadesGrupo from './pages/Grupos/DoacaoGrupo.jsx';
 import Configuracoes from './pages/Configuracoes/Configuracoes.jsx';
-import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage.jsx';
-
-import img1 from './assets/img1.jpg';
-import img2 from './assets/img2.jpg';
-import img3 from './assets/img3.jpg';
-import img4 from './assets/img4.jpg';
 
 /** Aplica o tema salvo no perfil ao iniciar o app */
 function ThemeBoot() {
@@ -57,59 +58,7 @@ const getUserId = () => {
   }
 };
 
-// Página pública (Home) — sem Footer dentro; o Footer vem do Layout
-function HomePage() {
-  useEffect(() => {
-    document.title = 'Lideranças Empáticas • Início';
-  }, []);
-
-  return (
-    <div className="page">
-      <Header />
-      <main className="container">
-        <SectionHero />
-
-        <MetricCard
-          layout="leftText"
-          bg="var(--green-700)"
-          image={img1}
-          value={87763}
-          unit="Kg"
-          subtitle="Em arrecadações"
-          kicker="Mais de"
-          imageAlt="Equipe com doações em um evento comunitário"
-        />
-        <MetricCard
-          layout="rightText"
-          bg="var(--green-800)"
-          image={img2}
-          value={7800}
-          subtitle="Pessoas alimentadas durante 1 mês"
-          imageAlt="Voluntários com cestas básicas e alimentos"
-        />
-        <MetricCard
-          layout="leftText"
-          bg="var(--green-700)"
-          image={img3}
-          value={1950}
-          subtitle="Famílias alimentadas durante 1 mês"
-          imageAlt="Ação de distribuição de alimentos"
-        />
-        <MetricCard
-          layout="rightText"
-          bg="var(--green-800)"
-          image={img4}
-          value={1600}
-          subtitle="Alunos participantes"
-          kicker="Mais de"
-          imageAlt="Grupo de estudantes participantes do projeto"
-        />
-      </main>
-    </div>
-  );
-}
-
-// Layout com Footer único
+// Layout com Footer único para páginas públicas
 function LayoutComFooter() {
   return (
     <>
@@ -130,12 +79,13 @@ export default function App() {
           <Route path="/registrar" element={<RegisterPage />} />
           <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
 
-          {/* Home com Footer (único) */}
+          {/* Home + Resultados com Footer único */}
           <Route element={<LayoutComFooter />}>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/resultados" element={<Resultados />} />
           </Route>
 
-          {/* Rotas PROTEGIDAS */}
+          {/* Rotas protegidas */}
           <Route
             path="/painel"
             element={
@@ -144,7 +94,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/grupos"
             element={
@@ -153,7 +102,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/perfil"
             element={
@@ -162,7 +110,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/config"
             element={
@@ -171,7 +118,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/relatorios"
             element={
@@ -180,9 +126,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
-            path="/grupos/atividade/:id"
+            path="/grupos/doacoes/:id"
             element={
               <ProtectedRoute>
                 <AtividadesGrupo />
@@ -190,20 +135,8 @@ export default function App() {
             }
           />
 
-          {/* (Opcional) Expor Dashboard avulso */}
-          {/*
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Fallback 404 */}
+          <Route path="*" element={<Error404 />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

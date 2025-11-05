@@ -1436,3 +1436,91 @@ display: incline-block;
       transition: none; /* Remove também a transição da largura */
   }
 }
+/* ========= Toolbar de grupos ========= */
+.grupos-toolbar {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin: 8px 0 6px;
+}
+.grupos-toolbar .input { max-width: 320px; }
+
+/* ========= Mini-KPIs no topo ========= */
+.mini-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.mini-kpi {
+  background: #e6f7eb; border: 1px solid #b7e4c7;
+  border-radius: 10px; padding: 10px;
+  display: flex; flex-direction: column; align-items: flex-start;
+}
+.mini-kpi strong { font-size: 1.3rem; }
+.mini-kpi span { color: #0b3d2c; opacity: .9; }
+
+/* ========= Topo do card de grupo ========= */
+.grupo-card__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mentor-badge { display: flex; align-items: center; gap: 10px; }
+.mentor-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.mentor-avatar.initials {
+  display: grid; place-items: center; background: #d8f3dc; color: #1b4332;
+  font-weight: 800; width: 34px; height: 34px; border-radius: 50%;
+}
+.mentor-info .grupo-title { margin: 0; }
+.grupo-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.anim-chip { animation: chip-pop .25s ease-out both; }
+@keyframes chip-pop {
+  0% { transform: scale(.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ========= Empty state ========= */
+.empty-state {
+  background: #e6f7eb;
+  border: 1px dashed #b7e4c7;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex; align-items: center;
+  gap: 10px; justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+/* ========= Animações utilitárias ========= */
+.anim-fade-in-up {
+  animation: fade-in-up .26s ease-out both;
+}
+.anim-slide-in {
+  animation: slide-in .22s ease-out both;
+}
+.anim-pop {
+  animation: pop-in .26s ease-out both;
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ======= Preferência por menos movimento ======= */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in-up, .anim-slide-in, .anim-pop, .anim-chip {
+    animation: none !important;
+  }
+}
+
+/* ========= Refinos de contraste (opcional) ========= */
+/* Deixa os chips coerentes com o restante do painel */
+.chip { transition: transform .12s ease; }
+.chip:hover { transform: translateY(-1px); }
+
+/* ========= Responsivo ========= */
+@media (max-width: 768px) {
+  .grupos-toolbar .input { max-width: 100%; flex: 1; }
+}
