@@ -12,6 +12,8 @@
 
 ## Professores Orientadores: <a href="https://www.linkedin.com/in/cristina-machado-corr%C3%AAa-leite-630309160" target="_blank"> Cristina Machado Corrêa Leite</a>, <a href="https://www.linkedin.com/in/dolemes/" target="_blank"> David de Oliveira Lemes</a>, <a href="https://www.linkedin.com/in/francisco-escobar/" target="_blank"> Francisco de Souza Escobar </a>, <a href="https://www.linkedin.com/in/katia-bossi/" target="_blank"> Kátia Bossi </a>, <a href="https://www.linkedin.com/in/leonardo-fabris-lugoboni-a3369416/?originalSubdomain=br" target="_blank"> Leonardo Fabris Lugoboni</a><br/>
 
+<h3>Banner:<a href="Documentos/Banner_FECAP_CCOMP2_WebCrawlers.pptx.pdf">Banner_FECAP_CCOMP2_WebCrawlers</a></h3>
+
 # Entregas
 | Disciplinas | Entrega 1 | Entrega 2 |  
 | :-------: | :------: | :-------: |
