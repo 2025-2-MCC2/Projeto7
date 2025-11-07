@@ -66,7 +66,7 @@ body{
   border: 1px solid var(--code-border);
   background: var(--code-bg);
   color: #cbd5e1;
-  box-shadow: 0 16px 42px rgba(0,0,0,.18);
+  box-shadow: 0 16px 42px rgba(0,0,0,.18); 
 }
 .e404-code__bar{
   display:flex; align-items:center; gap:8px; padding:10px 12px;
@@ -79,3 +79,5 @@ body{
 @media (prefers-reduced-motion: reduce){
   .e404-btn{ transition:none; }
 }
+
+/* Error 404 FIM */
