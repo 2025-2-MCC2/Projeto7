@@ -20,7 +20,7 @@
 | Desenvolvimento Web Full Stack | [Desenvolvimento Web Full Stack](https://projeto-interdisciplinar-webcrawlers.vercel.app/) | [Desenvolvimento Web Full Stack](https://projeto-interdisciplinar-webcrawlers.vercel.app/) |   
 | Cálculo II | [Cálculo II](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20C%C3%A1lculo%202.pdf) | [Cálculo II](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%202/Entrega%202%20-%20C%C3%A1lculo%202.pdf) |    
 | Projetos em Banco de Dados | [Projetos em Banco de Dados](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Projetos%20em%20Banco%20de%20Dados.pdf) | [Projetos em Banco de Dados](https://github.com/2025-2-MCC2/Projeto7/tree/main/Documentos/Entrega%202/Entrega%202%20-%20Projetos%20em%20Banco%20de%20Dados) |  
-| Gestão Empresarial e Dinâmicas das Organizações | [Gestão Empresarial e Dinâmicas das Organizações](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Gest%C3%A3o%20Empresarial%20e%20Din%C3%A2micas%20das%20Organiza%C3%A7%C3%B5es.pdf) | [Gestão Empresarial e Dinâmicas das Organizações]() |  
+| Gestão Empresarial e Dinâmicas das Organizações | [Gestão Empresarial e Dinâmicas das Organizações](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%201/Entrega%201%20-%20Gest%C3%A3o%20Empresarial%20e%20Din%C3%A2micas%20das%20Organiza%C3%A7%C3%B5es.pdf) | [Gestão Empresarial e Dinâmicas das Organizações](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Entrega%202/Entrega%202%20-%20Gest%C3%A3o%20Empresarial%20e%20Din%C3%A2micas%20das%20Organiza%C3%A7%C3%B5es.pdf) |  
 | Projeto Interdisciplinar: Programação Web | [Projeto Interdisciplinar: Programação Web](https://www.figma.com/design/d6d58QWVq8z9luoTVgzR7V/WebCrawler-s?node-id=48-2&t=Ak4S9BNHtQX5Ntdp-1) | [Projeto Interdisciplinar: Programação Web](https://github.com/2025-2-MCC2/Projeto7/blob/main/Documentos/Documento%20-%20Projeto%20de%20Extens%C3%A3o%20-%20COM%20Empresa.pdf) |   
 <br/>
 
@@ -58,7 +58,7 @@ Para os administradores, a plataforma disponibiliza um painel completo que permi
 
 ## login e senha para testar:
 Aluno: 12345 | senha: 123456 <br/>
-Mentor: mentorn@test.com | senha: 123456
+Mentor: mentor@test.com | senha: 123456
 
 <h2>Não consegue fazer login? <a href="LoginProblems.md">Clique aqui</a></h2>
 
