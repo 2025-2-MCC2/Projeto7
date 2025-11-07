@@ -88,7 +88,9 @@ export default function PainelInicial() {
       setLoadingGrupos(true);
       setErrorGrupos('');
       try {
-        const resp = await fetch(`${API_BASE}/grupos`);
+        const resp = await fetch(`${API_BASE}/grupos`,{
+         credentials: "include"
+        )};
         if (!resp.ok) {
           const errText = await resp.text();
           console.error('API Error:', resp.status, errText);
