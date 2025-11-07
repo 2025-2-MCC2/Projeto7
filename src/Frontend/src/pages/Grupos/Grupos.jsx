@@ -108,7 +108,9 @@ export default function Grupos() {
       setLoading(true);
       setError('');
       try {
-        const resp = await fetch(`${API_BASE}/grupos`);
+        const resp = await fetch(`${API_BASE}/grupos`,{
+          credentials: "include",
+        });
         if (!resp.ok) throw new Error('Falha ao carregar do servidor');
         const data = await resp.json();
         if (!abort) {
