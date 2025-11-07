@@ -267,6 +267,7 @@ export default function Grupos() {
       const resp = await fetch(`${API_BASE}/grupos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {
@@ -358,6 +359,7 @@ export default function Grupos() {
       };
       const r = await fetch(`${API_BASE}/grupos/${editId}`, {
         method: 'PUT',
+        credentials: "include",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -397,7 +399,10 @@ export default function Grupos() {
     setConfirm({ open: false, id: null, name: '' });
     if (!id) return;
     try {
-      const r = await fetch(`${API_BASE}/grupos/${id}`, { method: 'DELETE' });
+      onst r = await fetch(`${API_BASE}/grupos/${id}`, {
+        credentials: "include",
+        method: "DELETE",
+      }); 
       if (!r.ok) {
         let msg = 'Falha ao excluir';
         try {
