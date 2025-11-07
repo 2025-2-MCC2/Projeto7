@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import path from 'path';
+import path from 'node:path';
 
 // Define o diretório de uploads (relativo ao CWD, diretório onde o 'node' foi iniciado)
 const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
@@ -8,7 +8,7 @@ const PUBLIC_URL_PREFIX = '/uploads/grupos';
 
 // *** NOVO ***
 // Lê a URL pública do backend a partir das variáveis de ambiente
-// Certifique-se de definir BACKEND_PUBLIC_URL no seu ficheiro .env
+// Certifique-se de definir MYSQL_PUBLIC_URL no seu ficheiro .env
 const BACKEND_URL = (process.env.MYSQL_PUBLIC_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 
