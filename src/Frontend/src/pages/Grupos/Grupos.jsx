@@ -399,7 +399,7 @@ export default function Grupos() {
     setConfirm({ open: false, id: null, name: '' });
     if (!id) return;
     try {
-      onst r = await fetch(`${API_BASE}/grupos/${id}`, {
+      const r = await fetch(`${API_BASE}/grupos/${id}`, {
         credentials: "include",
         method: "DELETE",
       }); 
