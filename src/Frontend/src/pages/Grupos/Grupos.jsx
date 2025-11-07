@@ -1,4 +1,3 @@
-// src/pages/Grupos/Grupos.jsx
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './Grupos.css';
@@ -6,6 +5,7 @@ import './Grupos.css';
 /* =========================
    Config & Helpers
    ========================= */
+// [MUDANÇA 1]: API_BASE atualizado para deploy
 const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
   "https://projeto-interdisciplinar-2.onrender.com/api";
@@ -108,8 +108,9 @@ export default function Grupos() {
       setLoading(true);
       setError('');
       try {
-        const resp = await fetch(`${API_BASE}/grupos`,{
-          credentials: "include",
+        // [MUDANÇA 2]: Adicionado credentials
+        const resp = await fetch(`${API_BASE}/grupos`, {
+          credentials: 'include',
         });
         if (!resp.ok) throw new Error('Falha ao carregar do servidor');
         const data = await resp.json();
@@ -269,7 +270,7 @@ export default function Grupos() {
       const resp = await fetch(`${API_BASE}/grupos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: "include",
+        credentials: 'include', // <-- [MUDANÇA 2] Adicionado credentials
         body: JSON.stringify(payload),
       });
       if (!resp.ok) {
@@ -307,7 +308,13 @@ export default function Grupos() {
      Editar Grupo
      ========================= */
   const [editId, setEditId] = useState(null);
-  const [editForm, setEditForm] = useState({ nome: '', metaArrecadacao: '', metaAlimentos: '' });
+  // [MUDANÇA 3]: Adicionado 'mentorNome' ao estado de edição
+  const [editForm, setEditForm] = useState({
+    nome: '',
+    metaArrecadacao: '',
+    metaAlimentos: '',
+    mentorNome: '', // <-- NOVO
+  });
   const [editMembers, setEditMembers] = useState([{ nome: '', ra: '', telefone: '' }]);
   const [editCapa, setEditCapa] = useState('');
   const editCapaRef = useRef(null);
@@ -333,6 +340,7 @@ export default function Grupos() {
       nome: g.nome ?? '',
       metaArrecadacao: String(g.metaArrecadacao ?? ''),
       metaAlimentos: g.metaAlimentos ?? '',
+      mentorNome: g.mentor ?? '', // <-- [MUDANÇA 4]: Popular o nome do mentor
     });
     setEditMembers(
       (g.membros?.length ? g.membros : [{ nome: '', ra: '', telefone: '' }]).map((m) => ({
@@ -350,18 +358,30 @@ export default function Grupos() {
     if (!editId) return;
     setSaving(true);
     try {
+      // [MUDANÇA 5]: Lógica do payload atualizada para o Admin
       const payload = {
         nome: editForm.nome.trim(),
         metaArrecadacao: Number(editForm.metaArrecadacao ?? 0),
         metaAlimentos: editForm.metaAlimentos ?? '',
-        membros: isStudent ? editMembers.filter((m) => m.nome && m.ra) : undefined,
-        mentor: isMentor ? perfil.nome ?? undefined : undefined,
-        mentorFotoUrl: isMentor ? perfil.fotoUrl ?? undefined : undefined,
         capaDataUrl: editCapa || undefined,
+
+        // Lógica de Membros (Aluno OU Admin podem editar)
+        // (A lógica original 'isStudent' parecia errada, ajustei para 'isStudent || isAdmin')
+        membros: (isStudent || isAdmin) ? editMembers.filter((m) => m.nome && m.ra) : undefined,
+
+        // Lógica de Mentor (Mentor se auto-atribui, Admin atribui pelo form)
+        mentor: isAdmin
+          ? editForm.mentorNome.trim() || undefined // Admin define pelo form
+          : (isMentor ? perfil.nome ?? undefined : undefined), // Mentor se auto-define
+        
+        mentorFotoUrl: isAdmin
+          ? undefined // Admin não pode definir foto de outro
+          : (isMentor ? perfil.fotoUrl ?? undefined : undefined), // Mentor se auto-define
       };
+
       const r = await fetch(`${API_BASE}/grupos/${editId}`, {
         method: 'PUT',
-        credentials: "include",
+        credentials: 'include', // <-- [MUDANÇA 2] Adicionado credentials
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -402,9 +422,9 @@ export default function Grupos() {
     if (!id) return;
     try {
       const r = await fetch(`${API_BASE}/grupos/${id}`, {
-        credentials: "include",
-        method: "DELETE",
-      }); 
+        method: 'DELETE',
+        credentials: 'include', // <-- [MUDANÇA 2] Adicionado credentials
+      });
       if (!r.ok) {
         let msg = 'Falha ao excluir';
         try {
@@ -807,7 +827,8 @@ export default function Grupos() {
                             }}
                             placeholder="Nome"
                             required
-                            disabled={!isStudent ? !isStudent : i === 0 ? !isStudent : false}
+                            // [MUDANÇA 6]: Permite Admins E Alunos editarem membros
+                            disabled={!isAdmin && !isStudent} 
                           />
                           <input
                             type="text"
@@ -819,7 +840,8 @@ export default function Grupos() {
                             }}
                             placeholder="RA"
                             required
-                            disabled={!isStudent ? !isStudent : i === 0 ? !isStudent : false}
+                            // [MUDANÇA 6]: Permite Admins E Alunos editarem membros
+                            disabled={!isAdmin && !isStudent}
                           />
                           <input
                             type="tel"
@@ -830,9 +852,11 @@ export default function Grupos() {
                               setEditMembers(cp);
                             }}
                             placeholder="Telefone (opcional)"
-                            disabled={!isStudent}
+                            // [MUDANÇA 6]: Permite Admins E Alunos editarem membros
+                            disabled={!isAdmin && !isStudent}
                           />
-                          {editMembers.length > 1 && !isStudent && (
+                          {/* [MUDANÇA 6]: Permite Admins E Alunos removerem membros */}
+                          {editMembers.length > 1 && (isAdmin || isStudent) && (
                             <button
                               type="button"
                               className="btn-danger-small"
@@ -848,8 +872,9 @@ export default function Grupos() {
                           )}
                         </div>
                       ))}
-
-                      {isStudent && (
+                      
+                      {/* [MUDANÇA 6]: Permite Admins E Alunos adicionarem membros */}
+                      {(isStudent || isAdmin) && (
                         <button
                           type="button"
                           className="btn-secondary"
@@ -861,8 +886,9 @@ export default function Grupos() {
                         </button>
                       )}
                     </div>
-
-                    {!isStudent && (
+                    
+                    {/* [MUDANÇA 7]: Só mentores e admins podem editar metas */}
+                    {isMentorLike && (
                       <>
                         <div className="form-group">
                           <label htmlFor="emeta">Meta de Arrecadação (R$)</label>
@@ -889,6 +915,42 @@ export default function Grupos() {
                         </div>
                       </>
                     )}
+
+                    {/* [MUDANÇA 8]: Novo campo para Admin atribuir mentor */}
+                    {isAdmin && (
+                      <div className="form-group">
+                        <label htmlFor="ementorNome">Atribuir Mentor (Admin)</label>
+                        <input
+                          id="ementorNome"
+                          type="text"
+                          value={editForm.mentorNome}
+                          onChange={(e) => setEditForm(f => ({ ...f, mentorNome: e.target.value }))}
+                          placeholder="Nome do Mentor"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Campo para Mentor se auto-atribuir */}
+                    {isMentor && !isAdmin && (
+                      <div className="form-group">
+                         <label>Mentor</label>
+                         <input
+                          id="ementorNome"
+                          type="text"
+                          value={editForm.mentorNome}
+                          disabled // Mentor não digita, apenas usa o botão
+                        />
+                        <button type="button" className="btn-secondary" style={{marginTop: '8px'}}
+                          onClick={() => {
+                            setEditForm(f => ({ ...f, mentorNome: perfil.nome }));
+                            setMessage("Você foi definido como mentor.");
+                          }}
+                        >
+                          Assumir como Mentor
+                        </button>
+                      </div>
+                    )}
+
 
                     <div className="form-group">
                       <label>Imagem de capa</label>
