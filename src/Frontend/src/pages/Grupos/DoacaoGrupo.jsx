@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import './DoacaoGrupo.css';
 
 /* ============ Utils ============ */
-const API_BASE = '/api';
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://projeto-interdisciplinar-2.onrender.com/api";
 const currency = (v) =>
   (Number(v ?? 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateTimeBR = (iso) => {
