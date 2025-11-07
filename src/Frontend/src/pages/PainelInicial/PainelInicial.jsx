@@ -674,7 +674,7 @@ export default function PainelInicial() {
                     style={{ animationDelay: `${idx * 30}ms` }}
                     role="button"
                     tabIndex={0}
-                    onClick={() => navigate(`/grupos/atividade/${g.id}`)}
+                    onClick={() => navigate(`/grupos/doacoes/${g.id}`)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter')
                         navigate(`/grupos/atividade/${g.id}`);
