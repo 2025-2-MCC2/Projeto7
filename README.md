@@ -108,13 +108,7 @@ Há também X pastas que seguem da seguinte forma:
 
 ## 🛠 Instalação
 
-
-<b>Windows:</b>
-
-Não há instalação! Apenas executável!
-
-
-
+Não há instalação! Acesse pelo <a href="https://projeto-interdisciplinar-webcrawlers.vercel.app/">link do site!</a>
 
 ## 💻 Configuração para Desenvolvimento
 
@@ -141,12 +135,6 @@ npm start
 
 Aqui estão as referências usadas no projeto.
 
-1. <https://link>
-2. <https://link>
-3. <https://link>
-4. <https://link>
-5. <https://link>
-6. <https://link>
-7. <https://link>
-8. <https://link>
+1. <a href="https://liderancasempaticas.com/">Lideranças Empáticas</a>
+
 
