@@ -5,7 +5,9 @@ const API_BASE =
 
 /** GET /grupos */
 export async function fetchGrupos() {
-  const r = await fetch(`${API_BASE}/grupos`);
+  const r = await fetch(`${API_BASE}/grupos`,{
+    credentials: 'include',
+  });
   if (!r.ok) throw new Error(`Falha ao listar grupos (${r.status})`);
   const data = await r.json();
   return Array.isArray(data) ? data : [];
@@ -13,7 +15,8 @@ export async function fetchGrupos() {
 
 /** GET /grupos/:id/doacoes?status=...  -> normaliza attachments */
 export async function fetchDoacoesByGrupo(groupId, { status = 'todas' } = {}) {
-  const r = await fetch(`${API_BASE}/grupos/${groupId}/doacoes?status=${encodeURIComponent(status)}`);
+  const r = await fetch(`${API_BASE}/grupos/${groupId}/doacoes?status=${encodeURIComponent(status)}`,
+{credentials: 'include'});
   if (!r.ok) {
     const t = await r.text().catch(() => '');
     throw new Error(`Falha ao buscar doações (${r.status}): ${t}`);
