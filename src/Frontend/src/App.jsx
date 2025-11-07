@@ -7,12 +7,12 @@ import {
   Outlet,
 } from 'react-router-dom';
 
-// Estilos globais do projeto 
+// Estilos globais do projeto (sem tokens.css)
 import './styles/styles.css';
 import './styles/theme.css';
 
 // Autenticação / proteção de rotas
-import { AuthProvider } from './auth/useAuth.jsx';
+import { AuthProvider } from './auth/AuthProvider.jsx';
 import ProtectedRoute from './auth/ProtectedRoute';
 
 // Layout compartilhado
@@ -20,11 +20,10 @@ import Footer from './components/footer.jsx';
 
 // Páginas públicas
 import Home from './pages/HomePage/Home.jsx';
-import Resultados from './pages/Resultados/Resultados.jsx';    
+import Resultados from './pages/Resultados/Resultados.jsx';     // <— nova aba pública
 import Error404 from './pages/Error404Page/Error404.jsx';
 import LoginPage from './pages/LoginPage/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage/Registerpage.jsx';
-import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage.jsx';
 
 // Páginas protegidas
 import PainelInicial from './pages/PainelInicial/PainelInicial.jsx';
@@ -77,7 +76,6 @@ export default function App() {
           {/* Rotas públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registrar" element={<RegisterPage />} />
-          <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
 
           {/* Home + Resultados com Footer único */}
           <Route element={<LayoutComFooter />}>
