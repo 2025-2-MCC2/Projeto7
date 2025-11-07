@@ -1,800 +1,511 @@
-// src/pages/AtividadesGrupo/DoacaoGrupo.jsx (Renomeado de AtividadesGrupo.jsx)
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import "./DoacaoGrupo.css";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import './DoacaoGrupo.css';
 
-/* ----------------------------------------------------------------------------
- * Helpers (load, save, fileToCompressedDataURL, Lightbox) - Mantidos do original
- * --------------------------------------------------------------------------*/
-const load = (key, fb) => {
-  try {
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : fb;
-  } catch {
-    return fb;
-  }
-}; //
-const save = (key, val) => localStorage.setItem(key, JSON.stringify(val)); //
-
-async function fileToCompressedDataURL(file, maxSize = 1280, quality = 0.8) {
-  //
-  const dataUrl = await new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = reject;
-    fr.readAsDataURL(file);
-  });
-  const img = await new Promise((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = reject;
-    i.src = dataUrl;
-  });
-  let { width, height } = img;
-  const ratio = width / height;
-  if (width > height && width > maxSize) {
-    width = maxSize;
-    height = Math.round(maxSize / ratio);
-  } else if (height >= width && height > maxSize) {
-    height = maxSize;
-    width = Math.round(maxSize * ratio);
-  }
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL("image/jpeg", quality);
-}
-
-// Lightbox Component (mantido)
-function Lightbox({
-  open,
-  items,
-  index,
-  onClose,
-  onPrev,
-  onNext,
-  onRemove,
-  showRemove,
-}) {
-  //
-  if (!open || !items?.length) return null;
-  const it = items[index];
-  return (
-    <div className="lb-overlay" onClick={onClose}>
-      <div className="lb" onClick={(e) => e.stopPropagation()}>
-        <img src={it.dataUrl} alt={it.caption || "imagem"} />
-        <div className="lb-actions">
-          <button
-            className="btn btn-ghost"
-            onClick={onPrev}
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-          <button
-            className="btn btn-ghost"
-            onClick={onNext}
-            aria-label="Próxima"
-          >
-            ›
-          </button>
-          {showRemove && (
-            <button
-              className="btn btn-danger"
-              onClick={() => onRemove(it)}
-              title="Remover imagem"
-            >
-              Remover
-            </button>
-          )}
-          <button className="btn btn-secondary" onClick={onClose}>
-            Fechar
-          </button>
-        </div>
-        {it.caption && <div className="lb-caption">{it.caption}</div>}
-      </div>
-    </div>
-  );
-}
-
-/* ----------------------------------------------------------------------------
- * Constantes e Configurações
- * --------------------------------------------------------------------------*/
-const GRUPOS_KEY = "grupos"; //
-const PERFIL_KEY = "perfil"; //
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
-  "https://projeto-interdisciplinar-2.onrender.com/api";
-const ACCEPT_ATTACH = "application/pdf,image/png,image/jpeg,image/jpg"; //
-
-// Helper para formatar data/hora
-const formatDateTime = (isoString) => {
-  //
-  if (!isoString) return "Data indisponível";
-  try {
-    const date = new Date(isoString);
-    if (isNaN(date)) throw new Error("Invalid Date");
-    return date.toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "Data inválida";
-  }
-};
-// Helper para formatar valor/item da doação
-const formatDoacaoValorItem = (d) => {
-  //
-  if (d.tipo_doacao === "dinheiro") {
-    return `R$ ${(Number(d.valor_doacao) || 0).toFixed(2)}`;
-  }
-  if (d.tipo_doacao === "item") {
-    return `${d.item_doacao || "?"} (${Number(d.quantidade || 0)} ${
-      d.unidade || "unid."
-    })`;
-  }
-  return "Tipo desconhecido";
-};
-// Helper para obter iniciais
-const getInitials = (name = "?") => {
-  const parts = String(name).trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : "";
-  const ini = `${first}${last}`.trim().toUpperCase();
-  return ini || "?";
-};
-// Helper para formatar moeda
+/* ============ Utils ============ */
+const API_BASE = '/api';
 const currency = (v) =>
-  Number(v ?? 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  (Number(v ?? 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const dateTimeBR = (iso) => {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return '—'; }
+};
+const initials = (name = '?') => {
+  const p = String(name).trim().split(/\s+/);
+  return ((p[0]?.[0] ?? '') + (p[p.length - 1]?.[0] ?? '') || '?').toUpperCase();
+};
+/* Exibe valor doado conforme tipo */
+const formatDoacaoPrimaria = (d) => {
+  if (d.tipo_doacao === 'dinheiro') return currency(d.valor_doacao);
+  if (d.tipo_doacao === 'item') {
+    const qtd = Number(d.quantidade ?? 0).toLocaleString('pt-BR');
+    const un = d.unidade ?? 'unid.';
+    const nm = d.item_doacao ?? 'Item';
+    return `${nm} (${qtd} ${un})`;
+  }
+  return '—';
+};
 
-/* ----------------------------------------------------------------------------
- * Página Principal: DoacaoGrupo (Renomeado)
- * --------------------------------------------------------------------------*/
+/* Perfil local */
+const loadPerfil = () => {
+  try { return JSON.parse(localStorage.getItem('perfil')) || {}; } catch { return {}; }
+};
+
+/* ============ Página ============ */
 export default function DoacaoGrupo() {
-  //
+  const { id } = useParams();
+  const groupId = Number(id);
   const navigate = useNavigate();
-  const { id } = useParams(); //
-  const groupId = Number(id); //
 
-  // Carrega perfil (do localStorage)
-  const [perfil] = useState(() =>
-    load(PERFIL_KEY, { nome: "Usuário", tipo: "aluno", ra: "" })
-  ); //
-  const isStudent = perfil.tipo === "aluno"; //
-  const isMentorLike = ["mentor", "professor", "adm"].includes(perfil.tipo); //
+  /* Perfil -> para permissões */
+  const [perfil] = useState(() => loadPerfil());
+  const isMentorLike = (perfil?.tipo === 'mentor' || perfil?.tipo === 'adm');
+  const isAluno = perfil?.tipo === 'aluno';
 
-  // Busca dados do grupo da API
-  const [grupo, setGrupo] = useState(null); //
-  const [loadingGrupo, setLoadingGrupo] = useState(true); //
+  /* Grupo */
+  const [grupo, setGrupo] = useState(null);
+  const [loadingGrupo, setLoadingGrupo] = useState(true);
 
+  /* Doações */
+  const [doacoes, setDoacoes] = useState([]);
+  const [loadingDoacoes, setLoadingDoacoes] = useState(true);
+  const [errorDoacoes, setErrorDoacoes] = useState('');
+
+  /* Filtros / ordenação */
+  const [q, setQ] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState('todas'); // todas|pendente|aprovada|rejeitada
+  const [tipoFiltro, setTipoFiltro] = useState('todos'); // todos|dinheiro|item
+  const [onlyWithImages, setOnlyWithImages] = useState(false);
+  const [order, setOrder] = useState('recentes'); // recentes|antigos|valor|a_z
+
+  /* Modal nova doação (Definição correta) */
+  const [openNew, setOpenNew] = useState(false);
+  const [tipoDoacaoForm, setTipoDoacaoForm] = useState(''); // dinheiro|item
+  const [form, setForm] = useState({
+    descricao: '',
+    doador_nome: '',
+    valor_doacao: '',
+    item_doacao: '',
+    quantidade: '',
+    unidade: 'un',
+  });
+  const [err, setErr] = useState({});
+  const [registering, setRegistering] = useState(false);
+
+  /* Modal de Rejeição */
+  const [rejectModal, setRejectModal] = useState({ open: false, doacaoId: null });
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  /* Anexos locais (pré-upload) */
+  const draftAttachRef = useRef(null);
+  const [draftAttachments, setDraftAttachments] = useState([]);
+  const hiddenFileRef = useRef(null);
+  const [uploadTargetId, setUploadTargetId] = useState(null);
+
+  /* Galeria / Lightbox */
+  const [lbOpen, setLbOpen] = useState(false);
+  const [lbIndex, setLbIndex] = useState(0);
+
+  /* ========= Carregar Grupo ========= */
   useEffect(() => {
-    //
     let abort = false;
-    const fetchGrupo = async () => {
-      if (!groupId) {
-        setLoadingGrupo(false);
-        setGrupo(null);
-        return;
-      }
+    (async () => {
       setLoadingGrupo(true);
       try {
-        const response = await fetch(`${API_BASE}/grupos/${groupId}`, {
-          credentials: "include",
+        const r = await fetch(`${API_BASE}/grupos/${groupId}`, {
+          credentials: 'include', // <-- CORRIGIDO
         });
-        if (!response.ok)
-          throw new Error(
-            `Grupo ${groupId} não encontrado (${response.status})`
-          );
-        const data = await response.json();
+        if (!r.ok) throw new Error(`Grupo ${groupId} não encontrado`);
+        const data = await r.json();
         if (!abort) setGrupo(data);
-      } catch (err) {
-        if (!abort) console.error("Erro ao buscar grupo:", err);
-        setGrupo(null);
+      } catch {
+        if (!abort) setGrupo(null);
       } finally {
         if (!abort) setLoadingGrupo(false);
       }
-    };
-    fetchGrupo();
-    return () => {
-      abort = true;
-    };
+    })();
+    return () => { abort = true; };
   }, [groupId]);
 
-  // Estado para Doações (da API)
-  const [doacoes, setDoacoes] = useState([]); //
-  const [loadingDoacoes, setLoadingDoacoes] = useState(true); //
-  const [errorDoacoes, setErrorDoacoes] = useState(""); //
-
-  // useEffect para buscar doações da API
-  useEffect(() => {
-    //
-    let abort = false;
-    const fetchDoacoes = async () => {
-      if (!groupId) return;
-      setLoadingDoacoes(true);
-      setErrorDoacoes("");
-      try {
-        const response = await fetch(
-          `${API_BASE}/grupos/${groupId}/doacoes?status=todas`,
-          {
-            credentials: "include",
-          }
-        ); //
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(
-            `Falha ao buscar doações (${response.status}): ${errText}`
-          ); //
-        }
-        const data = await response.json(); //
-        if (!abort) {
-          const dataWithLocalAttachments = data.map((d) => ({
-            ...d,
-            attachments:
-              doacoes.find((prevD) => prevD.ID_doacao === d.ID_doacao)
-                ?.attachments || [],
-          }));
-          setDoacoes(
-            Array.isArray(dataWithLocalAttachments)
-              ? dataWithLocalAttachments
-              : []
-          ); //
-        }
-      } catch (err) {
-        if (!abort) {
-          console.error("Erro ao buscar doações:", err);
-          setErrorDoacoes(err.message || "Erro.");
-        } //
-      } finally {
-        if (!abort) setLoadingDoacoes(false); //
+  /* ========= Carregar Doações ========= */
+  const loadDoacoes = useCallback(async () => {
+    setLoadingDoacoes(true);
+    setErrorDoacoes('');
+    try {
+      const r = await fetch(`${API_BASE}/grupos/${groupId}/doacoes?status=todas`, {
+        credentials: 'include', // <-- CORRIGIDO
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error(`Falha ao buscar doações (${r.status}): ${t}`);
       }
-    };
-    fetchDoacoes();
-    return () => {
-      abort = true;
-    };
+      const data = await r.json();
+      // normaliza attachments caso não venha
+      const norm = (Array.isArray(data) ? data : []).map(d => ({
+        ...d,
+        attachments: Array.isArray(d.attachments) ? d.attachments : [],
+      }));
+      setDoacoes(norm);
+    } catch (e) {
+      setErrorDoacoes(e.message || 'Erro ao carregar doações.');
+    } finally {
+      setLoadingDoacoes(false);
+    }
   }, [groupId]);
 
-  /* ---------------- Filtros / Busca / Ordenação ---------------- */
-  const [q, setQ] = useState(""); //
-  const [statusFiltro, setStatusFiltro] = useState("todas"); //
-  const [onlyWithImages, setOnlyWithImages] = useState(false); //
-  const [order, setOrder] = useState("recentes"); //
+  useEffect(() => { loadDoacoes(); }, [loadDoacoes]);
 
+  /* ========= KPIs ========= */
+  const kpis = useMemo(() => {
+    const aprovadas = doacoes.filter(d => d.status_doacao === 'aprovada');
+    const pendentes = doacoes.filter(d => d.status_doacao === 'pendente');
+    const totalR$ = aprovadas
+      .filter(d => d.tipo_doacao === 'dinheiro')
+      .reduce((s, d) => s + Number(d.valor_doacao ?? 0), 0);
+    const totalItens = aprovadas
+      .filter(d => d.tipo_doacao === 'item')
+      .reduce((s, d) => s + Number(d.quantidade ?? 0), 0);
+    return { totalFinanceiro: totalR$, totalItens, pendentes: pendentes.length };
+  }, [doacoes]);
+
+  /* ========= Filtros / Ordenação ========= */
   const doacoesFiltradas = useMemo(() => {
-    //
     let list = [...doacoes];
     if (q.trim()) {
-      //
       const s = q.toLowerCase();
-      list = list.filter(
-        (d) =>
-          (d.descricao || "").toLowerCase().includes(s) ||
-          (d.doador_nome || "").toLowerCase().includes(s) ||
-          (d.item_doacao || "").toLowerCase().includes(s) ||
-          (d.nome_usuario_registro || "").toLowerCase().includes(s)
+      list = list.filter(d =>
+        (d.descricao ?? '').toLowerCase().includes(s) ||
+        (d.doador_nome ?? '').toLowerCase().includes(s) ||
+        (d.item_doacao ?? '').toLowerCase().includes(s) ||
+        (d.nome_usuario_registro ?? '').toLowerCase().includes(s)
       );
     }
-    if (statusFiltro !== "todas")
-      list = list.filter((d) => d.status_doacao === statusFiltro); //
-    if (onlyWithImages)
-      list = list.filter((d) =>
-        (d.attachments || []).some((att) => att.type?.startsWith("image/"))
-      ); //
-    if (order === "recentes")
-      list.sort(
-        (a, b) =>
-          new Date(b.doacao_data_registro || 0) -
-          new Date(a.doacao_data_registro || 0)
-      );
-    //
-    else if (order === "antigos")
-      list.sort(
-        (a, b) =>
-          new Date(a.doacao_data_registro || 0) -
-          new Date(b.doacao_data_registro || 0)
-      );
-    //
-    else if (order === "a_z")
+    if (statusFiltro !== 'todas') list = list.filter(d => d.status_doacao === statusFiltro);
+    if (tipoFiltro !== 'todos') list = list.filter(d => d.tipo_doacao === tipoFiltro);
+    if (onlyWithImages) list = list.filter(d => (d.attachments ?? []).some(a => a.type?.startsWith('image/')));
+    if (order === 'recentes') {
+      list.sort((a, b) => new Date(b.doacao_data_registro ?? 0) - new Date(a.doacao_data_registro ?? 0));
+    } else if (order === 'antigos') {
+      list.sort((a, b) => new Date(a.doacao_data_registro ?? 0) - new Date(b.doacao_data_registro ?? 0));
+    } else if (order === 'valor') {
+      list.sort((a, b) => {
+        const va = a.tipo_doacao === 'dinheiro' ? Number(a.valor_doacao ?? 0) : 0;
+        const vb = b.tipo_doacao === 'dinheiro' ? Number(b.valor_doacao ?? 0) : 0;
+        return vb - va;
+      });
+    } else if (order === 'a_z') {
       list.sort((a, b) =>
-        (a.item_doacao || a.doador_nome || "").localeCompare(
-          b.item_doacao || b.doador_nome || "",
-          "pt-BR"
+        String(a.doador_nome ?? a.item_doacao ?? '').localeCompare(
+          String(b.doador_nome ?? b.item_doacao ?? ''), 'pt-BR'
         )
-      ); //
+      );
+    }
     return list;
-  }, [doacoes, q, statusFiltro, onlyWithImages, order]);
+  }, [doacoes, q, statusFiltro, tipoFiltro, onlyWithImages, order]);
 
-  /* ---------------- Registro de Nova Doação ---------------- */
-  const [openNew, setOpenNew] = useState(false); //
-  const [form, setForm] = useState({
-    descricao: "",
-    doador_nome: "",
-    valor_doacao: "",
-    item_doacao: "",
-    quantidade: "",
-    unidade: "un",
-  }); //
-  const [tipoDoacaoForm, setTipoDoacaoForm] = useState(""); //
-  const [err, setErr] = useState({}); //
-  const draftAttachRef = useRef(null); //
-  const [draftAttachments, setDraftAttachments] = useState([]); //
-
+  /* ========= Validação / Registro ========= */
   const validateNew = useCallback(() => {
-    //
     const e = {};
-    if (form.descricao && form.descricao.trim().length < 3)
-      e.descricao = "Mínimo 3 caracteres";
-    if (!tipoDoacaoForm) e.tipoDoacaoForm = "Selecione o tipo";
-    else if (tipoDoacaoForm === "dinheiro") {
+    if (!tipoDoacaoForm) e.tipoDoacaoForm = 'Selecione o tipo';
+    if (tipoDoacaoForm === 'dinheiro') {
       const v = Number(form.valor_doacao);
-      if (!(v > 0)) e.valor_doacao = "Valor > 0";
-    } else if (tipoDoacaoForm === "item") {
-      if (!form.item_doacao?.trim()) e.item_doacao = "Informe item";
+      if (!(v > 0)) e.valor_doacao = 'Valor > 0';
+    } else if (tipoDoacaoForm === 'item') {
+      if (!form.item_doacao?.trim()) e.item_doacao = 'Informe item';
       const qt = Number(form.quantidade);
-      if (!(qt > 0)) e.quantidade = "Qtd > 0";
-      if (!form.unidade?.trim()) e.unidade = "Selecione unid.";
+      if (!(qt > 0)) e.quantidade = 'Qtd > 0';
+      if (!form.unidade?.trim()) e.unidade = 'Selecione unidade';
+    }
+    if (form.descricao && form.descricao.trim().length > 0 && form.descricao.trim().length < 3) {
+      e.descricao = 'Mínimo 3 caracteres';
     }
     setErr(e);
     return Object.keys(e).length === 0;
   }, [form, tipoDoacaoForm]);
 
-  const [registering, setRegistering] = useState(false); //
-  const registrarDoacao = async (e) => {
-    //
+  const registrarDoacao = useCallback(async (e) => {
     e?.preventDefault?.();
     if (!validateNew()) return;
     setRegistering(true);
     setErr({});
-    setErrorDoacoes("");
-    const payload = {
-      //
-      tipo_doacao: tipoDoacaoForm,
-      doador_nome: form.doador_nome?.trim() || null,
-      descricao: form.descricao?.trim() || null,
-      valor_doacao:
-        tipoDoacaoForm === "dinheiro" ? Number(form.valor_doacao) : undefined,
-      item_doacao:
-        tipoDoacaoForm === "item" ? form.item_doacao.trim() : undefined,
-      quantidade:
-        tipoDoacaoForm === "item" ? Number(form.quantidade) : undefined,
-      unidade: tipoDoacaoForm === "item" ? form.unidade.trim() : undefined,
-      // TODO: Enviar anexos
-    };
+    setErrorDoacoes('');
     try {
+      const payload = {
+        tipo_doacao: tipoDoacaoForm,
+        doador_nome: form.doador_nome?.trim() || null,
+        descricao: form.descricao?.trim() || null,
+        valor_doacao: tipoDoacaoForm === 'dinheiro' ? Number(form.valor_doacao) : undefined,
+        item_doacao: tipoDoacaoForm === 'item' ? form.item_doacao.trim() : undefined,
+        quantidade: tipoDoacaoForm === 'item' ? Number(form.quantidade) : undefined,
+        unidade: tipoDoacaoForm === 'item' ? form.unidade.trim() : undefined,
+      };
       const response = await fetch(`${API_BASE}/grupos/${groupId}/doacoes`, {
-        credentials: "include",
-        method: "POST",
-        headers: { "Content-Type": "application/json" /* Authorization? */ },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
         let eM = `Erro (${response.status})`;
-        try {
-          const eD = await response.json();
-          eM = eD.error || eM;
-        } catch {}
+        try { const eD = await response.json(); eM = eD.error || eM; } catch {}
         throw new Error(eM);
-      } //
-      const novaDoacao = await response.json(); //
-      novaDoacao.attachments = draftAttachments; // Associa anexos locais
-      setDoacoes((prev) => [novaDoacao, ...prev]); //
-      setForm({
-        descricao: "",
-        doador_nome: "",
-        valor_doacao: "",
-        item_doacao: "",
-        quantidade: "",
-        unidade: "un",
-      }); //
-      setTipoDoacaoForm("");
+      }
+      const nova = await response.json();
+      // anexos locais (mock local)
+      if (draftAttachments.length) {
+        nova.attachments = draftAttachments.map(a => ({
+          id: a.id, name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl, status: 'local'
+        }));
+      }
+      setDoacoes(prev => [nova, ...prev]);
+      setForm({ descricao: '', doador_nome: '', valor_doacao: '', item_doacao: '', quantidade: '', unidade: 'un' });
+      setTipoDoacaoForm('');
       setDraftAttachments([]);
-      setOpenNew(false); //
+      setOpenNew(false);
     } catch (error) {
-      console.error("Erro:", error);
-      setErr((prev) => ({ ...prev, _global: error.message || "Erro." })); //
+      setErr(prev => ({ ...prev, _global: error.message || 'Erro.' }));
     } finally {
       setRegistering(false);
-    } //
-  };
+    }
+  }, [validateNew, form, tipoDoacaoForm, groupId, draftAttachments]);
 
-  /* ---------------- Excluir Doação ---------------- */
-  const removerDoacao = async (doacaoId) => {
-    //
-    if (!confirm(`Excluir doação ID ${doacaoId}?`)) return; //
-    const d = doacoes.find((x) => x.ID_doacao === doacaoId);
-    if (d && d.status_doacao !== "pendente") {
-      alert("Apenas pendentes podem ser excluídas.");
-      return;
-    } //
-    setErrorDoacoes(""); //
+  /* ========= Aprovar / Rejeitar / Excluir ========= */
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const handleApprove = useCallback(async (doacaoId) => {
+    if (!isMentorLike) return;
+    setUpdatingStatusId(doacaoId);
+    setErrorDoacoes('');
     try {
-      const r = await fetch(
-        `${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}`,
-        { credentials: "include" },
-        { method: "DELETE" /* Headers? */ }
-      ); //
+      const r = await fetch(`${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}/aprovar`, {
+        method: 'PUT',
+        credentials: 'include'
+      });
       if (!r.ok) {
         let eM = `Falha (${r.status})`;
-        try {
-          const eD = await r.json();
-          eM = eD.error || eM;
-        } catch {}
+        try { const eD = await r.json(); eM = eD.error || eM; } catch {}
         throw new Error(eM);
-      } //
-      setDoacoes((prev) => prev.filter((x) => x.ID_doacao !== doacaoId)); //
+      }
+      const atualizado = await r.json();
+      setDoacoes(prev => prev.map(d => d.ID_doacao === doacaoId ? atualizado : d));
     } catch (error) {
-      console.error("Erro:", error);
-      setErrorDoacoes(error.message || "Erro.");
-    } //
+      setErrorDoacoes(error.message || 'Erro.');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  }, [groupId, isMentorLike]);
+
+  // Função 'executeReject' (que substituiu o prompt)
+  const executeReject = useCallback(async (e) => {
+    e?.preventDefault(); // É um submit de formulário agora
+    if (!isMentorLike || !rejectModal.doacaoId) return;
+
+    const doacaoId = rejectModal.doacaoId;
+    const observacao = rejectionReason.trim() || null; // Pega do state
+
+    setUpdatingStatusId(doacaoId);
+    setErrorDoacoes('');
+    try {
+      const r = await fetch(`${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}/rejeitar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ observacao }), // Envia a observação do state
+      });
+      if (!r.ok) {
+        let eM = `Falha (${r.status})`;
+        try { const eD = await r.json(); eM = eD.error || eM; } catch {}
+        throw new Error(eM);
+      }
+      const atualizado = await r.json();
+      setDoacoes(prev => prev.map(d => d.ID_doacao === doacaoId ? atualizado : d));
+    } catch (error) {
+      setErrorDoacoes(error.message || 'Erro.');
+    } finally {
+      setUpdatingStatusId(null);
+      setRejectModal({ open: false, doacaoId: null }); // Fecha o modal
+      setRejectionReason(''); // Limpa o state
+    }
+  }, [groupId, isMentorLike, rejectModal.doacaoId, rejectionReason]);
+
+  // Função para ABRIR o modal de rejeição
+  const openRejectModal = (doacaoId) => {
+    setRejectModal({ open: true, doacaoId: doacaoId });
+    setRejectionReason(''); // Limpa o motivo anterior
   };
 
-  /* ---------------- Lógica de Anexos (Local) ---------------- */
-  const hiddenFileRef = useRef(null); //
-  const [uploadTargetId, setUploadTargetId] = useState(null); //
-  const openUploadFor = (doacaoId) => {
-    setUploadTargetId(doacaoId);
-    hiddenFileRef.current?.click();
-  }; //
-  const addAttachmentsToLocalDoacao = async (doacaoId, filesList) => {
-    //
-    const files = Array.from(filesList || []);
-    if (!files.length) return;
-    const newAtts = [];
-    for (const f of files) {
-      let dU;
-      if (f.type?.startsWith("image/")) {
-        try {
-          dU = await fileToCompressedDataURL(f);
-        } catch {}
-      }
-      newAtts.push({
-        id: Date.now() + Math.random(),
-        name: f.name,
-        type: f.type,
-        size: f.size,
-        dataUrl: dU,
-        status: "local",
+  const removerDoacao = useCallback(async (doacaoId) => {
+    const d = doacoes.find(x => x.ID_doacao === doacaoId);
+    if (d && d.status_doacao !== 'pendente') {
+      alert('Apenas pendentes podem ser excluídas.');
+      return;
+    }
+    if (!window.confirm(`Excluir doação ID ${doacaoId}?`)) return;
+    setErrorDoacoes('');
+    try {
+      const r = await fetch(`${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}`, {
+        method: 'DELETE',
+        credentials: 'include'
       });
-    } //
-    setDoacoes((prev) =>
-      prev.map((d) =>
-        d.ID_doacao === doacaoId
-          ? { ...d, attachments: [...(d.attachments || []), ...newAtts] }
-          : d
-      )
-    ); //
-    alert("Anexos locais adicionados. Upload não implementado."); //
-    // TODO: Implementar upload real
+      if (!r.ok) {
+        let eM = `Falha (${r.status})`;
+        try { const eD = await r.json(); eM = eD.error || eM; } catch {}
+        throw new Error(eM);
+      }
+      setDoacoes(prev => prev.filter(x => x.ID_doacao !== doacaoId));
+    } catch (error) {
+      setErrorDoacoes(error.message || 'Erro.');
+    }
+  }, [groupId, doacoes]);
+
+  /* ========= Anexos locais ========= */
+  const fileToDataUrl = (file) => new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result));
+    fr.onerror = rej;
+    fr.readAsDataURL(file);
+  });
+  const addDraftAttachments = async (fileList) => {
+    const fs = Array.from(fileList ?? []);
+    if (!fs.length) return;
+    const n = [];
+    for (const f of fs) {
+      let dataUrl;
+      if (f.type?.startsWith('image/')) {
+        try { dataUrl = await fileToDataUrl(f); } catch {}
+      }
+      n.push({ id: Date.now() + Math.random(), name: f.name, type: f.type, size: f.size, dataUrl, status: 'local' });
+    }
+    setDraftAttachments(p => [...p, ...n]);
   };
+  const openUploadFor = (doacaoId) => { setUploadTargetId(doacaoId); hiddenFileRef.current?.click(); };
   const onInputChange = async (e) => {
     const f = e.target.files;
-    const t = uploadTargetId;
-    e.target.value = "";
-    if (!t) return;
-    await addAttachmentsToLocalDoacao(t, f);
+    e.target.value = '';
+    if (!uploadTargetId) return;
+    const fs = Array.from(f ?? []);
+    const newAtts = [];
+    for (const file of fs) {
+      let dataUrl;
+      if (file.type?.startsWith('image/')) {
+        try { dataUrl = await fileToDataUrl(file); } catch {}
+      }
+      newAtts.push({ id: Date.now() + Math.random(), name: file.name, type: file.type, size: file.size, dataUrl, status: 'local' });
+    }
+    setDoacoes(prev => prev.map(d => d.ID_doacao === uploadTargetId ? { ...d, attachments: [...(d.attachments ?? []), ...newAtts] } : d));
     setUploadTargetId(null);
-  }; //
-  const [isDragging, setIsDragging] = useState(false); //
-  const onDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
   };
-  const onDragLeave = () => {
-    setIsDragging(false);
-  };
-  const onDrop = async (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (!doacoesFiltradas.length) return;
-    const t = uploadTargetId ?? doacoesFiltradas[0]?.ID_doacao;
-    if (!t) return;
-    await addAttachmentsToLocalDoacao(t, e.dataTransfer.files);
-    setUploadTargetId(null);
-  }; //
+
+  /* ========= Galeria ========= */
   const galleryItems = useMemo(() => {
     const i = [];
-    doacoes.forEach((d) =>
-      (d.attachments || [])
-        .filter((a) => a.type?.startsWith("image/") && a.dataUrl)
-        .forEach((a) =>
-          i.push({
-            ...a,
-            doacaoId: d.ID_doacao,
-            doacaoDescricao: d.descricao || `Doação ${d.ID_doacao}`,
-            createdAt: new Date(d.doacao_data_registro || 0),
-          })
-        )
+    doacoes.forEach(d =>
+      (d.attachments ?? [])
+        .filter(a => a.type?.startsWith('image/') && a.dataUrl)
+        .forEach(a => i.push({
+          ...a,
+          doacaoId: d.ID_doacao,
+          doacaoDescricao: d.descricao ?? `Doação ${d.ID_doacao}`,
+          createdAt: new Date(d.doacao_data_registro ?? 0),
+        }))
     );
     return i.sort((x, y) => y.createdAt - x.createdAt);
-  }, [doacoes]); //
-  const setAttachmentCaption = (dId, aId, cap) => {
-    setDoacoes((p) =>
-      p.map((d) =>
-        d.ID_doacao !== dId
-          ? d
-          : {
-              ...d,
-              attachments: (d.attachments || []).map((a) =>
-                a.id === aId ? { ...a, caption: cap } : a
-              ),
-            }
-      )
-    ); /* TODO: API PUT */
-  }; //
-  const removeAttachment = (dId, aId) => {
-    setDoacoes((p) =>
-      p.map((d) =>
-        d.ID_doacao === dId
-          ? {
-              ...d,
-              attachments: (d.attachments || []).filter((a) => a.id !== aId),
-            }
-          : d
-      )
-    );
-    alert(
-      "Removido local. Delete API não implementado."
-    ); /* TODO: API DELETE */
-  }; //
-  const [lbOpen, setLbOpen] = useState(false);
-  const [lbIndex, setLbIndex] = useState(0);
-  const openLB = (i) => {
-    setLbIndex(i);
-    setLbOpen(true);
-  };
-  const closeLB = () => {
-    setLbOpen(false);
-  };
-  const prevLB = () => {
-    setLbIndex((i) => (i - 1 + galleryItems.length) % galleryItems.length);
-  };
-  const nextLB = () => {
-    setLbIndex((i) => (i + 1) % galleryItems.length);
-  };
+  }, [doacoes]);
+  const openLB = (idx) => { setLbIndex(idx); setLbOpen(true); };
+  const closeLB = () => setLbOpen(false);
+  const prevLB = () => setLbIndex(i => (i - 1 + galleryItems.length) % galleryItems.length);
+  const nextLB = () => setLbIndex(i => (i + 1) % galleryItems.length);
   const removeFromLB = () => {
     const it = galleryItems[lbIndex];
     if (!it) return;
-    removeAttachment(it.doacaoId, it.id);
+    setDoacoes(p => p.map(d => d.ID_doacao === it.doacaoId
+      ? { ...d, attachments: (d.attachments ?? []).filter(a => a.id !== it.id) }
+      : d
+    ));
     if (galleryItems.length <= 1) setLbOpen(false);
-    else setLbIndex((i) => Math.max(0, i - 1));
-  }; //
-  const addDraftAttachments = async (fL) => {
-    const f = Array.from(fL || []);
-    if (!f.length) return;
-    const nA = [];
-    for (const file of f) {
-      let dU;
-      if (file.type?.startsWith("image/")) {
-        try {
-          dU = await fileToCompressedDataURL(file);
-        } catch {}
-      }
-      nA.push({
-        id: Date.now() + Math.random(),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        dataUrl: dU,
-        status: "local",
-      });
-    }
-    setDraftAttachments((p) => [...p, ...nA]);
-  }; //
+    else setLbIndex(i => Math.max(0, i - 1));
+  };
 
-  /* ---------------- Aprovar/Rejeitar Doação ---------------- */
-  const [updatingStatusId, setUpdatingStatusId] = useState(null);
-
-  const handleApprove = useCallback(
-    async (doacaoId) => {
-      //
-      setUpdatingStatusId(doacaoId);
-      setErrorDoacoes("");
-      try {
-        const response = await fetch(
-          `${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}/aprovar`,
-          {
-            credentials: "include",
-            method: "PUT",
-            headers: { "Content-Type": "application/json" /* Auth? */ },
-          }
-        ); //
-        if (!response.ok) {
-          let eM = `Falha(${response.status})`;
-          try {
-            const eD = await response.json();
-            eM = eD.error || eM;
-          } catch {}
-          throw new Error(eM);
-        } //
-        const doacaoAtualizada = await response.json(); //
-        setDoacoes((prev) =>
-          prev.map((d) => (d.ID_doacao === doacaoId ? doacaoAtualizada : d))
-        ); //
-      } catch (error) {
-        console.error("Erro:", error);
-        setErrorDoacoes(error.message || "Erro.");
-      } finally {
-        //
-        setUpdatingStatusId(null);
-      } //
-    },
-    [groupId]
-  );
-
-  const handleReject = useCallback(
-    async (doacaoId) => {
-      //
-      const observacao = prompt("Motivo da rejeição (opcional):"); //
-      setUpdatingStatusId(doacaoId);
-      setErrorDoacoes("");
-      try {
-        const response = await fetch(
-          `${API_BASE}/grupos/${groupId}/doacoes/${doacaoId}/rejeitar`,
-          {
-            credentials: "include",
-            method: "PUT",
-            headers: { "Content-Type": "application/json" /* Auth? */ },
-            body: JSON.stringify({ observacao: observacao ?? null }),
-          }
-        ); //
-        if (!response.ok) {
-          let eM = `Falha(${response.status})`;
-          try {
-            const eD = await response.json();
-            eM = eD.error || eM;
-          } catch {}
-          throw new Error(eM);
-        } //
-        const doacaoAtualizada = await response.json(); //
-        setDoacoes((prev) =>
-          prev.map((d) => (d.ID_doacao === doacaoId ? doacaoAtualizada : d))
-        ); //
-      } catch (error) {
-        console.error("Erro:", error);
-        setErrorDoacoes(error.message || "Erro.");
-      } finally {
-        //
-        setUpdatingStatusId(null);
-      } //
-    },
-    [groupId]
-  );
-
-  /* ---------------- Guardas ---------------- */
-  if (loadingGrupo) {
-    return (
-      <div className="ativ-page">
-        <p>Carregando...</p>
-      </div>
-    );
-  } //
+  /* ========= Render ========= */
+  if (loadingGrupo) return <div className="ativ-page">Carregando...</div>;
   if (!grupo) {
     return (
       <div className="ativ-page">
-        <div className="ativ-header">
-          <button className="btn btn-secondary" onClick={() => navigate(-1)}>
-            ← Voltar
-          </button>
-          <h1>Registro</h1>
-        </div>
-        <p className="message error">Grupo ID {groupId} não encontrado.</p>
+        <button className="btn btn-secondary" onClick={() => navigate(-1)}>← Voltar</button>
+        <h2>Grupo não encontrado</h2>
       </div>
     );
-  } //
+  }
 
-  /* ---------------- RENDER ---------------- */
   return (
-    //
     <div className="ativ-page">
+      {/* Header */}
       <div className="ativ-header">
-        {" "}
-        {/* */}
         <div className="left">
-          <button className="btn btn-secondary" onClick={() => navigate(-1)}>
-            ← Voltar
-          </button>
-          <h1 className="page-title">{grupo.nome}</h1>
-        </div>{" "}
-        {/* */}
-        <div className="right">
+          <button className="btn btn-secondary" onClick={() => navigate(-1)}>← Voltar</button>
+          <h2 className="page-title">{grupo.nome}</h2>
           {grupo.mentor && (
-            <div className="mentor-badge">
+            <span className="mentor-badge" title={`Mentor: ${grupo.mentor}`}>
               {grupo.mentorFotoUrl ? (
-                <img className="avatar small" src={grupo.mentorFotoUrl} />
+                <img className="avatar small" src={grupo.mentorFotoUrl} alt="Mentor" />
               ) : (
-                <span className="avatar small avatar-initials">
-                  {getInitials(grupo.mentor)}
-                </span>
+                <span className="avatar small avatar-initials">{initials(grupo.mentor)}</span>
               )}
-              <span className="mentor-name">{grupo.mentor}</span>
-            </div>
+              <span>{grupo.mentor}</span>
+            </span>
           )}
-        </div>{" "}
-        {/* */}
+        </div>
+        <div className="right">
+          <button className="btn btn-primary" onClick={() => setOpenNew(true)}>+ Registrar Doação</button>
+        </div>
       </div>
+
+      {/* KPIs do grupo */}
       <div className="ativ-kpis-card">
-        {" "}
-        {/* */}
         <div className="kpis">
           <div className="kpi">
-            <span>Meta</span>
-            <span>{currency(grupo.metaArrecadacao)}</span>
+            <span className="label">Arrecadado (R$) Aprovado</span>
+            <span className="value">{currency(kpis.totalFinanceiro)}</span>
           </div>
           <div className="kpi">
-            <span>Arrecadado</span>
-            <span>{currency(grupo.progressoArrecadacao)}</span>
+            <span className="label">Itens aprovados</span>
+            <span className="value">{kpis.totalItens.toLocaleString('pt-BR')}</span>
           </div>
-          {grupo.metaAlimentos && (
-            <div className="kpi">
-              <span>Meta Alim.</span>
-              <span>{grupo.metaAlimentos}</span>
-            </div>
-          )}
-        </div>{" "}
-        {/* */}
-        <div className="progress-bar">
+          <div className="kpi">
+            <span className="label">Pendentes</span>
+            <span className="value">{kpis.pendentes}</span>
+          </div>
+        </div>
+        {/* Progresso financeiro x meta do grupo */}
+        <div className="progress-bar" title="Progresso financeiro x meta do grupo">
           <div
             className="progress"
             style={{
-              width: `${Math.min(
-                ((grupo.progressoArrecadacao || 0) /
-                  (grupo.metaArrecadacao || 1)) *
-                  100,
-                100
-              )}%`,
+              width: `${
+                Math.min(
+                  (Number(grupo.progressoArrecadacao ?? 0) /
+                    Math.max(Number(grupo.metaArrecadacao ?? 1), 1)) *
+                    100,
+                  100
+                )
+              }%`,
             }}
           />
-        </div>{" "}
-        {/* */}
+        </div>
       </div>
-      <div
-        className={`ativ-grid ${isDragging ? "dragging" : ""}`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-      >
-        {" "}
-        {/* */}
-        <section className="ativ-col">
-          {" "}
-          {/* */}
+
+      {/* Grid: lista + galeria */}
+      <div className="ativ-grid">
+        {/* COL ESQUERDA */}
+        <div className="ativ-col">
+          {/* Toolbar */}
           <div className="toolbar">
-            {" "}
-            {/* */}
             <div className="search">
               <input
-                type="search"
+                className="input"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar..."
+                placeholder="Buscar por descrição, doador, item, usuário..."
                 aria-label="Buscar"
               />
-            </div>{" "}
-            {/* */}
+            </div>
             <div className="filters">
-              <select
-                value={statusFiltro}
-                onChange={(e) => setStatusFiltro(e.target.value)}
-              >
+              <select value={statusFiltro} onChange={(e) => setStatusFiltro(e.target.value)} aria-label="Filtrar por status">
                 <option value="todas">Todas</option>
                 <option value="pendente">Pendentes</option>
                 <option value="aprovada">Aprovadas</option>
                 <option value="rejeitada">Rejeitadas</option>
+              </select>
+              <select value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)} aria-label="Filtrar por tipo">
+                <option value="todos">Todos os tipos</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="item">Item</option>
               </select>
               <label className="chk">
                 <input
@@ -802,444 +513,412 @@ export default function DoacaoGrupo() {
                   checked={onlyWithImages}
                   onChange={(e) => setOnlyWithImages(e.target.checked)}
                 />
-                <span>Imagens</span>
+                Imagens
               </label>
-              <select value={order} onChange={(e) => setOrder(e.target.value)}>
+              <select value={order} onChange={(e) => setOrder(e.target.value)} aria-label="Ordenar">
                 <option value="recentes">Recentes</option>
                 <option value="antigos">Antigos</option>
+                <option value="valor">Maior valor (R$)</option>
                 <option value="a_z">A–Z</option>
               </select>
-            </div>{" "}
-            {/* */}
+            </div>
             <div className="actions">
-              <button
-                className="btn btn-primary"
-                onClick={() => setOpenNew(true)}
-              >
-                + Registrar
-              </button>
-            </div>{" "}
-            {/* */}
+              <button className="btn btn-secondary" onClick={loadDoacoes}>Atualizar</button>
+            </div>
           </div>
-          <div className={`drop-hint ${isDragging ? "show" : ""}`}>
-            Solte aqui (upload não implementado).
-          </div>{" "}
-          {/* */}
-          {loadingDoacoes && (
+
+          {/* Estados */}
+          {loadingDoacoes && <p>Carregando...</p>}
+          {errorDoacoes && <p className="message error" role="alert">{errorDoacoes}</p>}
+          {!loadingDoacoes && !errorDoacoes && doacoesFiltradas.length === 0 && (
             <div className="empty">
-              <p>Carregando...</p>
-            </div>
-          )}{" "}
-          {/* */}
-          {errorDoacoes && (
-            <div className="empty message error">
-              <p>{errorDoacoes}</p>
-            </div>
-          )}{" "}
-          {/* */}
-          {!loadingDoacoes &&
-            !errorDoacoes &&
-            doacoesFiltradas.length === 0 && (
-              <div className="empty">
-                <p>Nenhuma doação encontrada.</p>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setOpenNew(true)}
-                >
-                  Registrar
-                </button>
+              Nenhuma doação encontrada.
+              <div style={{ marginTop: 8 }}>
+                <button className="btn btn-primary" onClick={() => setOpenNew(true)}>Registrar</button>
               </div>
-            )}{" "}
-          {/* */}
+            </div>
+          )}
+
+          {/* Lista */}
           {!loadingDoacoes && !errorDoacoes && doacoesFiltradas.length > 0 && (
             <div className="ativ-list">
               {doacoesFiltradas.map((d) => (
-                <article
-                  key={d.ID_doacao}
-                  className={`card status-${d.status_doacao}`}
-                >
-                  {" "}
-                  {/* */}
-                  <header className="card-head">
-                    {" "}
-                    {/* */}
+                <div key={d.ID_doacao} className={`card ${d.status_doacao}`}>
+                  <div className="card-head">
                     <div className="left">
                       <div className="title">
-                        <h3>{formatDoacaoValorItem(d)}</h3>
+                        <h3>{formatDoacaoPrimaria(d)}</h3>
                         {d.descricao && <p className="muted">{d.descricao}</p>}
                         <p className="muted">
-                          Doador: <strong>{d.doador_nome || "Anônimo"}</strong>
-                        </p>
-                        <p className="muted">
-                          <span className={`badge status-${d.status_doacao}`}>
-                            {d.status_doacao.toUpperCase()}
-                          </span>{" "}
-                          · {formatDateTime(d.doacao_data_registro)}
-                          {d.nome_usuario_registro &&
-                            ` por ${d.nome_usuario_registro}`}
+                          Doador: {d.doador_nome ?? 'Anônimo'} ·{' '}
+                          <span className={`badge ${d.status_doacao}`}>{d.status_doacao}</span>{' '}
+                          · {dateTimeBR(d.doacao_data_registro)}
+                          {d.nome_usuario_registro ? ` · por ${d.nome_usuario_registro}` : ''}
                         </p>
                       </div>
-                    </div>{" "}
-                    {/* */}
-                    <div className="right card-actions">
-                      {" "}
-                      {/* */}
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => openUploadFor(d.ID_doacao)}
-                      >
-                        Anexar
-                      </button>{" "}
-                      {/* */}
-                      {isMentorLike && d.status_doacao === "pendente" && (
+                    </div>
+                    <div className="right" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button className="btn btn-secondary" onClick={() => openUploadFor(d.ID_doacao)}>Anexar</button>
+
+                      {/* Mentor/Admin: pode aprovar/rejeitar quando pendente */}
+                      {isMentorLike && d.status_doacao === 'pendente' && (
                         <>
-                          {" "}
-                          {/* */}
                           <button
-                            className="btn btn-success btn-sm"
+                            className="btn btn-primary"
                             onClick={() => handleApprove(d.ID_doacao)}
                             disabled={updatingStatusId === d.ID_doacao}
                           >
-                            {updatingStatusId === d.ID_doacao
-                              ? "..."
-                              : "Aprovar"}
-                          </button>{" "}
-                          {/* */}
+                            {updatingStatusId === d.ID_doacao ? '...' : 'Aprovar'}
+                          </button>
+                          {/* onClick chama o ABRIDOR DE MODAL */}
                           <button
-                            className="btn btn-warning btn-sm"
-                            onClick={() => handleReject(d.ID_doacao)}
+                            className="btn btn-danger"
+                            onClick={() => openRejectModal(d.ID_doacao)}
                             disabled={updatingStatusId === d.ID_doacao}
                           >
-                            {updatingStatusId === d.ID_doacao
-                              ? "..."
-                              : "Rejeitar"}
-                          </button>{" "}
-                          {/* */}
+                            {updatingStatusId === d.ID_doacao ? '...' : 'Rejeitar'}
+                          </button>
                         </>
                       )}
-                      {d.status_doacao === "pendente" &&
-                        (isStudent || isMentorLike) && (
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => removerDoacao(d.ID_doacao)}
-                            disabled={updatingStatusId === d.ID_doacao}
-                          >
-                            Excluir
-                          </button>
-                        )}{" "}
-                      {/* */}
+
+                      {/* Aluno: exibe chip quando pendente */}
+                      {isAluno && d.status_doacao === 'pendente' && (
+                        <span className="chip chip-warn" title="Somente mentor/admin podem aprovar">
+                          Aguardando aprovação do mentor
+                        </span>
+                      )}
+
+                      {/* Excluir (mantida regra do front: só pendente) */}
+                      {d.status_doacao === 'pendente' && (
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => removerDoacao(d.ID_doacao)}
+                          disabled={updatingStatusId === d.ID_doacao}
+                        >
+                          Excluir
+                        </button>
+                      )}
                     </div>
-                  </header>
-                  {(d.attachments || []).length > 0 && (
-                    <>{/* ...anexos... */}</>
-                  )}{" "}
-                  {/* */}
-                </article>
+                  </div>
+                  
+                  {/* Bloco de exibição do motivo (agora com fallback) */}
+                  {d.status_doacao === 'rejeitada' && (
+                    <div className="rejection-reason">
+                      <strong>Motivo da Rejeição:</strong> {d.observacao || <em>Nenhum motivo informado.</em>}
+                    </div>
+                  )}
+
+                  {/* Thumbs/anexos */}
+                  {(d.attachments ?? []).length > 0 && (
+                    <div className="thumbs">
+                      {d.attachments
+                        .filter(a => a.type?.startsWith('image/') && a.dataUrl)
+                        .map((a, idx) => {
+                          const globalIdx = galleryItems.findIndex(g => g.id === a.id);
+                          return (
+                            <div className="thumb" key={a.id}>
+                              <img
+                                src={a.dataUrl}
+                                alt={a.name}
+                                onClick={() => globalIdx >= 0 && openLB(globalIdx)}
+                              />
+                              <div className="thumb-actions">
+                                <input
+                                  className="input"
+                                  placeholder="Legenda (local)"
+                                  defaultValue={a.caption ?? ''}
+                                  onBlur={(e) => {
+                                    const cap = e.target.value;
+                                    setDoacoes(prev => prev.map(x =>
+                                      x.ID_doacao === d.ID_doacao
+                                        ? { ...x, attachments: (x.attachments ?? []).map(att => att.id === a.id ? { ...att, caption: cap } : att) }
+                                        : x
+                                    ));
+                                  }}
+                                />
+                                <button
+                                  className="btn-ghost"
+                                  title="Remover anexo (local)"
+                                  onClick={() => {
+                                    setDoacoes(prev => prev.map(x =>
+                                      x.ID_doacao === d.ID_doacao
+                                        ? { ...x, attachments: (x.attachments ?? []).filter(att => att.id !== a.id) }
+                                        : x
+                                    ));
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
-        </section>
-        <aside className="galeria-col">
-          {" "}
-          {/* */}
+
+          {/* Input oculto para anexos em doações existentes */}
+          <input
+            ref={hiddenFileRef}
+            type="file"
+            accept="application/pdf,image/png,image/jpeg,image/jpg"
+            multiple
+            style={{ display: 'none' }}
+            onChange={onInputChange}
+          />
+        </div>
+
+        {/* COL DIREITA — Galeria */}
+        <div className="galeria-col">
           <div className="galeria-head">
-            <h2>Galeria</h2>
+            <h3>Galeria</h3>
             <span className="muted">{galleryItems.length}</span>
           </div>
           {galleryItems.length === 0 ? (
-            <div className="empty">
-              <p>Sem imagens.</p>
-            </div>
+            <div className="empty">Sem imagens.</div>
           ) : (
             <div className="galeria-grid">
               {galleryItems.map((img, idx) => (
-                <figure
-                  key={img.id}
-                  className="gal-item"
-                  onClick={() => openLB(idx)}
-                >
-                  <img src={img.dataUrl} />
+                <figure className="gal-item" key={img.id} onClick={() => openLB(idx)}>
+                  <img src={img.dataUrl} alt={img.name} />
                   <figcaption>
-                    <span className="cap">{img.caption || ""}</span>
+                    <span className="cap">{img.caption ?? img.name}</span>
                     <span className="tag">{img.doacaoDescricao}</span>
                   </figcaption>
                 </figure>
               ))}
             </div>
           )}
-        </aside>
+        </div>
       </div>
-      <input
-        ref={hiddenFileRef}
-        type="file"
-        accept={ACCEPT_ATTACH}
-        multiple
-        hidden
-        onChange={onInputChange}
-      />{" "}
-      {/* */}
+
+      {/* Lightbox */}
+      {lbOpen && galleryItems[lbIndex] && (
+        <div className="lb-overlay" onClick={closeLB}>
+          <div className="lb" onClick={(e) => e.stopPropagation()}>
+            <img src={galleryItems[lbIndex].dataUrl} alt={galleryItems[lbIndex].name} />
+            <div className="lb-actions">
+              <button className="btn btn-secondary" onClick={prevLB}>‹</button>
+              <button className="btn btn-secondary" onClick={nextLB}>›</button>
+              <button className="btn btn-danger" onClick={removeFromLB}>Remover</button>
+              <button className="btn btn-ghost" onClick={closeLB}>Fechar</button>
+            </div>
+            <div className="lb-caption">{galleryItems[lbIndex].caption ?? galleryItems[lbIndex].name}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nova Doação */}
       {openNew && (
         <div className="modal-overlay" onClick={() => setOpenNew(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            {" "}
-            {/* */}
             <div className="modal-header">
               <h3>Registrar Doação</h3>
-              <button
-                className="btn btn-ghost"
-                onClick={() => setOpenNew(false)}
-              >
-                ✕
-              </button>
-            </div>{" "}
-            {/* */}
-            <form
-              id="formNovaDoacao"
-              className="modal-body"
-              onSubmit={registrarDoacao}
-            >
-              {" "}
-              {/* */}
-              <div className="segmented">
-                <span className="seg-label">Tipo*:</span>
-                <div
-                  className={`seg-buttons ${
-                    err.tipoDoacaoForm ? "input-error-border" : ""
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className={`seg ${
-                      tipoDoacaoForm === "dinheiro" ? "active" : ""
-                    }`}
-                    onClick={() => setTipoDoacaoForm("dinheiro")}
-                  >
-                    Dinheiro
-                  </button>
-                  <button
-                    type="button"
-                    className={`seg ${
-                      tipoDoacaoForm === "item" ? "active" : ""
-                    }`}
-                    onClick={() => setTipoDoacaoForm("item")}
-                  >
-                    Item
-                  </button>
+              <button className="btn btn-ghost" onClick={() => setOpenNew(false)}>✕</button>
+            </div>
+            <form className="modal-body" onSubmit={registrarDoacao}>
+              <label>
+                Tipo*
+                <div className="segmented" style={{ marginTop: 6 }}>
+                  <span className="seg-label">Selecione:</span>
+                  <div className="seg-buttons">
+                    <button type="button" className={`seg ${tipoDoacaoForm === 'dinheiro' ? 'active' : ''}`}
+                            onClick={() => setTipoDoacaoForm('dinheiro')}>Dinheiro</button>
+                    <button type="button" className={`seg ${tipoDoacaoForm === 'item' ? 'active' : ''}`}
+                            onClick={() => setTipoDoacaoForm('item')}>Item</button>
+                  </div>
                 </div>
-                {err.tipoDoacaoForm && (
-                  <span className="error-text">{err.tipoDoacaoForm}</span>
-                )}
-              </div>{" "}
-              {/* */}
+                {err.tipoDoacaoForm && <span className="error-text">{err.tipoDoacaoForm}</span>}
+              </label>
+
               {tipoDoacaoForm && (
                 <>
-                  {" "}
-                  {/* */}
                   <label>
                     Doador:
-                    <input
-                      type="text"
-                      className="input"
-                      value={form.doador_nome}
-                      onChange={(e) =>
-                        setForm((s) => ({ ...s, doador_nome: e.target.value }))
-                      }
-                    />
-                  </label>{" "}
-                  {/* */}
-                  {tipoDoacaoForm === "dinheiro" && (
+                    <input className="input"
+                           value={form.doador_nome}
+                           onChange={(e) => setForm(s => ({ ...s, doador_nome: e.target.value }))}
+                           placeholder="Nome do doador (opcional)" />
+                  </label>
+
+                  {tipoDoacaoForm === 'dinheiro' && (
                     <label>
-                      Valor(R$)*:
+                      Valor (R$)*:
                       <input
+                        className={`input ${err.valor_doacao ? 'input-error' : ''}`}
                         type="number"
-                        min="0.01"
                         step="0.01"
-                        className={`input ${
-                          err.valor_doacao ? "input-error" : ""
-                        }`}
                         value={form.valor_doacao}
-                        onChange={(e) =>
-                          setForm((s) => ({
-                            ...s,
-                            valor_doacao: e.target.value,
-                          }))
-                        }
+                        //
+                        // 👇 [MUDANÇA 9] ESTA É A CORREÇÃO DO BUG DO DINHEIRO
+                        //
+                        onChange={(e) => setForm(s => ({ ...s, valor_doacao: e.target.value }))}
                       />
-                      {err.valor_doacao && (
-                        <span className="error-text">{err.valor_doacao}</span>
-                      )}
+                      {err.valor_doacao && <span className="error-text">{err.valor_doacao}</span>}
                     </label>
-                  )}{" "}
-                  {/* */}
-                  {tipoDoacaoForm === "item" && (
+                  )}
+
+                  {tipoDoacaoForm === 'item' && (
                     <>
-                      {" "}
-                      {/* */}
                       <label>
                         Item*:
                         <input
-                          type="text"
-                          className={`input ${
-                            err.item_doacao ? "input-error" : ""
-                          }`}
+                          className={`input ${err.item_doacao ? 'input-error' : ''}`}
                           value={form.item_doacao}
-                          onChange={(e) =>
-                            setForm((s) => ({
-                              ...s,
-                              item_doacao: e.target.value,
-                            }))
-                          }
+                          onChange={(e) => setForm(s => ({ ...s, item_doacao: e.target.value }))}
+                          placeholder="Ex.: Arroz"
                         />
-                        {err.item_doacao && (
-                          <span className="error-text">{err.item_doacao}</span>
-                        )}
+                        {err.item_doacao && <span className="error-text">{err.item_doacao}</span>}
                       </label>
                       <div className="grid-kg">
                         <label>
                           Qtd*:
                           <input
+                            className={`input ${err.quantidade ? 'input-error' : ''}`}
                             type="number"
-                            min="0"
-                            step="any"
-                            className={`input ${
-                              err.quantidade ? "input-error" : ""
-                            }`}
+                            step="1"
                             value={form.quantidade}
-                            onChange={(e) =>
-                              setForm((s) => ({
-                                ...s,
-                                quantidade: e.target.value,
-                              }))
-                            }
+                            onChange={(e) => setForm(s => ({ ...s, quantidade: e.target.value }))}
                           />
-                          {err.quantidade && (
-                            <span className="error-text">{err.quantidade}</span>
-                          )}
+                          {err.quantidade && <span className="error-text">{err.quantidade}</span>}
                         </label>
                         <label>
                           Unid.*:
                           <select
-                            className={`input ${
-                              err.unidade ? "input-error" : ""
-                            }`}
+                            className={`input ${err.unidade ? 'input-error' : ''}`}
                             value={form.unidade}
-                            onChange={(e) =>
-                              setForm((s) => ({
-                                ...s,
-                                unidade: e.target.value,
-                              }))
-                            }
+                            onChange={(e) => setForm(s => ({ ...s, unidade: e.target.value }))}
                           >
                             <option value="un">un</option>
                             <option value="kg">kg</option>
                             <option value="g">g</option>
                             <option value="L">L</option>
-                            <option value="mL">mL</option>
                             <option value="pacote">pacote</option>
+                            <option value="cx">cx</option>
                           </select>
-                          {err.unidade && (
-                            <span className="error-text">{err.unidade}</span>
-                          )}
+                          {err.unidade && <span className="error-text">{err.unidade}</span>}
                         </label>
-                      </div>{" "}
-                      {/* */}
+                      </div>
                     </>
                   )}
-                  <label>
-                    Descrição:
-                    <textarea
-                      className="input"
-                      rows={3}
-                      value={form.descricao}
-                      onChange={(e) =>
-                        setForm((s) => ({ ...s, descricao: e.target.value }))
-                      }
-                    />
-                  </label>{" "}
-                  {/* */}
-                  <div className="anexos-block">
-                    <div className="anexos-head">
-                      <span>Anexos</span>
-                      <div>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => draftAttachRef.current?.click()}
-                        >
-                          Add
-                        </button>
-                        <input
-                          ref={draftAttachRef}
-                          type="file"
-                          accept={ACCEPT_ATTACH}
-                          multiple
-                          hidden
-                          onChange={(e) => {
-                            const f = e.target.files;
-                            e.target.value = "";
-                            addDraftAttachments(f);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    {draftAttachments.length > 0 && (
-                      <div className="draft-attachments">
-                        {/* ...anexos... */}
-                      </div>
-                    )}
-                  </div>{" "}
-                  {/* */}
                 </>
               )}
-              {err._global && <p className="message error">{err._global}</p>}{" "}
-              {/* */}
+
+              <label>
+                Descrição:
+                <textarea
+                  className={`input ${err.descricao ? 'input-error' : ''}`}
+                  rows={3}
+                  value={form.descricao}
+                  onChange={(e) => setForm(s => ({ ...s, descricao: e.target.value }))}
+                  placeholder="Detalhes (opcional)"
+                />
+                {err.descricao && <span className="error-text">{err.descricao}</span>}
+              </label>
+
+              {/* Anexos (locais) */}
+              <div className="anexos-block">
+                <div className="anexos-head">
+                  <strong>Anexos</strong>
+                  <button type="button" className="btn btn-secondary" onClick={() => draftAttachRef.current?.click()}>
+                    Adicionar
+                  </button>
+                </div>
+                <input
+                  ref={draftAttachRef}
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg,image/jpg"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const f = e.target.files;
+                    e.target.value = '';
+                    addDraftAttachments(f);
+                  }}
+                />
+                {draftAttachments.length > 0 && (
+                  <div className="doc-list">
+                    {draftAttachments.map(a => (
+                      <div key={a.id} className="doc-chip">
+                        <span className="doc-icon">📎</span>
+                        <span className="doc-name" title={a.name}>{a.name}</span>
+                        <button
+                          className="doc-remove"
+                          onClick={() => setDraftAttachments(p => p.filter(x => x.id !== a.id))}
+                          title="Remover anexo"
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {err._global && <p className="message error" role="alert">{err._global}</p>}
             </form>
             <div className="modal-actions">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setOpenNew(false)}
-              >
-                Cancelar
+              <button className="btn btn-ghost" onClick={() => setOpenNew(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={registrarDoacao} disabled={registering}>
+                {registering ? '...' : 'Registrar'}
               </button>
-              <button
-                form="formNovaDoacao"
-                type="submit"
-                className="btn btn-primary"
-                disabled={!tipoDoacaoForm || registering}
-              >
-                {registering ? "..." : "Registrar"}
-              </button>
-            </div>{" "}
-            {/* */}
+            </div>
           </div>
         </div>
       )}
-      <Lightbox
-        open={lbOpen}
-        items={galleryItems}
-        index={lbIndex}
-        onClose={closeLB}
-        onPrev={prevLB}
-        onNext={nextLB}
-        onRemove={removeFromLB}
-        showRemove={isMentorLike || isStudent}
-      />{" "}
-      {/* */}
+
+      {/* JSX do NOVO MODAL de Rejeição */}
+      {rejectModal.open && (
+        <div className="modal-overlay" onClick={() => setRejectModal({ open: false, doacaoId: null })}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Rejeitar Doação</h3>
+              <button className="btn btn-ghost" onClick={() => setRejectModal({ open: false, doacaoId: null })}>✕</button>
+            </div>
+            <form className="modal-body" onSubmit={executeReject}>
+              <label>
+                Motivo da rejeição (será exibido ao aluno):
+                <textarea
+                  className="input"
+                  rows={4}
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Opcional. Ex: Comprovante ilegível, valor incorreto..."
+                  autoFocus
+                />
+              </label>
+            </form>
+            <div className="modal-actions">
+              <button className="btn btn-ghost" onClick={() => setRejectModal({ open: false, doacaoId: null })}>Cancelar</button>
+              <button
+                className="btn btn-danger"
+                onClick={executeReject}
+                disabled={updatingStatusId === rejectModal.doacaoId}
+              >
+                {updatingStatusId === rejectModal.doacaoId ? 'Rejeitando...' : 'Confirmar Rejeição'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
-        .card-actions .btn-sm { padding: 4px 8px; font-size: 0.8rem; }
-        .btn-success { background-color: #28a745; color: white; border-color: #28a745; }
-        .btn-success:hover { background-color: #218838; border-color: #1e7e34; }
-        .btn-warning { background-color: #ffc107; color: #212529; border-color: #ffc107; }
-        .btn-warning:hover { background-color: #e0a800; border-color: #d39e00; }
-        .card.status-pendente { border-left: 4px solid #ffc107; }
-        .card.status-aprovada { border-left: 4px solid #28a745; opacity: 0.9; }
-        .card.status-rejeitada { border-left: 4px solid #dc3545; opacity: 0.7; }
-        .badge.status-pendente { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
-        .badge.status-aprovada { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .badge.status-rejeitada { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-      `}</style>{" "}
-      {/* */}
+        .rejection-reason {
+          font-size: 0.9em;
+          color: #ae2a2a; /* Cor de perigo/rejeição */
+          background-color: #fff5f5;
+          border: 1px solid #f6caca;
+          padding: 8px 12px;
+          border-radius: 6px;
+          margin-top: 10px;
+        }
+        .rejection-reason strong {
+          color: #8c2323;
+        }
+      `}</style>
     </div>
   );
 }
