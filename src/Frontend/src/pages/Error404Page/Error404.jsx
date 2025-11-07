@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import './Error404.css';
 
 // use sua imagem local; se quiser, receba via prop: /...
-import defaultImage from '../../assets/error404.gif';
+import defaultImage from '../../assets/Error404.gif';
 
 export default function Error404({ imageSrc, showHomeButton = true }) {
   const img = imageSrc || defaultImage;
