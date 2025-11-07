@@ -9,7 +9,7 @@ const PUBLIC_URL_PREFIX = '/uploads/grupos';
 // *** NOVO ***
 // Lê a URL pública do backend a partir das variáveis de ambiente
 // Certifique-se de definir MYSQL_PUBLIC_URL no seu ficheiro .env
-const BACKEND_URL = (process.env.MYSQL_PUBLIC_URL || 'http://localhost:3000').replace(/\/$/, '');
+const BACKEND_URL = ('https://projeto-interdisciplinar-2.onrender.com' || 'http://localhost:3000').replace(/\/$/, '');
 
 
 /**
