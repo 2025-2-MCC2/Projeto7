@@ -31,10 +31,12 @@ export default function Header({ showCTA = true }) {
 
           {/* Direita: Login (ghost, discreto) */}
           <nav className="header__actions" aria-label="Ações principais">
-           <nav>
-          <button className="btn-pill" onClick={() => navigate('/login')}>
-            Login
-          </button>
+            <button
+              className="btn btn-pill btn--ghost"
+              onClick={() => navigate('/login')}
+            >
+              Login
+            </button>
           </nav>
         </div>
       </header>
