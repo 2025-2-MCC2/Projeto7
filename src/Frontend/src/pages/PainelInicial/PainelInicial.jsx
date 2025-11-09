@@ -217,7 +217,7 @@ export default function PainelInicial() {
   const removerGrupo = useCallback(async (id) => {
     setConfirmDeleteId(null);
     try {
-      const response = await fetch(`${API_BASE}/grupos/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${API_BASE}/grupos/${id}`, { method: 'DELETE', credentials: "include" });
       if (!response.ok) {
         let errorMsg = `Falha ao excluir grupo (${response.status})`;
         try {
