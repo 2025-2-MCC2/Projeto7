@@ -1,3 +1,4 @@
+// src/components/Dashboard.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, Sector,
@@ -6,13 +7,12 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 
-/* ========================= Helpers ========================= */
 
-// [MUDANÇA 1]: Adicionada a variável de ambiente da API
 const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
   "https://projeto-interdisciplinar-2.onrender.com/api";
 
+/* ========================= Helpers ========================= */
 const currency = (v) =>
   Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
     .format(Number(v ?? 0));
@@ -99,29 +99,19 @@ const ActiveShape = (props) => {
 };
 
 /* ========================= API (segue seu padrão) ========================= */
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
-  "https://projeto-interdisciplinar-2.onrender.com/api";
-  
-  // [MUDANÇA 2]: API_BASE e credentials adicionados
+const API = {
   async summary(groupId, status = 'aprovada') {
-    const r = await fetch(`${API_BASE}/dashboard/${groupId}/summary?status=${status}`, {
-      credentials: "include",
-    });
+    const r = await fetch(`/api/dashboard/${groupId}/summary?status=${status}`);
     if (!r.ok) throw new Error("Falha ao carregar summary");
     return r.json();
   },
   async inventory(groupId, status = 'aprovada') {
-    const r = await fetch(`${API_BASE}/dashboard/${groupId}/inventory?status=${status}`, {
-      credentials: "include",
-    });
+    const r = await fetch(`/api/dashboard/${groupId}/inventory?status=${status}`);
     if (!r.ok) throw new Error("Falha ao carregar inventário");
     return r.json(); // [{nome, unidade, quantidade}]
   },
   async timeseries(groupId, range = "30d", tipo = 'todos', status = 'aprovada') {
-    const r = await fetch(`${API_BASE}/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`, {
-      credentials: "include",
-    });
+    const r = await fetch(`/api/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`);
     if (!r.ok) throw new Error("Falha ao carregar série temporal");
     return r.json(); // [{data, valor}]
   },
@@ -203,13 +193,9 @@ export default function Dashboard({ grupo }) {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  // SSE para atualizações em tempo real
+  // SSE para atualizações em tempo real (mantido e ampliado)
   useEffect(() => {
-    // [MUDANÇA 3]: API_BASE e withCredentials adicionados
-    const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
-      withCredentials: true
-    });
-    
+    const es = new EventSource(`/api/stream/grupos/${grupo.id}`);
     const handler = async () => {
       try {
         const [sum, inv, ts] = await Promise.all([
@@ -252,10 +238,7 @@ export default function Dashboard({ grupo }) {
     const rows = [["data", "valor"]];
     (series ?? []).forEach(r => rows.push([r.data, String(r.valor ?? 0).replace(".", ",")]));
     const csv = rows.map(r => r.join(";")).join("\n");
-    
-    // [MUDANÇA 4]: Adicionado "\ufeff" (BOM) para forçar o Excel a usar UTF-8
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `timeseries_${grupo.id}_${range}_${tipo}_${status}.csv`;
@@ -301,8 +284,7 @@ export default function Dashboard({ grupo }) {
           </div>
         </div>
         <div className="actions">
-          {/* [MUDANÇA 5]: Texto do botão alterado para ser mais claro */}
-          <button className="btn" onClick={exportCSV}>Exportar p/ Excel (CSV)</button>
+          <button className="btn" onClick={exportCSV}>Exportar CSV</button>
           <button className="btn" onClick={loadAll}>Atualizar</button>
         </div>
       </div>
