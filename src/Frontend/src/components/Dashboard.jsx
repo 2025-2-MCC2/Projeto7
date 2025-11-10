@@ -99,7 +99,10 @@ const ActiveShape = (props) => {
 };
 
 /* ========================= API (segue seu padrão) ========================= */
-const API = {
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://projeto-interdisciplinar-2.onrender.com/api";
+  
   // [MUDANÇA 2]: API_BASE e credentials adicionados
   async summary(groupId, status = 'aprovada') {
     const r = await fetch(`${API_BASE}/dashboard/${groupId}/summary?status=${status}`, {
