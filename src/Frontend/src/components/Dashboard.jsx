@@ -10,9 +10,6 @@ import { api, API_BASE } from "../../auth/api";
 
 /* ========================= Helpers ========================= */
 
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
-  "https://projeto-interdisciplinar-2.onrender.com/api";
 
 const currency = (v) =>
   Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
