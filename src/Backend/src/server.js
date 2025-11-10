@@ -1,4 +1,3 @@
-// src/Backend/src/server.js
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -7,7 +6,7 @@ import cookieParser from "cookie-parser";
 import path from "node:path";
 import { initDb } from "./DataBase/db.js";
 
-// Rotas principais
+// ===== Rotas =====
 import profileRoutes from "./Routes/profile.routes.js";
 import presenceRoutes from "./Routes/presence.routes.js";
 import dashboardRoutes from "./Routes/dashboard.routes.js";
@@ -16,75 +15,122 @@ import usuarioRoutes from "./Routes/user.routes.js";
 import sseRoutes from "./Routes/sse.routes.js";
 import mainRoutes from "./Routes/routes.js";
 import relatorioMensalRoutes from "./Routes/relatorioMensal.routes.js";
-
-// 🔒 Middleware de autenticação (seu middleware original)
 import { requireAuth } from "./middlewares/requireAuth.js";
 
+// =================================================================
+// 1. INICIALIZAÇÃO DO APP
+// =================================================================
 const app = express();
 
+// =================================================================
+// 2. CONSTANTES DE AMBIENTE
+// (Definir ANTES de usá-las)
+// =================================================================
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProd = NODE_ENV === 'production';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
-// Suporte a múltiplas origens (Vercel + localhost)
+console.log('--- Configuração do Servidor ---');
+console.log(`[ENV] Ambiente: ${NODE_ENV} (isProd: ${isProd})`);
+
+// =================================================================
+// 3. CONFIGURAÇÃO DE COOKIE
+// (Precisa de `isProd` definido acima)
+// =================================================================
+export const cookieBase = {
+  httpOnly: true,
+  secure: isProd, // (Produção: true) Requer HTTPS
+  sameSite: isProd ? 'none' : 'lax', // (Produção: 'none') Para cross-origin
+  path: '/',
+  // Lembrete: maxAge (duração) é definido no auth.controller.js
+};
+console.log(`[COOKIE] Config: Secure=${cookieBase.secure}, SameSite=${cookieBase.sameSite}`);
+
+// =================================================================
+// 4. MIDDLEWARES GLOBAIS
+// =================================================================
+
+// --- CORS ---
+// Suporte a múltiplas origens (ex: "url1.com,url2.com")
 const allowedOrigins = CORS_ORIGIN.split(",").map((o) =>
-  o.trim().replace(/\/$/, "")
-); // remove barra final, se tiver
+  o.trim().replace(/\/$/, "") // remove barra final
+);
+console.log(`[CORS] Liberado para: ${allowedOrigins.join(", ")}`);
 
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Permite !origin (ex: Postman) ou origens na lista
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`[CORS] Origem REJEITADA: ${origin}`);
         callback(new Error(`Origem ${origin} não permitida pelo CORS`));
       }
     },
-    credentials: true,
+    credentials: true, // Essencial para cookies
   })
 );
 
-// Segurança e middlewares básicos
-app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(express.json({ limit: "1mb" }));
+// --- Segurança e Parsers ---
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false, // Ajuste conforme necessário
+}));
 app.use(cookieParser());
+app.use(express.json({ limit: "2mb" }));
 
-// ===== Rotas públicas =====
-app.use("/api", authRoutes); // Login / Registro
-app.use("/api/usuario", usuarioRoutes); // Usuários
-app.use("/api/profile", profileRoutes); // Perfis
-app.use("/api", dashboardRoutes); // Painel
-app.use("/api", requireAuth, sseRoutes); // SSE (notificações)
+// =================================================================
+// 5. ROTAS
+// =================================================================
 
-// ===== Rotas protegidas =====
-// Tudo que requer autenticação vem abaixo
-app.use("/api/presence", requireAuth, presenceRoutes); // Presença protegida
-app.use("/api", requireAuth, mainRoutes); // Grupos / Doações / Metas / etc.
-app.use("/api", requireAuth, relatorioMensalRoutes);
-// ===== Health check =====
+// --- Rotas Públicas ---
+app.use("/api", authRoutes); // Login / Logout / Refresh
+app.use("/api/usuario", usuarioRoutes); // Criar usuário
 app.get(["/health", "/api/health"], (_req, res) => res.json({ ok: true }));
 
-// ===== Servir uploads estáticos =====
+// --- Rotas Protegidas (Requerem autenticação) ---
+// (O middleware requireAuth vai barrar se não houver cookie JWT válido)
+app.use("/api/profile", requireAuth, profileRoutes);
+app.use("/api/presence", requireAuth, presenceRoutes);
+app.use("/api/dashboard", requireAuth, dashboardRoutes);
+app.use("/api/sse", requireAuth, sseRoutes);
+app.use("/api/relatorio", requireAuth, relatorioMensalRoutes);
+app.use("/api", requireAuth, mainRoutes); // Rotas principais (grupos, etc.)
+
+// --- Servir uploads estáticos ---
 const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
 app.use(
   "/uploads",
   express.static(UPLOADS_DIR, {
-    maxAge: "7d",
+    maxAge: "7d", // Cache de 7 dias
     etag: true,
   })
 );
 
-// ===== Middleware global de erro =====
+// =================================================================
+// 6. HANDLER DE ERRO GLOBAL
+// =================================================================
 app.use((err, req, res, next) => {
-  console.error("❌ Erro interno:", err);
+  console.error("❌ Erro Interno (Global):", err);
   res
     .status(500)
     .json({ error: "Erro interno no servidor", detalhe: err?.message });
 });
 
-// ===== Inicializa o banco e inicia o servidor =====
-await initDb();
-
-app.listen(PORT, () => {
-  console.log(`✅ API ON em http://localhost:${PORT}`);
-  console.log(`   CORS liberado para: ${allowedOrigins.join(", ")}`);
-});
+// =================================================================
+// 7. INICIALIZAÇÃO
+// =================================================================
+(async () => {
+  try {
+    await initDb();
+    console.log('---');
+    app.listen(PORT, () => {
+      console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
+    });
+  } catch (dbError) {
+    console.error("❌ Falha ao inicializar o banco de dados:", dbError);
+    process.exit(1); // Falha em iniciar se o banco não conectar
+  }
+})();

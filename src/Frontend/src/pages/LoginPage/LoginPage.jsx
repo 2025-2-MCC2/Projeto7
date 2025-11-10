@@ -1,19 +1,16 @@
 // src/pages/LoginPage/LoginPage.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // 1. useNavigate ainda é usado
 import "./LoginPage.css";
-import axios from "axios";
+// import axios from "axios"; // 2. REMOVEMOS o axios global
+import { api } from "../../auth/api"; // 3. IMPORTAMOS a instância 'api'
+import { useAuth } from "../../auth/useAuth"; // 4. IMPORTAMOS o useAuth
 import { FaUser, FaLock, FaIdCard } from "react-icons/fa";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 /**
  * Segurança & Modo Teste:
- * - VITE_AUTH_STORAGE = 'cookie' | 'local'
- *   'cookie' (padrão): usa JWT em cookie httpOnly (mais seguro).
- *   'local'  (dev): marca "auth" no localStorage (evita depender de cookie em dev).
- * - VITE_ENABLE_LOCAL_TEST_LOGINS = 'true'|'false'
- *   Se 'true', em caso de erro no backend, usa credenciais locais:
- *     mentor@test.com/123456 | 12345/123456 | adm@test.com/admin123
+ // ... (comentários existentes) ...
  */
 const AUTH_STORAGE = import.meta.env.VITE_AUTH_STORAGE || "cookie";
 const ENABLE_LOCAL_TEST = (import.meta.env.VITE_ENABLE_LOCAL_TEST_LOGINS || "false") === "true";
@@ -29,9 +26,13 @@ export default function LoginPage() {
   const [usedLocalFallback, setUsedLocalFallback] = useState(false);
 
   const navigate = useNavigate();
-  const API = import.meta.env.VITE_API_URL || "/api";
+  // const API = import.meta.env.VITE_API_URL || ""; // REMOVIDO (api.js cuida disso)
 
-  axios.defaults.withCredentials = AUTH_STORAGE === "cookie";
+  // 5. PEGAMOS O setPerfil DO CONTEXTO GLOBAL
+  const { setPerfil } = useAuth();
+
+  // 6. Esta linha não é mais necessária aqui, está no api.js e App.jsx
+  // axios.defaults.withCredentials = AUTH_STORAGE === "cookie"; 
 
   // Carrega perfil/ultimoLogin para foto (visual) e conveniência
   useEffect(() => {
@@ -82,9 +83,9 @@ export default function LoginPage() {
     if (loginMethod === "email" && identifier === "adm@test.com" && password === "admin123") {
       if (AUTH_STORAGE === "local") localStorage.setItem("auth", "true");
       try { localStorage.removeItem("ultimoLogin"); } catch {}
-      upsertPerfil({ tipo: "adm", nome: "Administrador", email: identifier, ra: "", fotoUrl: "" });
+      const admProfile = upsertPerfil({ tipo: "adm", nome: "Administrador", email: identifier, ra: "", fotoUrl: "" });
       setUsedLocalFallback(true);
-      return { tipo: "adm" };
+      return { tipo: "adm", perfil: admProfile }; // Retorna o perfil
     }
 
     // Mentor
@@ -92,9 +93,9 @@ export default function LoginPage() {
       const u = { id: 1, tipo: "mentor", nome: "Mentor Teste", email: identifier, ra: "", fotoUrl: "" };
       if (AUTH_STORAGE === "local") localStorage.setItem("auth", "true");
       localStorage.setItem("ultimoLogin", JSON.stringify(u));
-      upsertPerfil({ tipo: u.tipo, nome: u.nome, email: u.email, ra: "", fotoUrl: u.fotoUrl });
+      const mentorProfile = upsertPerfil({ tipo: u.tipo, nome: u.nome, email: u.email, ra: "", fotoUrl: u.fotoUrl });
       setUsedLocalFallback(true);
-      return u;
+      return { tipo: "mentor", perfil: mentorProfile }; // Retorna o perfil
     }
 
     // Aluno
@@ -102,9 +103,9 @@ export default function LoginPage() {
       const u = { id: 2, tipo: "aluno", nome: "Aluno Teste", email: "", ra: identifier, fotoUrl: "" };
       if (AUTH_STORAGE === "local") localStorage.setItem("auth", "true");
       localStorage.setItem("ultimoLogin", JSON.stringify(u));
-      upsertPerfil({ tipo: u.tipo, nome: u.nome, email: "", ra: u.ra, fotoUrl: u.fotoUrl });
+      const alunoProfile = upsertPerfil({ tipo: u.tipo, nome: u.nome, email: "", ra: u.ra, fotoUrl: u.fotoUrl });
       setUsedLocalFallback(true);
-      return u;
+      return { tipo: "aluno", perfil: alunoProfile }; // Retorna o perfil
     }
 
     return null;
@@ -120,7 +121,8 @@ export default function LoginPage() {
     if (AUTH_STORAGE === "local") try { localStorage.removeItem("auth"); } catch {}
 
     try {
-      const resp = await axios.post(`${API}/auth/login`, {
+      // 7. Usamos a instância 'api' e a rota relativa
+      const resp = await api.post(`/auth/login`, {
         method: loginMethod,
         identifier,
         senha: password,
@@ -133,9 +135,13 @@ export default function LoginPage() {
       if (u.tipo === "adm") {
         if (AUTH_STORAGE === "local") localStorage.setItem("auth", "true");
         try { localStorage.removeItem("ultimoLogin"); } catch {}
-        upsertPerfil({ tipo: "adm", nome: u.nome || "Administrador", email: u.email || "", ra: "", fotoUrl: "" });
-        setMessage("✅ Login ADM realizado!");
-        setTimeout(() => navigate("/painel"), 350);
+        const admProfile = upsertPerfil({ tipo: "adm", nome: u.nome || "Administrador", email: u.email || "", ra: "", fotoUrl: "" });
+        
+        // 8. ATUALIZA O ESTADO GLOBAL *ANTES* DE NAVEGAR
+        setPerfil(admProfile);
+
+        // 9. NAVEGA IMEDIATAMENTE (sem setTimeout)
+        navigate("/painel");
         return;
       }
 
@@ -151,15 +157,20 @@ export default function LoginPage() {
       }));
       if (perfilNovo.fotoUrl && !photoUrl) setPhotoUrl(perfilNovo.fotoUrl);
 
-      setMessage("✅ Login realizado com sucesso!");
-      setTimeout(() => navigate("/painel"), 350);
+      // 10. ATUALIZA O ESTADO GLOBAL *ANTES* DE NAVEGAR
+      setPerfil(perfilNovo);
+
+      // 11. NAVEGA IMEDIATAMENTE (sem setTimeout)
+      navigate("/painel");
+
     } catch (err) {
       // Fallback local (modo teste)
       const test = tryLocalLogin();
-      if (test) {
-        const msg = test.tipo === "adm" ? "✅ Login ADM (teste local)" : "✅ Login (teste local)";
-        setMessage(msg);
-        setTimeout(() => navigate("/painel"), 300);
+      if (test && test.perfil) {
+        // 12. ATUALIZA O ESTADO GLOBAL (para o fallback)
+        setPerfil(test.perfil);
+        // 13. NAVEGA IMEDIATAMENTE (sem setTimeout)
+        navigate("/painel");
       } else {
         const msg = err?.response?.data?.error || "❌ Login ou senha incorretos!";
         setMessage(msg);
@@ -172,7 +183,7 @@ export default function LoginPage() {
   const labelIdentifier = loginMethod === "ra" ? "RA (Registro do Aluno)" : "Email do Mentor";
   const placeholderIdentifier = loginMethod === "ra" ? "Ex.: 12345" : "mentor@exemplo.com";
   const identifierType = loginMethod === "ra" ? "text" : "email";
-  const isSuccess = message.startsWith("✅");
+  const isSuccess = message.startsWith("✅"); // Agora só mostrará erros
 
   return (
     <div className="login-container">
@@ -262,7 +273,7 @@ export default function LoginPage() {
             
           </button>
 
-          {message && (
+          {message && ( // 14. O 'message' agora só exibirá ERROS
             <p
               className="login-message"
               style={{ color: isSuccess ? "#2e7d32" : "#e53935" }}
@@ -275,7 +286,7 @@ export default function LoginPage() {
         </form>
 
         <div className="login-links">
-          <Link to="/esqueci-senha">Esqueci minha senha</Link>
+          <Link to="#">Esqueci minha senha</Link>
           <Link to="/registrar">Criar conta</Link>
         </div>
       </div>

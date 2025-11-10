@@ -6,6 +6,7 @@ import {
   Route,
   Outlet,
 } from 'react-router-dom';
+import axios from 'axios'; 
 
 // Estilos globais do projeto (sem tokens.css)
 import './styles/styles.css';
@@ -32,6 +33,14 @@ import PerfilPage from './pages/Perfil/PerfilPage.jsx';
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
 import AtividadesGrupo from './pages/Grupos/DoacaoGrupo.jsx';
 import Configuracoes from './pages/Configuracoes/Configuracoes.jsx';
+import { api } from './auth/api.js';
+
+
+
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+
 
 /** Aplica o tema salvo no perfil ao iniciar o app */
 function ThemeBoot() {
