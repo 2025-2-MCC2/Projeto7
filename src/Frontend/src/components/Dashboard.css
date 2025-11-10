@@ -140,3 +140,50 @@
     .dash-card { padding: 1rem; }
     .chart-selector { flex-wrap: wrap; }
   }
+  /* ==== Toolbar do Dashboard ==== */
+.dash-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.dash-toolbar .filters {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+
+.dash-toolbar select {
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--card-bg, #fff);
+  color: var(--text, #333);
+  padding: 6px 10px; border-radius: 8px; font-weight: 600;
+}
+
+.dash-toolbar .actions { display: flex; gap: 8px; }
+
+.dash-toolbar .btn {
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--card-bg, #fff);
+  color: var(--text, #333);
+  padding: 8px 12px; border-radius: 8px;
+  cursor: pointer; font-weight: 700;
+  transition: background-color .2s, transform .2s, border-color .2s, color .2s, box-shadow .2s;
+}
+.dash-toolbar .btn:hover { transform: translateY(-1px); }
+ */
+/* Ajusta botão ativo via classe existente */
+.range-filter button.active {
+  border-color: var(--primary, #22c55e);
+  outline: 2px solid color-mix(in srgb, var(--primary, #22c55e) 22%, transparent);
+}
+
+/* Cartões já existem; só harmoniza pequenas coisas */
+.dash-card h3 { margin-top: 0; }
+
+@media (max-width: 820px) {
+  .dash-toolbar { gap: 10px; }
+  .dash-toolbar .filters { width: 100%; }
+  .dash-toolbar .actions { margin-left: auto; }
+}
