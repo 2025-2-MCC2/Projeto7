@@ -2,7 +2,7 @@
 /* Arquivo de tema mestre ATUALIZADO v2.
    - Tema claro usa cores de botão originais (verde estilo styles.css).
    - Tema escuro usa tons mais escuros derivados.
-   - Controla todo o app, exceto Home  */
+   - Controla todo o app  */
 
 /* ==================================
    1. TEMA CLARO (Light Mode - Padrão)
@@ -16,7 +16,7 @@
   --border: #b7e4c7;                 /* Borda clara (Original PainelInicial.css) */
   --input-bg: #ffffff;               /* Input branco */
 
-  /* --- Cores de Ação (Botões - ORIGINAIS do seu estilo preferido) --- */
+  /* --- Cores de Ação --- */
   --primary: #1b4332;                /* Botão primário (Verde Escuro - PainelInicial/Config) */
   --primary-hover: #2d6a4f;          /* Hover Verde Médio */
   --primary-text: #ffffff;
@@ -34,7 +34,7 @@
   --danger-text: #ffffff;
   --danger-outline-bg: rgba(217, 4, 41, 0.05);
 
-  /* Cores de Status (Badges, Bordas - Baseado no claro) */
+  /* Cores de Status (Badges, Bordas - Baseado no  tema claro) */
   --status-pending-bg: #fff3cd;
   --status-pending-text: #856404;
   --status-pending-border: #ffeeba;
@@ -95,7 +95,7 @@ html[data-theme="escuro"] {
 }
 
 /* ==================================
-   3. APLICAÇÃO GLOBAL (Exceto Home)
+   3. APLICAÇÃO GLOBAL 
    ================================== */
 body:not(.home-active) {
   background-color: var(--bg);
@@ -117,7 +117,7 @@ html, body, #root { min-height: 100%; }
 }
 
 /* ==================================
-   4. Estilos Utilitários (Opcional)
+   4. Estilos Utilitários 
    ================================== */
 .text-muted { color: var(--muted); }
 .text-danger { color: var(--danger); }
