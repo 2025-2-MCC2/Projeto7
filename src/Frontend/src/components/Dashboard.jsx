@@ -177,7 +177,7 @@ const API = {
   },
   // 5. ATUALIZADO: Adicionado 'status'
   async inventory(groupId) {
-    const r = await fetch(`${API_BASE}/dashboard/${groupId}/inventory` {
+    const r = await fetch(`${API_BASE}/dashboard/${groupId}/inventory`, {
       credentials: "include",
     });
     if (!r.ok) throw new Error("Falha ao carregar inventário");
