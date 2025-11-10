@@ -92,7 +92,7 @@ app.use(express.json({ limit: "2mb" }));
 // --- Rotas Públicas ---
 app.use("/api", authRoutes); // Login / Logout / Refresh
 app.use("/api/usuario", usuarioRoutes); // Criar usuário
-app.use("/api/sse", sseRoutes);
+app.use("/api", sseRoutes);
 app.use("/api", dashboardRoutes);
 app.get(["/health", "/api/health"], (_req, res) => res.json({ ok: true }));
 
