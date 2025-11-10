@@ -103,21 +103,21 @@ const API = {
   // [MUDANÇA 2]: API_BASE e credentials adicionados
   async summary(groupId, status = 'aprovada') {
     const r = await fetch(`${API_BASE}/dashboard/${groupId}/summary?status=${status}`, {
-      credentials: "include",
+      credentials: 'include',
     });
     if (!r.ok) throw new Error("Falha ao carregar summary");
     return r.json();
   },
   async inventory(groupId, status = 'aprovada') {
     const r = await fetch(`${API_BASE}/dashboard/${groupId}/inventory?status=${status}`, {
-      credentials: "include",
+      credentials: 'include',
     });
     if (!r.ok) throw new Error("Falha ao carregar inventário");
     return r.json(); // [{nome, unidade, quantidade}]
   },
   async timeseries(groupId, range = "30d", tipo = 'todos', status = 'aprovada') {
     const r = await fetch(`${API_BASE}/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`, {
-      credentials: "include",
+      credentials: 'include',
     });
     if (!r.ok) throw new Error("Falha ao carregar série temporal");
     return r.json(); // [{data, valor}]
