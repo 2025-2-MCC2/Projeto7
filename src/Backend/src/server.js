@@ -27,11 +27,11 @@ const app = express();
 // (Definir ANTES de usá-las)
 // =================================================================
 const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const isProd = NODE_ENV === 'production';
+const NODE_ENV = process.env.NODE_ENV || "development";
+const isProd = NODE_ENV === "production";
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
-console.log('--- Configuração do Servidor ---');
+console.log("--- Configuração do Servidor ---");
 console.log(`[ENV] Ambiente: ${NODE_ENV} (isProd: ${isProd})`);
 
 // =================================================================
@@ -41,11 +41,13 @@ console.log(`[ENV] Ambiente: ${NODE_ENV} (isProd: ${isProd})`);
 export const cookieBase = {
   httpOnly: true,
   secure: true, // (Produção: true) Requer HTTPS
-  sameSite: isProd ? 'none' : 'lax', // (Produção: 'none') Para cross-origin
-  path: '/',
+  sameSite: isProd ? "none" : "lax", // (Produção: 'none') Para cross-origin
+  path: "/",
   // Lembrete: maxAge (duração) é definido no auth.controller.js
 };
-console.log(`[COOKIE] Config: Secure=${cookieBase.secure}, SameSite=${cookieBase.sameSite}`);
+console.log(
+  `[COOKIE] Config: Secure=${cookieBase.secure}, SameSite=${cookieBase.sameSite}`
+);
 
 // =================================================================
 // 4. MIDDLEWARES GLOBAIS
@@ -53,8 +55,8 @@ console.log(`[COOKIE] Config: Secure=${cookieBase.secure}, SameSite=${cookieBase
 
 // --- CORS ---
 // Suporte a múltiplas origens (ex: "url1.com,url2.com")
-const allowedOrigins = CORS_ORIGIN.split(",").map((o) =>
-  o.trim().replace(/\/$/, "") // remove barra final
+const allowedOrigins = CORS_ORIGIN.split(",").map(
+  (o) => o.trim().replace(/\/$/, "") // remove barra final
 );
 console.log(`[CORS] Liberado para: ${allowedOrigins.join(", ")}`);
 
@@ -74,10 +76,12 @@ app.use(
 );
 
 // --- Segurança e Parsers ---
-app.use(helmet({
-  crossOriginResourcePolicy: false,
-  contentSecurityPolicy: false, // Ajuste conforme necessário
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false, // Ajuste conforme necessário
+  })
+);
 app.use(cookieParser());
 app.use(express.json({ limit: "2mb" }));
 
@@ -88,8 +92,8 @@ app.use(express.json({ limit: "2mb" }));
 // --- Rotas Públicas ---
 app.use("/api", authRoutes); // Login / Logout / Refresh
 app.use("/api/usuario", usuarioRoutes); // Criar usuário
-app.use("/api/sse", sseRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use("/api", sseRoutes);
+app.use("/api", dashboardRoutes);
 app.get(["/health", "/api/health"], (_req, res) => res.json({ ok: true }));
 
 // --- Rotas Protegidas (Requerem autenticação) ---
@@ -125,7 +129,7 @@ app.use((err, req, res, next) => {
 (async () => {
   try {
     await initDb();
-    console.log('---');
+    console.log("---");
     app.listen(PORT, () => {
       console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
     });
