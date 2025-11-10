@@ -16,7 +16,7 @@
     --input-bg: #ffffff;
   }
   
-  /* Paleta escura (neutra, sem "gamer") */
+  /* Paleta escura  */
   .painel-container[data-theme="escuro"] {
     --danger: #ef4444; 
     --bg: #0f1115;
@@ -40,7 +40,6 @@
   }
   /* Paleta clara (padrão) */
 :root {
-    /* ... seu tema claro continua igual ... */
     --bg: #f7f8f9;
     --text: #333333;
     --muted: #555555;
