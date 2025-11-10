@@ -7,11 +7,6 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 
-
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
-  "https://projeto-interdisciplinar-2.onrender.com/api";
-
 /* ========================= Helpers ========================= */
 const currency = (v) =>
   Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
@@ -99,23 +94,50 @@ const ActiveShape = (props) => {
 };
 
 /* ========================= API (segue seu padrão) ========================= */
+// const API = {
+//   async summary(groupId, status = 'aprovada') {
+//     const r = await fetch(`/api/dashboard/${groupId}/summary?status=${status}`);
+//     if (!r.ok) throw new Error("Falha ao carregar summary");
+//     return r.json();
+//   },
+//   async inventory(groupId, status = 'aprovada') {
+//     const r = await fetch(`/api/dashboard/${groupId}/inventory?status=${status}`);
+//     if (!r.ok) throw new Error("Falha ao carregar inventário");
+//     return r.json(); // [{nome, unidade, quantidade}]
+//   },
+//   async timeseries(groupId, range = "30d", tipo = 'todos', status = 'aprovada') {
+//     const r = await fetch(`/api/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`);
+//     if (!r.ok) throw new Error("Falha ao carregar série temporal");
+//     return r.json(); // [{data, valor}]
+//   },
+// };
+
 const API = {
+  // [MUDANÇA 2]: API_BASE e credentials adicionados
   async summary(groupId, status = 'aprovada') {
-    const r = await fetch(`/api/dashboard/${groupId}/summary?status=${status}`);
+    const r = await fetch(`/api/dashboard/${groupId}/summary?status=${status}`, {
+      credentials: "include",
+    });
     if (!r.ok) throw new Error("Falha ao carregar summary");
     return r.json();
   },
   async inventory(groupId, status = 'aprovada') {
-    const r = await fetch(`/api/dashboard/${groupId}/inventory?status=${status}`);
+    const r = await fetch(`/api/dashboard/${groupId}/inventory?status=${status}`, {
+      credentials: "include",
+    });
     if (!r.ok) throw new Error("Falha ao carregar inventário");
     return r.json(); // [{nome, unidade, quantidade}]
   },
   async timeseries(groupId, range = "30d", tipo = 'todos', status = 'aprovada') {
-    const r = await fetch(`/api/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`);
+    const r = await fetch(`/api/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`, {
+      credentials: "include",
+    });
     if (!r.ok) throw new Error("Falha ao carregar série temporal");
     return r.json(); // [{data, valor}]
   },
 };
+
+
 
 /* ========================= Componente ========================= */
 export default function Dashboard({ grupo }) {
