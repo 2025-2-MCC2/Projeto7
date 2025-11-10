@@ -203,7 +203,7 @@ export default function Dashboard({ grupo }) {
   // SSE para atualizações em tempo real
   useEffect(() => {
     // [MUDANÇA 3]: API_BASE e withCredentials adicionados
-    const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
+    const es = new EventSource(`${API_BASE}/grupos/${grupo.id}`, {
       withCredentials: true
     });
     
