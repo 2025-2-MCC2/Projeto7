@@ -88,14 +88,14 @@ app.use(express.json({ limit: "2mb" }));
 // --- Rotas Públicas ---
 app.use("/api", authRoutes); // Login / Logout / Refresh
 app.use("/api/usuario", usuarioRoutes); // Criar usuário
+app.use("/api/sse", sseRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.get(["/health", "/api/health"], (_req, res) => res.json({ ok: true }));
 
 // --- Rotas Protegidas (Requerem autenticação) ---
 // (O middleware requireAuth vai barrar se não houver cookie JWT válido)
 app.use("/api/profile", requireAuth, profileRoutes);
 app.use("/api/presence", requireAuth, presenceRoutes);
-app.use("/api/dashboard", requireAuth, dashboardRoutes);
-app.use("/api/sse", requireAuth, sseRoutes);
 app.use("/api/relatorio", requireAuth, relatorioMensalRoutes);
 app.use("/api", requireAuth, mainRoutes); // Rotas principais (grupos, etc.)
 
