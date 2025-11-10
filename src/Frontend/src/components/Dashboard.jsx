@@ -5,11 +5,11 @@ import {
   LineChart, Line
 } from "recharts";
 import "./Dashboard.css";
-// 1. IMPORTAMOS a instância 'api' (axios) e a 'API_BASE' (para o SSE)
-import { api, API_BASE } from "../../auth/api"; 
 
 /* ========================= Helpers ========================= */
-
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
+  "https://projeto-interdisciplinar-2.onrender.com/api";
 
 const currency = (v) =>
   Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
@@ -200,9 +200,6 @@ export default function Dashboard({ grupo }) {
 
   // SSE para atualizações em tempo real
   useEffect(() => {
-    // 3. [MUDANÇA 3]: Usamos a API_BASE importada de 'src/auth/api.js'
-    //    Isso garante que o SSE aponte para o backend (Render) e não
-    //    para o frontend (Vercel) em produção.
     const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
       withCredentials: true // Mantemos isso para o EventSource
     });
