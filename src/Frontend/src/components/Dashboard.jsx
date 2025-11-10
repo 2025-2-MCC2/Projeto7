@@ -5,10 +5,11 @@ import {
   LineChart, Line
 } from "recharts";
 import "./Dashboard.css";
+// 1. IMPORTAMOS a instância 'api' (axios) e a 'API_BASE' (para o SSE)
+import { api, API_BASE } from "../../auth/api"; 
 
 /* ========================= Helpers ========================= */
 
-// [MUDANÇA 1]: Adicionada a variável de ambiente da API
 const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
   "https://projeto-interdisciplinar-2.onrender.com/api";
@@ -99,28 +100,23 @@ const ActiveShape = (props) => {
 };
 
 /* ========================= API (segue seu padrão) ========================= */
+
+// 2. [MUDANÇA 2]: O objeto API agora usa a instância 'api' (Axios)
 const API = {
-  // [MUDANÇA 2]: API_BASE e credentials adicionados
   async summary(groupId, status = 'aprovada') {
-    const r = await fetch(`/api/dashboard/${groupId}/summary?status=${status}`, {
-      credentials: "include",
-    });
-    if (!r.ok) throw new Error("Falha ao carregar summary");
-    return r.json();
+    // Usamos 'api.get' (Axios)
+    // - Não precisa de '/api/' (vem da baseURL)
+    // - Não precisa de 'credentials' (vem da instância global 'api')
+    const res = await api.get(`/dashboard/${groupId}/summary?status=${status}`);
+    return res.data; // Axios já retorna o JSON em 'res.data'
   },
   async inventory(groupId, status = 'aprovada') {
-    const r = await fetch(`/api/dashboard/${groupId}/inventory?status=${status}`, {
-      credentials: "include",
-    });
-    if (!r.ok) throw new Error("Falha ao carregar inventário");
-    return r.json(); // [{nome, unidade, quantidade}]
+    const res = await api.get(`/dashboard/${groupId}/inventory?status=${status}`);
+    return res.data;
   },
   async timeseries(groupId, range = "30d", tipo = 'todos', status = 'aprovada') {
-    const r = await fetch(`/api/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`, {
-      credentials: "include",
-    });
-    if (!r.ok) throw new Error("Falha ao carregar série temporal");
-    return r.json(); // [{data, valor}]
+    const res = await api.get(`/dashboard/${groupId}/timeseries?range=${range}&tipo=${tipo}&status=${status}`);
+    return res.data;
   },
 };
 
@@ -183,16 +179,21 @@ export default function Dashboard({ grupo }) {
     setLoading(true);
     setError("");
     try {
+      // O 'await Promise.all' funciona exatamente igual com o 'api.get'
       const [sum, inv, ts] = await Promise.all([
         API.summary(grupo.id, status),
         API.inventory(grupo.id, status),
         API.timeseries(grupo.id, range, tipo, status),
       ]);
+      // Como o axios já retorna os dados (res.data),
+      // não precisamos mais chamar .json()
       setSummary(sum ?? { meta: 0, progresso: 0, totalItens: 0 });
       setInventory(Array.isArray(inv) ? inv : []);
       setSeries(Array.isArray(ts) ? ts : []);
     } catch (e) {
-      setError(e?.message ?? "Erro ao carregar dashboard.");
+      // O interceptor do api.js vai tratar o 401.
+      // Isso aqui vai pegar outros erros (500, 404, etc.)
+      setError(e?.response?.data?.error || e?.message || "Erro ao carregar dashboard.");
     } finally {
       setLoading(false);
     }
@@ -202,13 +203,16 @@ export default function Dashboard({ grupo }) {
 
   // SSE para atualizações em tempo real
   useEffect(() => {
-    // [MUDANÇA 3]: API_BASE e withCredentials adicionados
-    const es = new EventSource(`/api/stream/grupos/${grupo.id}`, {
-      withCredentials: true
+    // 3. [MUDANÇA 3]: Usamos a API_BASE importada de 'src/auth/api.js'
+    //    Isso garante que o SSE aponte para o backend (Render) e não
+    //    para o frontend (Vercel) em produção.
+    const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
+      withCredentials: true // Mantemos isso para o EventSource
     });
     
     const handler = async () => {
       try {
+        // A lógica de recarregar os dados via 'api' (axios) está correta
         const [sum, inv, ts] = await Promise.all([
           API.summary(grupo.id, status),
           API.inventory(grupo.id, status),
@@ -222,7 +226,7 @@ export default function Dashboard({ grupo }) {
     es.addEventListener("dashboard", handler);
     es.addEventListener("heartbeat", () => {}); // mantém conexão viva
     return () => es.close();
-  }, [grupo.id, range, tipo, status]);
+  }, [grupo.id, range, tipo, status]); // A dependência de 'loadAll' foi removida para evitar reconexão
 
   /* ========================= Insights ========================= */
   const getPieChartInsights = (data) => {
@@ -250,7 +254,7 @@ export default function Dashboard({ grupo }) {
     (series ?? []).forEach(r => rows.push([r.data, String(r.valor ?? 0).replace(".", ",")]));
     const csv = rows.map(r => r.join(";")).join("\n");
     
-    // [MUDANÇA 4]: Adicionado "\ufeff" (BOM) para forçar o Excel a usar UTF-8
+    // 4. [MUDANÇA 4]: Mantida - Adicionado "\ufeff" (BOM) para forçar o Excel a usar UTF-8
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     
     const a = document.createElement("a");
@@ -298,7 +302,7 @@ export default function Dashboard({ grupo }) {
           </div>
         </div>
         <div className="actions">
-          {/* [MUDANÇA 5]: Texto do botão alterado para ser mais claro */}
+          {/* 5. [MUDANÇA 5]: Mantida - Texto do botão alterado */}
           <button className="btn" onClick={exportCSV}>Exportar p/ Excel (CSV)</button>
           <button className="btn" onClick={loadAll}>Atualizar</button>
         </div>
