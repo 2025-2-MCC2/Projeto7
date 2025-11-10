@@ -1,3 +1,4 @@
+// src/components/Dashboard.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
@@ -19,13 +20,12 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 
-// 1. API_BASE MANTIDA (como você pediu)
 const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ||
   "https://projeto-interdisciplinar-2.onrender.com/api";
 
 /* =========================
-    Helpers de formatação
+   Helpers de formatação
    ========================= */
 const currency = (v) =>
   Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -46,14 +46,8 @@ const todayStr = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
-// 2. ADICIONADO: Helper para ler variáveis CSS (do código local)
-const cssVar = (name, fallback) => {
-  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return v || fallback;
-};
-
 /* =========================
-    Tooltip customizada
+   Tooltip customizada
    ========================= */
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -74,9 +68,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 /* =========================
-    Fatia ativa (Pizza)
+   Fatia ativa (Pizza)
    ========================= */
-// 3. MANTIDO: Seu ActiveShape (do código antigo)
 const ActiveShape = (props) => {
   const RADIAN = Math.PI / 180;
   const {
@@ -163,11 +156,20 @@ const ActiveShape = (props) => {
   );
 };
 
+const COLORS = [
+  "#22c55e",
+  "#3b82f6",
+  "#f59e0b",
+  "#ef4444",
+  "#a78bfa",
+  "#14b8a6",
+  "#e11d48",
+];
+
 /* =========================
-    API (ATUALIZADA)
+   API (NOVO)
    ========================= */
 const API = {
-  // 4. ATUALIZADO: Adicionado 'status'
   async summary(groupId) {
     const r = await fetch(`${API_BASE}/dashboard/${groupId}/summary`, {
       credentials: "include",
@@ -175,7 +177,6 @@ const API = {
     if (!r.ok) throw new Error("Falha ao carregar summary");
     return r.json();
   },
-  // 5. ATUALIZADO: Adicionado 'status'
   async inventory(groupId) {
     const r = await fetch(`${API_BASE}/dashboard/${groupId}/inventory`, {
       credentials: "include",
@@ -183,7 +184,6 @@ const API = {
     if (!r.ok) throw new Error("Falha ao carregar inventário");
     return r.json(); // [{nome, unidade, quantidade}]
   },
-  // 6. ATUALIZADO: Adicionado 'tipo' e 'status'
   async timeseries(groupId, range = "30d") {
     const r = await fetch(
       `${API_BASE}/dashboard/${groupId}/timeseries?range=${range}`,
@@ -205,19 +205,16 @@ export default function Dashboard({ grupo }) {
     );
 
   /* =========================
-      Estados
+     Estados
      ========================= */
   const [activeChart, setActiveChart] = useState("distribuicao"); // 'distribuicao'|'progresso'|'tendencia'
   const [activeIndex, setActiveIndex] = useState(0);
   const [filtroItem, setFiltroItem] = useState(null);
   const [range, setRange] = useState("30d");
-  // 7. ATUALIZADO: Adicionados estados de filtro
-  const [tipo, setTipo] = useState("todos"); // todos | dinheiro | item
-  const [status, setStatus] = useState("aprovada"); // aprovada | pendente | rejeitada | todas
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Dados vindos do backend
+  // Dados vindos do backend (NOVO)
   const [summary, setSummary] = useState({
     meta: 0,
     progresso: 0,
@@ -225,25 +222,6 @@ export default function Dashboard({ grupo }) {
   });
   const [inventory, setInventory] = useState([]); // [{nome, unidade, quantidade}]
   const [series, setSeries] = useState([]); // [{data, valor}]
-  
-  // 8. ADICIONADO: Cores reativas ao tema (do código local)
-  const [themeKey, setThemeKey] = useState(0);
-  useEffect(() => {
-    const obs = new MutationObserver(() => setThemeKey((k) => k + 1));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => obs.disconnect();
-  }, []);
-  const THEME_COLORS = useMemo(() => {
-    const primary = cssVar('--primary', '#22c55e');
-    const accent1 = cssVar('--accent', '#4caf50') || primary;
-    const blue    = '#3b82f6';
-    const amber   = '#f59e0b';
-    const red     = cssVar('--danger', '#ef4444');
-    const purple  = '#a78bfa';
-    const teal    = '#14b8a6';
-    return [primary, blue, amber, red, purple, teal, accent1];
-  }, [themeKey]);
-
 
   const totalItens = useMemo(
     () => (inventory || []).reduce((s, i) => s + Number(i.quantidade || 0), 0),
@@ -278,63 +256,59 @@ export default function Dashboard({ grupo }) {
   );
 
   /* =========================
-      Carregamento inicial + SSE (ATUALIZADO)
+     Carregamento inicial + SSE (NOVO)
      ========================= */
-  
-  // 9. ATUALIZADO: Lógica de 'loadAll' separada (do código local)
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      // 10. ATUALIZADO: Passa todos os filtros para a API
-      const [sum, inv, ts] = await Promise.all([
-        API.summary(grupo.id, status),
-        API.inventory(grupo.id, status),
-        API.timeseries(grupo.id, range, tipo, status),
-      ]);
-      setSummary(sum ?? { meta: 0, progresso: 0, totalItens: 0 });
-      setInventory(Array.isArray(inv) ? inv : []);
-      setSeries(Array.isArray(ts) ? ts : []);
-    } catch (e) {
-      setError(e?.message ?? "Erro ao carregar dashboard.");
-    } finally {
-      setLoading(false);
-    }
-  }, [grupo.id, range, tipo, status]); // 11. ATUALIZADO: Adiciona dependências
-
-  useEffect(() => { loadAll(); }, [loadAll]);
-
-
-  // SSE para atualizações
   useEffect(() => {
-    // 12. MANTIDO: Lógica SSE do código antigo (já estava correta)
+    let abort = false;
+    async function load() {
+      try {
+        setLoading(true);
+        setError("");
+        const [sum, inv, ts] = await Promise.all([
+          API.summary(grupo.id),
+          API.inventory(grupo.id),
+          API.timeseries(grupo.id, range),
+        ]);
+        if (abort) return;
+        setSummary(sum);
+        setInventory(inv);
+        setSeries(ts);
+      } catch (e) {
+        if (!abort) setError(e?.message || "Erro ao carregar dashboard.");
+      } finally {
+        if (!abort) setLoading(false);
+      }
+    }
+    load();
+
+    // Assina SSE para atualizações (aprovação de doações / novas doações)
     const es = new EventSource(`${API_BASE}/stream/grupos/${grupo.id}`, {
       credentials: "include",
       withCredentials: true,
     });
     const handler = async () => {
       try {
-        // 13. ATUALIZADO: Handler do SSE também usa os filtros
         const [sum, inv, ts] = await Promise.all([
-          API.summary(grupo.id, status),
-          API.inventory(grupo.id, status),
-          API.timeseries(grupo.id, range, tipo, status),
+          API.summary(grupo.id),
+          API.inventory(grupo.id),
+          API.timeseries(grupo.id, range),
         ]);
-        setSummary(sum ?? { meta: 0, progresso: 0, totalItens: 0 });
-        setInventory(Array.isArray(inv) ? inv : []);
-        setSeries(Array.isArray(ts) ? ts : []);
+        setSummary(sum);
+        setInventory(inv);
+        setSeries(ts);
       } catch {}
     };
     es.addEventListener("dashboard", handler);
     es.addEventListener("heartbeat", () => {}); // mantém conexão viva
 
     return () => {
+      abort = true;
       es.close();
     };
-  }, [grupo.id, range, tipo, status]); // 14. ATUALIZADO: Adiciona dependências
+  }, [grupo.id, range]);
 
   /* =========================
-      Insights
+     Insights
      ========================= */
   const getPieChartInsights = (data) => {
     if (!data || data.length === 0) return "Nenhum item no inventário.";
@@ -364,26 +338,7 @@ export default function Dashboard({ grupo }) {
   };
 
   /* =========================
-      Export CSV (ATUALIZADO)
-     ========================= */
-  const exportCSV = () => {
-    const rows = [["data", "valor"]];
-    (series ?? []).forEach(r => rows.push([r.data, String(r.valor ?? 0).replace(".", ",")]));
-    const csv = rows.map(r => r.join(";")).join("\n");
-    
-    // 15. ATUALIZADO: Adiciona BOM para Excel (do código local)
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    // 16. ATUALIZADO: Nome do arquivo inclui filtros
-    a.download = `timeseries_${grupo.id}_${range}_${tipo}_${status}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  /* =========================
-      UI
+     UI
      ========================= */
   return (
     <div className="dash-container">
@@ -392,38 +347,6 @@ export default function Dashboard({ grupo }) {
         <h3 className="group-title">{grupo.nome}</h3>
         <div className="header-icons" aria-hidden>
           <span title="Atualizado">{todayStr()}</span>
-        </div>
-      </div>
-
-      {/* 17. ATUALIZADO: Toolbar com filtros (do código local) */}
-      <div className="dash-toolbar">
-        <div className="filters">
-          <label>
-            Tipo:
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-              <option value="todos">Todos</option>
-              <option value="dinheiro">Dinheiro</option>
-              <option value="item">Item</option>
-            </select>
-          </label>
-          <label>
-            Status:
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="aprovada">Aprovadas</option>
-              <option value="pendente">Pendentes</option>
-              <option value="rejeitada">Rejeitadas</option>
-              <option value="todas">Todas</option>
-            </select>
-          </label>
-          <div className="range-filter">
-            <button className={range === "7d" ? "active" : ""} onClick={() => setRange("7d")}>7 dias</button>
-            <button className={range === "30d" ? "active" : ""} onClick={() => setRange("30d")}>30 dias</button>
-            <button className={range === "mes" ? "active" : ""} onClick={() => setRange("mes")}>Mês atual</button>
-          </div>
-        </div>
-        <div className="actions">
-          <button className="btn" onClick={exportCSV}>Exportar p/ Excel (CSV)</button>
-          <button className="btn" onClick={loadAll}>Atualizar</button>
         </div>
       </div>
 
@@ -497,8 +420,7 @@ export default function Dashboard({ grupo }) {
       )}
 
       {/* Distribuição */}
-      {/* 18. ATUALIZADO: Usa THEME_COLORS (do código local) */}
-      {!loading && !error && activeChart === "distribuicao" && (
+      {activeChart === "distribuicao" && (
         <div className="dash-card">
           <h3>Distribuição de Itens</h3>
           {pieData.length === 0 ? (
@@ -525,7 +447,7 @@ export default function Dashboard({ grupo }) {
                       onClick={onPieClick}
                     >
                       {pieData.map((_, i) => (
-                        <Cell key={i} fill={THEME_COLORS[i % THEME_COLORS.length]} />
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
@@ -554,8 +476,7 @@ export default function Dashboard({ grupo }) {
       )}
 
       {/* Progresso */}
-      {/* 19. ATUALIZADO: Usa THEME_COLORS (do código local) */}
-      {!loading && !error && activeChart === "progresso" && (
+      {activeChart === "progresso" && (
         <div className="dash-card">
           <h3>Progresso de Arrecadação</h3>
           <div className="card-content">
@@ -577,7 +498,7 @@ export default function Dashboard({ grupo }) {
                 />
                 <Bar
                   dataKey="progresso"
-                  fill={THEME_COLORS[0]} // Cor dinâmica
+                  fill="var(--primary, #22c55e)"
                   radius={[6, 6, 0, 0]}
                 >
                   <LabelList
@@ -606,8 +527,7 @@ export default function Dashboard({ grupo }) {
       )}
 
       {/* Tendência */}
-      {/* 20. ATUALIZADO: Usa THEME_COLORS (do código local) */}
-      {!loading && !error && activeChart === "tendencia" && (
+      {activeChart === "tendencia" && (
         <div className="dash-card">
           <h3>Tendência de Doações (R$)</h3>
 
@@ -657,7 +577,7 @@ export default function Dashboard({ grupo }) {
                   type="monotone"
                   dataKey="valor"
                   name="Diário"
-                  stroke={THEME_COLORS[0]} // Cor dinâmica
+                  stroke="#22c55e"
                   dot={false}
                   strokeWidth={2}
                 />
