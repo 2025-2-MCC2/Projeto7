@@ -40,7 +40,7 @@ console.log(`[ENV] Ambiente: ${NODE_ENV} (isProd: ${isProd})`);
 // =================================================================
 export const cookieBase = {
   httpOnly: true,
-  secure: isProd, // (Produção: true) Requer HTTPS
+  secure: true, // (Produção: true) Requer HTTPS
   sameSite: isProd ? 'none' : 'lax', // (Produção: 'none') Para cross-origin
   path: '/',
   // Lembrete: maxAge (duração) é definido no auth.controller.js
