@@ -1,3 +1,9 @@
+## Login Sem resposta
+O nosso backend é hospedado em uma instância gratuita pelo Render, que entra em um estado de hibernação quando inativo, o que pode atrasar requisições em até 50 segundos.<br>
+<i>"Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more." Mensagem do Render</i><br><br>
+Para resolver, pedimos para que façam várias tentativas de login e fique recaregando a página por alguns segundos.
+
+
 ## Login realizado, mas já logo sai:
 Caso o login tenha sido realizado com sucesso, mas quando é redirecionado para página principal ocorre um erro e você é expulso, como na imagem:
 <div align="center"><br>
